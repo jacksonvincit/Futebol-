@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FuteStat — Jogos e Previsões</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b1f17; --panel: #122a20; --panel-2: #0e241b; --line: #1f3b2c;
+  --text: #edf3ee; --muted: #8fa79b; --lime: #c8ff4d; --cyan: #5fd8e0; --amber: #ffb15c;
+  --font-display: 'Oswald', sans-serif; --font-body: 'Inter', sans-serif; --font-mono: 'IBM Plex Mono', monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(ellipse at top, #102a1f 0%, var(--bg) 60%); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
+.topbar { display: flex; align-items: center; padding: 24px clamp(16px, 5vw, 48px) 8px; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark { font-family: var(--font-mono); font-weight: 600; font-size: 14px; letter-spacing: 0.08em; border: 1px solid var(--lime); color: var(--lime); padding: 6px 9px; border-radius: 4px; }
+.brand h1 { font-family: var(--font-display); font-weight: 700; font-size: 24px; margin: 0; text-transform: uppercase; }
+.brand-sub { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.disclaimer { margin: 8px clamp(16px, 5vw, 48px) 0; padding: 14px 18px; background: #1d1306; border: 1px solid #5a3c12; border-left: 4px solid var(--amber); border-radius: 6px; color: #f1d9b3; font-size: 13.5px; }
+main { padding: 20px clamp(16px, 5vw, 48px) 40px; max-width: 720px; margin: 0 auto; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.panel-head h2 { font-family: var(--font-display); font-size: 17px; text-transform: uppercase; letter-spacing: 0.03em; margin: 0; }
+.tabs { display: flex; gap: 6px; }
+.tab { background: transparent; border: 1px solid var(--line); color: var(--muted); padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; }
+.tab.active { border-color: var(--lime); color: var(--lime); }
+.fixtures-list { display: flex; flex-direction: column; gap: 8px; }
+.fixture-row { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-size: 13.5px; cursor: pointer; }
+.fixture-row:active { border-color: var(--lime); }
+.fixture-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.fixture-row .league { color: var(--muted); font-size: 11px; display: block; margin-bottom: 2px; }
+.fixture-score { font-family: var(--font-mono); color: var(--lime); font-weight: 600; white-space: nowrap; }
+.empty { color: var(--muted); font-size: 14px; }
+.predict-box { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.predict-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; }
+.predict-row .pv { font-family: var(--font-mono); font-weight: 600; color: var(--lime); font-size: 16px; }
+.predict-sub { color: var(--muted); font-size: 11px; }
+.predict-meta { color: var(--muted); font-size: 11.5px; margin-bottom: 6px; }
+.footer { padding: 18px clamp(16px, 5vw, 48px) 30px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); max-width: 720px; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">FT</span>
+      <div>
+        <h1>FuteStat</h1>
+        <p class="brand-sub">Toque num jogo para ver a previsão estatística</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="disclaimer" role="note">
+    A previsão é a <strong>média recente</strong> de chutes, escanteios, cartões, faltas e gols dos dois
+    times somada — não é garantia de resultado. Nenhuma ferramenta bate as odds das casas de apostas.
+    Jogue com responsabilidade, +18.
+  </div>
+
+  <main>
+    <section class="panel" id="fixtures-panel">
+      <div class="panel-head">
+        <h2>Jogos</h2>
+        <div class="tabs" id="fixture-tabs">
+          <button class="tab active" data-scope="today">Hoje</button>
+          <button class="tab" data-scope="live">Ao vivo</button>
+        </div>
+      </div>
+      <div id="fixtures-list" class="fixtures-list"><p class="empty">Carregando jogos…</p></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>FuteStat não é casa de apostas e não garante resultados. Dados via Sportmonks Football API.
+      Se apostar deixar de ser divertido, procure ajuda: <strong>0800 891 6080</strong> (CVV).</p>
+  </footer>
+
+<script>
+const API = '/.netlify/functions/api';
+const fixturesList = document.getElementById('fixtures-list');
+const fixtureTabs = document.getElementById('fixture-tabs');
+let currentFixtures = [];
+
+function stateLabel(stateId) {
+  if (stateId === 5) return 'Encerrado';
+  if (stateId === 1) return 'Agendado';
+  return 'Em andamento';
+}
+
+function renderFixtures(fixtures) {
+  currentFixtures = fixtures;
+  if (!fixtures.length) { fixturesList.innerHTML = '<p class="empty">Nenhum jogo encontrado.</p>'; return; }
+  fixturesList.innerHTML = fixtures.map((f, idx) => {
+    const score = f.homeGoals !== null && f.awayGoals !== null ? `${f.homeGoals} - ${f.awayGoals}` : stateLabel(f.stateId);
+    return `<div class="fixture-row" data-idx="${idx}">
+      <div class="fixture-top">
+        <div><span class="league">${f.league || ''}</span>${f.home} vs ${f.away}</div>
+        <div class="fixture-score">${score}</div>
+      </div>
+      <div class="predict-box" id="predict-${idx}" hidden></div>
+    </div>`;
+  }).join('');
+}
+
+async function loadFixtures(scope) {
+  fixturesList.innerHTML = '<p class="empty">Carregando jogos…</p>';
+  try {
+    const res = await fetch(`${API}?action=fixtures&scope=${scope}`);
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Erro ao buscar jogos');
+    renderFixtures(json.fixtures || []);
+  } catch (err) {
+    fixturesList.innerHTML = `<p class="empty">Não foi possível carregar os jogos (${err.message}). Verifique a SPORTMONKS_API_TOKEN.</p>`;
+  }
+}
+
+fixtureTabs.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab');
+  if (!btn) return;
+  document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+  btn.classList.add('active');
+  loadFixtures(btn.dataset.scope);
+});
+
+fixturesList.addEventListener('click', async (e) => {
+  const row = e.target.closest('.fixture-row');
+  if (!row) return;
+  const idx = row.dataset.idx;
+  const fx = currentFixtures[idx];
+  const box = document.getElementById(`predict-${idx}`);
+  if (!fx.homeId || !fx.awayId) return;
+
+  if (!box.hidden) { box.hidden = true; return; }
+
+  box.hidden = false;
+  box.innerHTML = '<p class="empty">Calculando previsão a partir dos últimos jogos…</p>';
+
+  try {
+    const url = new URL(API, window.location.origin);
+    url.searchParams.set('action', 'predict');
+    url.searchParams.set('home', fx.homeId);
+    url.searchParams.set('away', fx.awayId);
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Erro ao calcular previsão');
+
+    if (!json.markets.length) {
+      box.innerHTML = '<p class="empty">Não há jogos recentes suficientes desses times para calcular.</p>';
+      return;
+    }
+
+    box.innerHTML = `
+      <p class="predict-meta">Baseado em ${json.homeMatchesAnalyzed} jogos de ${fx.home} e ${json.awayMatchesAnalyzed} jogos de ${fx.away}</p>
+      ${json.markets.map((m) => `
+        <div class="predict-row">
+          <div>
+            ${m.marketLabel}
+            <div class="predict-sub">${fx.home}: ${m.homeAvg} · ${fx.away}: ${m.awayAvg} · linha sugerida: mais de ${m.suggestedLine}</div>
+          </div>
+          <div class="pv">${m.predictedTotal}</div>
+        </div>
+      `).join('')}
+    `;
+  } catch (err) {
+    box.innerHTML = `<p class="empty">Não foi possível calcular (${err.message}).</p>`;
+  }
+});
+
+loadFixtures('today');
+</script>
+</body>
+</html>
