@@ -1,104 +1,94 @@
-// Um único arquivo de backend. Duas ações:
+// Backend único, usando a API-Football (api-sports.io / dashboard.api-football.com).
+// Plano gratuito: 100 consultas por dia, mas cobre mais de 1.200 ligas e copas.
+//
 // ?action=fixtures&scope=today|live   -> lista de jogos
-// ?action=predict&home=ID&away=ID     -> previsão de chutes/escanteios/cartões/faltas/gols
-//   somando a média recente de cada time
+// ?action=predict&home=ID&away=ID     -> previsão somando a média recente dos dois times
 
-const MARKETS = {
-  shots_total: { label: 'Total de chutes', typeIds: [42] },
-  corners: { label: 'Escanteios', typeIds: [34] },
-  cards: { label: 'Cartões (amarelos + vermelhos)', typeIds: [84, 83] },
-  fouls: { label: 'Faltas', typeIds: [56] },
-  goals: { label: 'Gols', typeIds: [52] },
+const BASE_URL = 'https://v3.football.api-sports.io';
+const MAX_MATCHES_PER_TEAM = 5; // baixo de propósito, pra não estourar as 100 consultas/dia
+
+const STAT_NAMES = {
+  shots_total: 'Total de chutes',
+  corners: 'Escanteios',
+  cards: 'Cartões (amarelos + vermelhos)',
+  fouls: 'Faltas',
+  goals: 'Gols',
 };
 
-const MAX_PAGES = 3;
-const TEAM_DAYS_BACK = 45;
-const MAX_MATCHES_PER_TEAM = 10;
-
-async function sportmonksGet(path, params = {}) {
-  const token = process.env.SPORTMONKS_API_TOKEN;
-  if (!token) throw new Error('SPORTMONKS_API_TOKEN não configurado nas variáveis de ambiente da Netlify.');
-  const url = new URL('https://api.sportmonks.com/v3/football' + path);
-  url.searchParams.set('api_token', token);
+async function apiFootballGet(path, params = {}) {
+  const key = process.env.APIFOOTBALL_KEY;
+  if (!key) throw new Error('APIFOOTBALL_KEY não configurada nas variáveis de ambiente da Netlify.');
+  const url = new URL(BASE_URL + path);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, v);
   }
-  const res = await fetch(url.toString());
-  if (res.status === 429) throw new Error('RATE_LIMIT: limite de chamadas da Sportmonks atingido, tente de novo em alguns minutos.');
-  if (!res.ok) throw new Error(`Sportmonks HTTP ${res.status}: ${await res.text().catch(() => '')}`);
+  const res = await fetch(url.toString(), { headers: { 'x-apisports-key': key } });
+  if (res.status === 429) throw new Error('RATE_LIMIT: limite diário de consultas da API-Football atingido. Volta amanhã ou tenta de novo mais tarde.');
+  if (!res.ok) throw new Error(`API-Football HTTP ${res.status}: ${await res.text().catch(() => '')}`);
   return res.json();
 }
 
 function fmtDate(d) { return d.toISOString().slice(0, 10); }
 
-function mapFixture(fx) {
-  const participants = fx.participants || [];
-  const home = participants.find((p) => p.meta && p.meta.location === 'home') || participants[0];
-  const away = participants.find((p) => p.meta && p.meta.location === 'away') || participants[1];
-  const scoreFor = (id) => {
-    if (!fx.scores || !id) return null;
-    const s = fx.scores.find((sc) => sc.participant_id === id && sc.description === 'CURRENT');
-    return s ? s.score.goals : null;
-  };
+function mapFixture(item) {
   return {
-    id: fx.id,
-    league: fx.league ? fx.league.name : null,
-    startingAt: fx.starting_at,
-    stateId: fx.state_id,
-    home: home ? home.name : '?',
-    away: away ? away.name : '?',
-    homeId: home ? home.id : null,
-    awayId: away ? away.id : null,
-    homeGoals: scoreFor(home && home.id),
-    awayGoals: scoreFor(away && away.id),
+    id: item.fixture.id,
+    league: item.league ? item.league.name : null,
+    startingAt: item.fixture.date,
+    statusShort: item.fixture.status ? item.fixture.status.short : null,
+    home: item.teams.home.name,
+    away: item.teams.away.name,
+    homeId: item.teams.home.id,
+    awayId: item.teams.away.id,
+    homeGoals: item.goals ? item.goals.home : null,
+    awayGoals: item.goals ? item.goals.away : null,
   };
 }
 
 async function handleFixtures(qs) {
   const scope = qs.scope === 'live' ? 'live' : 'today';
   if (scope === 'live') {
-    const json = await sportmonksGet('/livescores/inplay', { include: 'participants;league;scores' });
-    return { fixtures: (json.data || []).map(mapFixture) };
+    const json = await apiFootballGet('/fixtures', { live: 'all' });
+    return { fixtures: (json.response || []).map(mapFixture) };
   }
   const date = qs.date || fmtDate(new Date());
-  const json = await sportmonksGet(`/fixtures/date/${date}`, { include: 'participants;league;scores' });
-  return { fixtures: (json.data || []).map(mapFixture) };
+  const json = await apiFootballGet('/fixtures', { date });
+  return { fixtures: (json.response || []).map(mapFixture) };
 }
 
-function sumStat(statistics, participantId, typeIds) {
-  return statistics
-    .filter((s) => s.participant_id === participantId && typeIds.includes(s.type_id))
-    .reduce((acc, s) => acc + (s.data && typeof s.data.value === 'number' ? s.data.value : 0), 0);
+function extractStat(statsResponse, teamId, statName) {
+  const teamBlock = (statsResponse.response || []).find((b) => b.team.id === teamId);
+  if (!teamBlock) return null;
+  const entry = teamBlock.statistics.find((s) => s.type === statName);
+  if (!entry || entry.value === null || entry.value === undefined) return null;
+  return typeof entry.value === 'string' ? parseFloat(entry.value) : entry.value;
 }
 
 async function teamAverages(teamId) {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - TEAM_DAYS_BACK);
+  const fixturesJson = await apiFootballGet('/fixtures', { team: teamId, last: MAX_MATCHES_PER_TEAM, status: 'FT' });
+  const fixtures = fixturesJson.response || [];
 
-  let page = 1;
-  let all = [];
-  while (page <= MAX_PAGES) {
-    const json = await sportmonksGet(`/fixtures/between/${fmtDate(start)}/${fmtDate(end)}/${teamId}`, {
-      include: 'statistics;participants',
-      page,
-    });
-    all = all.concat(json.data || []);
-    if (!json.pagination || !json.pagination.has_more) break;
-    page += 1;
-  }
+  const totals = { shots_total: [], corners: [], cards: [], fouls: [], goals: [] };
 
-  const finished = all
-    .filter((f) => f.state_id === 5 && Array.isArray(f.statistics) && f.statistics.length > 0)
-    .sort((a, b) => new Date(b.starting_at) - new Date(a.starting_at))
-    .slice(0, MAX_MATCHES_PER_TEAM);
+  for (const fx of fixtures) {
+    const fixtureId = fx.fixture.id;
+    const isHome = fx.teams.home.id === teamId;
+    const goalsFor = isHome ? fx.goals.home : fx.goals.away;
+    if (typeof goalsFor === 'number') totals.goals.push(goalsFor);
 
-  const totals = {};
-  for (const key of Object.keys(MARKETS)) totals[key] = [];
-
-  for (const fx of finished) {
-    for (const [key, def] of Object.entries(MARKETS)) {
-      totals[key].push(sumStat(fx.statistics, teamId, def.typeIds));
+    try {
+      const statsJson = await apiFootballGet('/fixtures/statistics', { fixture: fixtureId });
+      const shots = extractStat(statsJson, teamId, 'Total Shots');
+      const corners = extractStat(statsJson, teamId, 'Corner Kicks');
+      const fouls = extractStat(statsJson, teamId, 'Fouls');
+      const yellow = extractStat(statsJson, teamId, 'Yellow Cards');
+      const red = extractStat(statsJson, teamId, 'Red Cards');
+      if (shots !== null) totals.shots_total.push(shots);
+      if (corners !== null) totals.corners.push(corners);
+      if (fouls !== null) totals.fouls.push(fouls);
+      if (yellow !== null || red !== null) totals.cards.push((yellow || 0) + (red || 0));
+    } catch (_) {
+      // se uma partida específica não tiver estatística disponível, simplesmente ignora ela
     }
   }
 
@@ -107,7 +97,7 @@ async function teamAverages(teamId) {
     averages[key] = values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
   }
 
-  return { averages, matchesAnalyzed: finished.length };
+  return { averages, matchesAnalyzed: fixtures.length };
 }
 
 function roundLine(predicted) {
@@ -123,13 +113,13 @@ async function handlePredict(qs) {
   const [homeStats, awayStats] = await Promise.all([teamAverages(homeId), teamAverages(awayId)]);
 
   const markets = [];
-  for (const [key, def] of Object.entries(MARKETS)) {
+  for (const [key, label] of Object.entries(STAT_NAMES)) {
     const h = homeStats.averages[key];
     const a = awayStats.averages[key];
     if (h === null || a === null) continue;
     const predicted = Math.round((h + a) * 10) / 10;
     markets.push({
-      marketLabel: def.label,
+      marketLabel: label,
       predictedTotal: predicted,
       homeAvg: Math.round(h * 10) / 10,
       awayAvg: Math.round(a * 10) / 10,
