@@ -74,7 +74,7 @@ main { padding: 20px clamp(16px, 5vw, 48px) 40px; max-width: 720px; margin: 0 au
   </main>
 
   <footer class="footer">
-    <p>FuteStat não é casa de apostas e não garante resultados. Dados via Sportmonks Football API.
+    <p>FuteStat não é casa de apostas e não garante resultados. Dados via API-Football.
       Se apostar deixar de ser divertido, procure ajuda: <strong>0800 891 6080</strong> (CVV).</p>
   </footer>
 
@@ -84,9 +84,9 @@ const fixturesList = document.getElementById('fixtures-list');
 const fixtureTabs = document.getElementById('fixture-tabs');
 let currentFixtures = [];
 
-function stateLabel(stateId) {
-  if (stateId === 5) return 'Encerrado';
-  if (stateId === 1) return 'Agendado';
+function stateLabel(statusShort) {
+  if (statusShort === 'FT' || statusShort === 'AET' || statusShort === 'PEN') return 'Encerrado';
+  if (statusShort === 'NS') return 'Agendado';
   return 'Em andamento';
 }
 
@@ -94,7 +94,7 @@ function renderFixtures(fixtures) {
   currentFixtures = fixtures;
   if (!fixtures.length) { fixturesList.innerHTML = '<p class="empty">Nenhum jogo encontrado.</p>'; return; }
   fixturesList.innerHTML = fixtures.map((f, idx) => {
-    const score = f.homeGoals !== null && f.awayGoals !== null ? `${f.homeGoals} - ${f.awayGoals}` : stateLabel(f.stateId);
+    const score = f.homeGoals !== null && f.awayGoals !== null ? `${f.homeGoals} - ${f.awayGoals}` : stateLabel(f.statusShort);
     return `<div class="fixture-row" data-idx="${idx}">
       <div class="fixture-top">
         <div><span class="league">${f.league || ''}</span>${f.home} vs ${f.away}</div>
@@ -113,7 +113,7 @@ async function loadFixtures(scope) {
     if (!res.ok) throw new Error(json.error || 'Erro ao buscar jogos');
     renderFixtures(json.fixtures || []);
   } catch (err) {
-    fixturesList.innerHTML = `<p class="empty">Não foi possível carregar os jogos (${err.message}). Verifique a SPORTMONKS_API_TOKEN.</p>`;
+    fixturesList.innerHTML = `<p class="empty">Não foi possível carregar os jogos (${err.message}). Verifique a APIFOOTBALL_KEY.</p>`;
   }
 }
 
