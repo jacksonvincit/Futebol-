@@ -15,6 +15,17 @@ const STAT_NAMES = {
   goals: 'Gols',
 };
 
+// Médias genéricas de referência (ligas de futebol profissional em geral),
+// usadas apenas quando um time não tem jogos recentes suficientes pra calcular sua própria média.
+// Cada valor já é a média de UM time (depois somamos os dois lados na previsão).
+const GENERIC_TEAM_AVERAGE = {
+  shots_total: 12,
+  corners: 5,
+  cards: 2.2,
+  fouls: 11,
+  goals: 1.3,
+};
+
 async function apiFootballGet(path, params = {}) {
   const key = process.env.APIFOOTBALL_KEY;
   if (!key) throw new Error('APIFOOTBALL_KEY não configurada nas variáveis de ambiente da Netlify.');
@@ -34,6 +45,8 @@ function mapFixture(item) {
   return {
     id: item.fixture.id,
     league: item.league ? item.league.name : null,
+    leagueId: item.league ? item.league.id : null,
+    leagueCountry: item.league ? item.league.country : null,
     startingAt: item.fixture.date,
     statusShort: item.fixture.status ? item.fixture.status.short : null,
     home: item.teams.home.name,
@@ -93,11 +106,18 @@ async function teamAverages(teamId) {
   }
 
   const averages = {};
+  const isReal = {};
   for (const [key, values] of Object.entries(totals)) {
-    averages[key] = values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
+    if (values.length >= 2) {
+      averages[key] = values.reduce((a, b) => a + b, 0) / values.length;
+      isReal[key] = true;
+    } else {
+      averages[key] = GENERIC_TEAM_AVERAGE[key];
+      isReal[key] = false;
+    }
   }
 
-  return { averages, matchesAnalyzed: fixtures.length };
+  return { averages, isReal, matchesAnalyzed: fixtures.length };
 }
 
 function roundLine(predicted) {
@@ -116,14 +136,15 @@ async function handlePredict(qs) {
   for (const [key, label] of Object.entries(STAT_NAMES)) {
     const h = homeStats.averages[key];
     const a = awayStats.averages[key];
-    if (h === null || a === null) continue;
     const predicted = Math.round((h + a) * 10) / 10;
+    const isEstimate = !homeStats.isReal[key] || !awayStats.isReal[key];
     markets.push({
       marketLabel: label,
       predictedTotal: predicted,
       homeAvg: Math.round(h * 10) / 10,
       awayAvg: Math.round(a * 10) / 10,
       suggestedLine: roundLine(predicted),
+      isEstimate,
     });
   }
 
