@@ -34,6 +34,8 @@ main { padding: 20px clamp(16px, 5vw, 48px) 40px; max-width: 720px; margin: 0 au
 .fixture-row .league { color: var(--muted); font-size: 11px; display: block; margin-bottom: 2px; }
 .fixture-score { font-family: var(--font-mono); color: var(--lime); font-weight: 600; white-space: nowrap; }
 .empty { color: var(--muted); font-size: 14px; }
+.league-filter { width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--font-body); font-size: 13.5px; margin-bottom: 10px; }
+.estimate-tag { display: inline-block; font-size: 10px; color: var(--amber); border: 1px solid var(--amber); border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: middle; }
 .predict-box { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 10px; }
 .predict-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; }
 .predict-row .pv { font-family: var(--font-mono); font-weight: 600; color: var(--lime); font-size: 16px; }
@@ -56,7 +58,9 @@ main { padding: 20px clamp(16px, 5vw, 48px) 40px; max-width: 720px; margin: 0 au
 
   <div class="disclaimer" role="note">
     A previsão é a <strong>média recente</strong> de chutes, escanteios, cartões, faltas e gols dos dois
-    times somada — não é garantia de resultado. Nenhuma ferramenta bate as odds das casas de apostas.
+    times somada — não é garantia de resultado. Quando um time não tem jogos recentes suficientes,
+    usamos uma <strong>média genérica de referência</strong> (marcada como "estimativa"), só pra você
+    sempre ter um número de comparação. Nenhuma ferramenta bate as odds das casas de apostas.
     Jogue com responsabilidade, +18.
   </div>
 
@@ -69,6 +73,9 @@ main { padding: 20px clamp(16px, 5vw, 48px) 40px; max-width: 720px; margin: 0 au
           <button class="tab" data-scope="live">Ao vivo</button>
         </div>
       </div>
+      <select id="league-filter" class="league-filter">
+        <option value="">Todas as ligas</option>
+      </select>
       <div id="fixtures-list" class="fixtures-list"><p class="empty">Carregando jogos…</p></div>
     </section>
   </main>
@@ -82,13 +89,37 @@ main { padding: 20px clamp(16px, 5vw, 48px) 40px; max-width: 720px; margin: 0 au
 const API = '/.netlify/functions/api';
 const fixturesList = document.getElementById('fixtures-list');
 const fixtureTabs = document.getElementById('fixture-tabs');
+const leagueFilter = document.getElementById('league-filter');
 let currentFixtures = [];
+let allFixtures = [];
 
 function stateLabel(statusShort) {
   if (statusShort === 'FT' || statusShort === 'AET' || statusShort === 'PEN') return 'Encerrado';
   if (statusShort === 'NS') return 'Agendado';
   return 'Em andamento';
 }
+
+function populateLeagueFilter(fixtures) {
+  const leagues = [];
+  const seen = new Set();
+  for (const f of fixtures) {
+    if (f.leagueId && !seen.has(f.leagueId)) {
+      seen.add(f.leagueId);
+      leagues.push({ id: f.leagueId, label: f.leagueCountry ? `${f.league} (${f.leagueCountry})` : f.league });
+    }
+  }
+  leagues.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+  leagueFilter.innerHTML = '<option value="">Todas as ligas</option>' +
+    leagues.map((l) => `<option value="${l.id}">${l.label}</option>`).join('');
+}
+
+function applyLeagueFilter() {
+  const selected = leagueFilter.value;
+  const filtered = selected ? allFixtures.filter((f) => String(f.leagueId) === selected) : allFixtures;
+  renderFixtures(filtered);
+}
+
+leagueFilter.addEventListener('change', applyLeagueFilter);
 
 function renderFixtures(fixtures) {
   currentFixtures = fixtures;
@@ -111,7 +142,10 @@ async function loadFixtures(scope) {
     const res = await fetch(`${API}?action=fixtures&scope=${scope}`);
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Erro ao buscar jogos');
-    renderFixtures(json.fixtures || []);
+    allFixtures = json.fixtures || [];
+    populateLeagueFilter(allFixtures);
+    leagueFilter.value = '';
+    renderFixtures(allFixtures);
   } catch (err) {
     fixturesList.innerHTML = `<p class="empty">Não foi possível carregar os jogos (${err.message}). Verifique a APIFOOTBALL_KEY.</p>`;
   }
@@ -147,17 +181,12 @@ fixturesList.addEventListener('click', async (e) => {
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Erro ao calcular previsão');
 
-    if (!json.markets.length) {
-      box.innerHTML = '<p class="empty">Não há jogos recentes suficientes desses times para calcular.</p>';
-      return;
-    }
-
     box.innerHTML = `
       <p class="predict-meta">Baseado em ${json.homeMatchesAnalyzed} jogos de ${fx.home} e ${json.awayMatchesAnalyzed} jogos de ${fx.away}</p>
       ${json.markets.map((m) => `
         <div class="predict-row">
           <div>
-            ${m.marketLabel}
+            ${m.marketLabel}${m.isEstimate ? '<span class="estimate-tag">estimativa</span>' : ''}
             <div class="predict-sub">${fx.home}: ${m.homeAvg} · ${fx.away}: ${m.awayAvg} · linha sugerida: mais de ${m.suggestedLine}</div>
           </div>
           <div class="pv">${m.predictedTotal}</div>
