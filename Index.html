@@ -14,30 +14,47 @@
 }
 * { box-sizing: border-box; }
 body {
-  margin: 0;
-  color: var(--text);
-  font-family: var(--font-body);
-  line-height: 1.5;
-  background-color: var(--bg);
+  margin: 0; color: var(--text); font-family: var(--font-body); line-height: 1.5;
+  background-color: #050f0a;
   background-image:
-    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(200,255,77,0.16), transparent 60%),
-    radial-gradient(ellipse 900px 500px at 110% 10%, rgba(95,216,224,0.10), transparent 60%),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 90px),
-    linear-gradient(180deg, #0a1c14 0%, #081710 40%, #061309 100%);
-  background-attachment: fixed;
-  position: relative;
+    radial-gradient(ellipse 1100px 600px at 20% -15%, rgba(255,255,255,0.10), transparent 55%),
+    radial-gradient(ellipse 1100px 600px at 100% -10%, rgba(200,255,77,0.10), transparent 55%),
+    radial-gradient(ellipse 1400px 700px at 50% 110%, rgba(95,216,224,0.07), transparent 60%),
+    repeating-linear-gradient(100deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 60px, rgba(0,0,0,0.06) 60px, rgba(0,0,0,0.06) 120px),
+    linear-gradient(180deg, #0c2117 0%, #081710 45%, #04100a 100%);
+  background-attachment: fixed; position: relative;
 }
 body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.5;
-  background-image: radial-gradient(circle at 50% 50%, transparent 0%, transparent 38%, rgba(0,0,0,0.35) 100%),
-    repeating-radial-gradient(circle at 50% 120%, transparent 0, transparent 60px, rgba(255,255,255,0.02) 61px, transparent 62px);
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,0.10), transparent 30%),
+    radial-gradient(circle at 50% 50%, transparent 0%, transparent 35%, rgba(0,0,0,0.55) 100%);
+}
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.5; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
 }
 .topbar, .disclaimer, main, .footer { position: relative; z-index: 1; }
+.live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ff4444; margin-right: 5px; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+.live-badge { display: inline-flex; align-items: center; font-size: 11px; color: #ff6666; font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.05em; }
+.elapsed { font-family: var(--font-mono); color: var(--lime); font-size: 12px; margin-left: 6px; }
+.live-panel { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.live-panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
+.live-panel-head h4 { margin: 0; font-family: var(--font-display); font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--lime); }
+.btn-close-live { background: transparent; border: 1px solid var(--line); color: var(--muted); font-size: 11px; border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+.compare-row { display: grid; grid-template-columns: 1fr 70px 70px; gap: 6px; align-items: center; padding: 5px 0; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.compare-row:last-child { border-bottom: none; }
+.compare-row .cr-label { color: var(--text); }
+.compare-row .cr-pred { font-family: var(--font-mono); color: var(--muted); text-align: center; }
+.compare-row .cr-actual { font-family: var(--font-mono); font-weight: 600; text-align: center; }
+.cr-actual.beating { color: var(--lime); }
+.cr-actual.below { color: #ff7777; }
+.cr-actual.exact { color: var(--cyan); }
+.compare-header { display: grid; grid-template-columns: 1fr 70px 70px; gap: 6px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; padding: 0 0 4px; border-bottom: 1px solid var(--line); }
+.compare-header span:last-child, .compare-header span:nth-child(2) { text-align: center; }
+.update-info { color: var(--muted); font-size: 10.5px; margin-top: 8px; text-align: right; }
+.btn-live { background: rgba(255,60,60,0.12); border: 1px solid rgba(255,60,60,0.4); color: #ff8888; font-size: 11.5px; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 8px; display: flex; align-items: center; gap: 5px; }
 .topbar { display: flex; align-items: center; padding: 24px clamp(16px, 5vw, 48px) 8px; }
 .brand { display: flex; align-items: center; gap: 14px; }
 .brand-mark { font-family: var(--font-mono); font-weight: 600; font-size: 14px; letter-spacing: 0.08em; border: 1px solid var(--lime); color: var(--lime); padding: 6px 9px; border-radius: 4px; }
@@ -87,9 +104,8 @@ main { padding: 20px clamp(16px, 5vw, 48px) 40px; max-width: 720px; margin: 0 au
   <div class="disclaimer" role="note">
     A previsão é a <strong>média recente</strong> de chutes, escanteios, cartões, faltas e gols dos dois
     times somada — não é garantia de resultado. Quando um time não tem jogos recentes suficientes,
-    usamos uma <strong>média genérica de referência</strong> (marcada como "estimativa"), só pra você
-    sempre ter um número de comparação. Nenhuma ferramenta bate as odds das casas de apostas.
-    Jogue com responsabilidade, +18.
+    usamos uma <strong>média genérica de referência</strong> (marcada como "estimativa").
+    Nenhuma ferramenta bate as odds das casas de apostas. Jogue com responsabilidade, +18.
   </div>
 
   <main>
@@ -111,6 +127,9 @@ main { padding: 20px clamp(16px, 5vw, 48px) 40px; max-width: 720px; margin: 0 au
   <footer class="footer">
     <p>FuteStat não é casa de apostas e não garante resultados. Dados via API-Football.
       Se apostar deixar de ser divertido, procure ajuda: <strong>0800 891 6080</strong> (CVV).</p>
+    <p style="margin-top:10px; border-top: 1px solid var(--line); padding-top: 10px;">
+      Desenvolvido por <strong style="color: var(--lime);">Jackson Vincit</strong> · FuteStat v1.0
+    </p>
   </footer>
 
 <script>
@@ -120,11 +139,18 @@ const fixtureTabs = document.getElementById('fixture-tabs');
 const leagueFilter = document.getElementById('league-filter');
 let currentFixtures = [];
 let allFixtures = [];
+const liveTimers = {};
 
-function stateLabel(statusShort) {
+function stateLabel(statusShort, elapsed) {
   if (statusShort === 'FT' || statusShort === 'AET' || statusShort === 'PEN') return 'Encerrado';
   if (statusShort === 'NS') return 'Agendado';
-  return 'Em andamento';
+  if (statusShort === 'HT') return 'Intervalo';
+  if (elapsed) return `<span class="live-badge"><span class="live-dot"></span>AO VIVO</span><span class="elapsed">${elapsed}'</span>`;
+  return '<span class="live-badge"><span class="live-dot"></span>AO VIVO</span>';
+}
+
+function isLive(statusShort) {
+  return !['NS','FT','AET','PEN','CANC','PST','ABD','WO','AWD'].includes(statusShort);
 }
 
 function populateLeagueFilter(fixtures) {
@@ -143,8 +169,7 @@ function populateLeagueFilter(fixtures) {
 
 function applyLeagueFilter() {
   const selected = leagueFilter.value;
-  const filtered = selected ? allFixtures.filter((f) => String(f.leagueId) === selected) : allFixtures;
-  renderFixtures(filtered);
+  renderFixtures(selected ? allFixtures.filter((f) => String(f.leagueId) === selected) : allFixtures);
 }
 
 leagueFilter.addEventListener('change', applyLeagueFilter);
@@ -153,7 +178,9 @@ function renderFixtures(fixtures) {
   currentFixtures = fixtures;
   if (!fixtures.length) { fixturesList.innerHTML = '<p class="empty">Nenhum jogo encontrado.</p>'; return; }
   fixturesList.innerHTML = fixtures.map((f, idx) => {
-    const score = f.homeGoals !== null && f.awayGoals !== null ? `${f.homeGoals} - ${f.awayGoals}` : stateLabel(f.statusShort);
+    const live = isLive(f.statusShort);
+    const scoreStr = (f.homeGoals !== null && f.awayGoals !== null)
+      ? `${f.homeGoals} - ${f.awayGoals}` : stateLabel(f.statusShort, f.elapsed);
     const homeCrest = f.homeLogo ? `<img class="team-crest" src="${f.homeLogo}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : '';
     const awayCrest = f.awayLogo ? `<img class="team-crest" src="${f.awayLogo}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : '';
     return `<div class="fixture-row" data-idx="${idx}">
@@ -165,14 +192,16 @@ function renderFixtures(fixtures) {
             <span class="team-name-line">${awayCrest}${f.away}</span>
           </div>
         </div>
-        <div class="fixture-score">${score}</div>
+        <div class="fixture-score">${scoreStr}</div>
       </div>
       <div class="predict-box" id="predict-${idx}" hidden></div>
+      ${live ? `<div class="live-panel" id="live-${idx}" hidden></div>` : ''}
     </div>`;
   }).join('');
 }
 
 async function loadFixtures(scope) {
+  Object.values(liveTimers).forEach(clearInterval);
   fixturesList.innerHTML = '<p class="empty">Carregando jogos…</p>';
   try {
     const res = await fetch(`${API}?action=fixtures&scope=${scope}`);
@@ -183,7 +212,7 @@ async function loadFixtures(scope) {
     leagueFilter.value = '';
     renderFixtures(allFixtures);
   } catch (err) {
-    fixturesList.innerHTML = `<p class="empty">Não foi possível carregar os jogos (${err.message}). Verifique a APIFOOTBALL_KEY.</p>`;
+    fixturesList.innerHTML = `<p class="empty">Não foi possível carregar (${err.message}).</p>`;
   }
 }
 
@@ -195,19 +224,11 @@ fixtureTabs.addEventListener('click', (e) => {
   loadFixtures(btn.dataset.scope);
 });
 
-fixturesList.addEventListener('click', async (e) => {
-  const row = e.target.closest('.fixture-row');
-  if (!row) return;
-  const idx = row.dataset.idx;
-  const fx = currentFixtures[idx];
+async function showPredict(idx, fx) {
   const box = document.getElementById(`predict-${idx}`);
-  if (!fx.homeId || !fx.awayId) return;
-
   if (!box.hidden) { box.hidden = true; return; }
-
   box.hidden = false;
-  box.innerHTML = '<p class="empty">Calculando previsão a partir dos últimos jogos…</p>';
-
+  box.innerHTML = '<p class="empty">Calculando previsão…</p>';
   try {
     const url = new URL(API, window.location.origin);
     url.searchParams.set('action', 'predict');
@@ -215,23 +236,91 @@ fixturesList.addEventListener('click', async (e) => {
     url.searchParams.set('away', fx.awayId);
     const res = await fetch(url);
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erro ao calcular previsão');
-
+    if (!res.ok) throw new Error(json.error);
+    const liveBtn = isLive(fx.statusShort)
+      ? `<button class="btn-live" id="btn-live-${idx}"><span class="live-dot"></span> Acompanhar ao vivo</button>` : '';
     box.innerHTML = `
       <p class="predict-meta">Baseado em ${json.homeMatchesAnalyzed} jogos de ${fx.home} e ${json.awayMatchesAnalyzed} jogos de ${fx.away}</p>
       ${json.markets.map((m) => `
         <div class="predict-row">
-          <div>
-            ${m.marketLabel}${m.isEstimate ? '<span class="estimate-tag">estimativa</span>' : ''}
-            <div class="predict-sub">${fx.home}: ${m.homeAvg} · ${fx.away}: ${m.awayAvg} · linha sugerida: mais de ${m.suggestedLine}</div>
+          <div>${m.marketLabel}${m.isEstimate ? '<span class="estimate-tag">estimativa</span>' : ''}
+            <div class="predict-sub">${fx.home}: ${m.homeAvg} · ${fx.away}: ${m.awayAvg} · linha: mais de ${m.suggestedLine}</div>
           </div>
           <div class="pv">${m.predictedTotal}</div>
-        </div>
-      `).join('')}
-    `;
+        </div>`).join('')}
+      ${liveBtn}`;
+    if (isLive(fx.statusShort)) {
+      document.getElementById(`btn-live-${idx}`).addEventListener('click', () => toggleLive(idx, fx, json.markets));
+    }
   } catch (err) {
-    box.innerHTML = `<p class="empty">Não foi possível calcular (${err.message}).</p>`;
+    box.innerHTML = `<p class="empty">Erro: ${err.message}</p>`;
   }
+}
+
+function renderCompare(panel, markets, liveData, updatedAt) {
+  const timeStr = new Date(updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const rows = liveData.markets.map((lm) => {
+    const pred = markets.find((m) => m.marketLabel === lm.marketLabel);
+    if (!pred || lm.actual === null) return '';
+    const line = pred.suggestedLine;
+    const cls = lm.actual > line ? 'beating' : lm.actual < line ? 'below' : 'exact';
+    const icon = cls === 'beating' ? '✅' : cls === 'below' ? '🔴' : '➡️';
+    return `<div class="compare-row"><div class="cr-label">${lm.marketLabel}</div><div class="cr-pred">prev. ${pred.predictedTotal}</div><div class="cr-actual ${cls}">${icon} ${lm.actual}</div></div>`;
+  }).join('');
+  panel.innerHTML = `
+    <div class="live-panel-head">
+      <h4><span class="live-dot"></span> Tempo real · Previsão vs Resultado</h4>
+      <button class="btn-close-live" id="close-live-${panel.id}">✕ Fechar</button>
+    </div>
+    <div class="compare-header"><span>Mercado</span><span>Previsão</span><span>Atual</span></div>
+    ${rows || '<p class="empty">Estatísticas ao vivo ainda não disponíveis para esse jogo.</p>'}
+    <p class="update-info">Atualizado às ${timeStr} · a cada 30s</p>`;
+  panel.querySelector(`#close-live-${panel.id}`).addEventListener('click', () => {
+    panel.hidden = true;
+    if (liveTimers[panel.id]) { clearInterval(liveTimers[panel.id]); delete liveTimers[panel.id]; }
+  });
+}
+
+async function fetchLiveCompare(idx, fx, markets) {
+  const panel = document.getElementById(`live-${idx}`);
+  if (!panel) return;
+  try {
+    const url = new URL(API, window.location.origin);
+    url.searchParams.set('action', 'live_compare');
+    url.searchParams.set('fixture', fx.id);
+    url.searchParams.set('home', fx.homeId);
+    url.searchParams.set('away', fx.awayId);
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error);
+    renderCompare(panel, markets, json, Date.now());
+  } catch (err) {
+    if (panel) panel.innerHTML = `<p class="empty">Erro ao buscar dados ao vivo: ${err.message}</p>`;
+  }
+}
+
+function toggleLive(idx, fx, markets) {
+  const panel = document.getElementById(`live-${idx}`);
+  if (!panel) return;
+  if (!panel.hidden) {
+    panel.hidden = true;
+    if (liveTimers[`live-${idx}`]) { clearInterval(liveTimers[`live-${idx}`]); delete liveTimers[`live-${idx}`]; }
+    return;
+  }
+  panel.hidden = false;
+  panel.innerHTML = '<p class="empty">Buscando estatísticas ao vivo…</p>';
+  fetchLiveCompare(idx, fx, markets);
+  liveTimers[`live-${idx}`] = setInterval(() => fetchLiveCompare(idx, fx, markets), 30000);
+}
+
+fixturesList.addEventListener('click', (e) => {
+  if (e.target.closest('.btn-live') || e.target.closest('.btn-close-live') || e.target.closest('.live-panel')) return;
+  const row = e.target.closest('.fixture-row');
+  if (!row) return;
+  const idx = row.dataset.idx;
+  const fx = currentFixtures[idx];
+  if (!fx || !fx.homeId || !fx.awayId) return;
+  showPredict(idx, fx);
 });
 
 loadFixtures('today');
