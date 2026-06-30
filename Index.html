@@ -13,7 +13,31 @@
   --font-display: 'Oswald', sans-serif; --font-body: 'Inter', sans-serif; --font-mono: 'IBM Plex Mono', monospace;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: radial-gradient(ellipse at top, #102a1f 0%, var(--bg) 60%); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(200,255,77,0.16), transparent 60%),
+    radial-gradient(ellipse 900px 500px at 110% 10%, rgba(95,216,224,0.10), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 90px),
+    linear-gradient(180deg, #0a1c14 0%, #081710 40%, #061309 100%);
+  background-attachment: fixed;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image: radial-gradient(circle at 50% 50%, transparent 0%, transparent 38%, rgba(0,0,0,0.35) 100%),
+    repeating-radial-gradient(circle at 50% 120%, transparent 0, transparent 60px, rgba(255,255,255,0.02) 61px, transparent 62px);
+}
+.topbar, .disclaimer, main, .footer { position: relative; z-index: 1; }
 .topbar { display: flex; align-items: center; padding: 24px clamp(16px, 5vw, 48px) 8px; }
 .brand { display: flex; align-items: center; gap: 14px; }
 .brand-mark { font-family: var(--font-mono); font-weight: 600; font-size: 14px; letter-spacing: 0.08em; border: 1px solid var(--lime); color: var(--lime); padding: 6px 9px; border-radius: 4px; }
@@ -28,11 +52,15 @@ main { padding: 20px clamp(16px, 5vw, 48px) 40px; max-width: 720px; margin: 0 au
 .tab { background: transparent; border: 1px solid var(--line); color: var(--muted); padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; }
 .tab.active { border-color: var(--lime); color: var(--lime); }
 .fixtures-list { display: flex; flex-direction: column; gap: 8px; }
-.fixture-row { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-size: 13.5px; cursor: pointer; }
+.fixture-row { background: linear-gradient(135deg, var(--panel-2), #0c1f17); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 13.5px; cursor: pointer; transition: border-color 0.15s; }
 .fixture-row:active { border-color: var(--lime); }
 .fixture-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.fixture-row .league { color: var(--muted); font-size: 11px; display: block; margin-bottom: 2px; }
-.fixture-score { font-family: var(--font-mono); color: var(--lime); font-weight: 600; white-space: nowrap; }
+.fixture-row .league { color: var(--muted); font-size: 11px; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.fixture-score { font-family: var(--font-mono); color: var(--lime); font-weight: 600; white-space: nowrap; font-size: 15px; }
+.teams-row { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.team-crest { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); }
+.team-names { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.team-name-line { display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .empty { color: var(--muted); font-size: 14px; }
 .league-filter { width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--font-body); font-size: 13.5px; margin-bottom: 10px; }
 .estimate-tag { display: inline-block; font-size: 10px; color: var(--amber); border: 1px solid var(--amber); border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: middle; }
@@ -126,9 +154,17 @@ function renderFixtures(fixtures) {
   if (!fixtures.length) { fixturesList.innerHTML = '<p class="empty">Nenhum jogo encontrado.</p>'; return; }
   fixturesList.innerHTML = fixtures.map((f, idx) => {
     const score = f.homeGoals !== null && f.awayGoals !== null ? `${f.homeGoals} - ${f.awayGoals}` : stateLabel(f.statusShort);
+    const homeCrest = f.homeLogo ? `<img class="team-crest" src="${f.homeLogo}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : '';
+    const awayCrest = f.awayLogo ? `<img class="team-crest" src="${f.awayLogo}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : '';
     return `<div class="fixture-row" data-idx="${idx}">
+      <span class="league">${f.league || ''}</span>
       <div class="fixture-top">
-        <div><span class="league">${f.league || ''}</span>${f.home} vs ${f.away}</div>
+        <div class="teams-row">
+          <div class="team-names">
+            <span class="team-name-line">${homeCrest}${f.home}</span>
+            <span class="team-name-line">${awayCrest}${f.away}</span>
+          </div>
+        </div>
         <div class="fixture-score">${score}</div>
       </div>
       <div class="predict-box" id="predict-${idx}" hidden></div>
