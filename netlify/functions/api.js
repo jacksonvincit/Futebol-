@@ -9,9 +9,13 @@ const MAX_MATCHES_PER_TEAM = 5; // baixo de propósito, pra não estourar as 100
 
 const STAT_NAMES = {
   shots_total: 'Total de chutes',
+  shots_on_target: 'Chutes no gol',
+  shots_off_target: 'Chutes para fora',
   corners: 'Escanteios',
   cards: 'Cartões (amarelos + vermelhos)',
+  yellow_cards: 'Cartões amarelos',
   fouls: 'Faltas',
+  offsides: 'Impedimentos',
   goals: 'Gols',
 };
 
@@ -20,9 +24,13 @@ const STAT_NAMES = {
 // Cada valor já é a média de UM time (depois somamos os dois lados na previsão).
 const GENERIC_TEAM_AVERAGE = {
   shots_total: 12,
+  shots_on_target: 4.5,
+  shots_off_target: 5.5,
   corners: 5,
   cards: 2.2,
+  yellow_cards: 1.9,
   fouls: 11,
+  offsides: 1.8,
   goals: 1.3,
 };
 
@@ -47,12 +55,15 @@ function mapFixture(item) {
     league: item.league ? item.league.name : null,
     leagueId: item.league ? item.league.id : null,
     leagueCountry: item.league ? item.league.country : null,
+    leagueLogo: item.league ? item.league.logo : null,
     startingAt: item.fixture.date,
     statusShort: item.fixture.status ? item.fixture.status.short : null,
     home: item.teams.home.name,
     away: item.teams.away.name,
     homeId: item.teams.home.id,
     awayId: item.teams.away.id,
+    homeLogo: item.teams.home.logo,
+    awayLogo: item.teams.away.logo,
     homeGoals: item.goals ? item.goals.home : null,
     awayGoals: item.goals ? item.goals.away : null,
   };
@@ -81,7 +92,7 @@ async function teamAverages(teamId) {
   const fixturesJson = await apiFootballGet('/fixtures', { team: teamId, last: MAX_MATCHES_PER_TEAM, status: 'FT' });
   const fixtures = fixturesJson.response || [];
 
-  const totals = { shots_total: [], corners: [], cards: [], fouls: [], goals: [] };
+  const totals = { shots_total: [], shots_on_target: [], shots_off_target: [], corners: [], cards: [], yellow_cards: [], fouls: [], offsides: [], goals: [] };
 
   for (const fx of fixtures) {
     const fixtureId = fx.fixture.id;
@@ -92,13 +103,20 @@ async function teamAverages(teamId) {
     try {
       const statsJson = await apiFootballGet('/fixtures/statistics', { fixture: fixtureId });
       const shots = extractStat(statsJson, teamId, 'Total Shots');
+      const shotsOn = extractStat(statsJson, teamId, 'Shots on Goal');
+      const shotsOff = extractStat(statsJson, teamId, 'Shots off Goal');
       const corners = extractStat(statsJson, teamId, 'Corner Kicks');
       const fouls = extractStat(statsJson, teamId, 'Fouls');
+      const offsides = extractStat(statsJson, teamId, 'Offsides');
       const yellow = extractStat(statsJson, teamId, 'Yellow Cards');
       const red = extractStat(statsJson, teamId, 'Red Cards');
       if (shots !== null) totals.shots_total.push(shots);
+      if (shotsOn !== null) totals.shots_on_target.push(shotsOn);
+      if (shotsOff !== null) totals.shots_off_target.push(shotsOff);
       if (corners !== null) totals.corners.push(corners);
       if (fouls !== null) totals.fouls.push(fouls);
+      if (offsides !== null) totals.offsides.push(offsides);
+      if (yellow !== null) totals.yellow_cards.push(yellow);
       if (yellow !== null || red !== null) totals.cards.push((yellow || 0) + (red || 0));
     } catch (_) {
       // se uma partida específica não tiver estatística disponível, simplesmente ignora ela
