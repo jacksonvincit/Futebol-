@@ -1,8 +1,3 @@
-// Backend único, usando a API-Football (api-sports.io / dashboard.api-football.com).
-// ?action=fixtures       -> lista de jogos
-// ?action=predict        -> previsão dos mercados
-// ?action=live_compare   -> compara previsão com estatísticas reais do jogo ao vivo
-
 const BASE_URL = 'https://v3.football.api-sports.io';
 const MAX_MATCHES_PER_TEAM = 5;
 
@@ -19,24 +14,14 @@ const STAT_NAMES = {
 };
 
 const GENERIC_TEAM_AVERAGE = {
-  shots_total: 12,
-  shots_on_target: 4.5,
-  shots_off_target: 5.5,
-  corners: 5,
-  cards: 2.2,
-  yellow_cards: 1.9,
-  fouls: 11,
-  offsides: 1.8,
-  goals: 1.3,
+  shots_total: 12, shots_on_target: 4.5, shots_off_target: 5.5,
+  corners: 5, cards: 2.2, yellow_cards: 1.9, fouls: 11, offsides: 1.8, goals: 1.3,
 };
 
 const STAT_API_NAME = {
-  shots_total: 'Total Shots',
-  shots_on_target: 'Shots on Goal',
-  shots_off_target: 'Shots off Goal',
-  corners: 'Corner Kicks',
-  fouls: 'Fouls',
-  offsides: 'Offsides',
+  shots_total: 'Total Shots', shots_on_target: 'Shots on Goal',
+  shots_off_target: 'Shots off Goal', corners: 'Corner Kicks',
+  fouls: 'Fouls', offsides: 'Offsides',
 };
 
 async function apiFootballGet(path, params = {}) {
@@ -125,16 +110,10 @@ async function teamAverages(teamId) {
     } catch (_) {}
   }
 
-  const averages = {};
-  const isReal = {};
+  const averages = {}, isReal = {};
   for (const [key, values] of Object.entries(totals)) {
-    if (values.length >= 2) {
-      averages[key] = values.reduce((a, b) => a + b, 0) / values.length;
-      isReal[key] = true;
-    } else {
-      averages[key] = GENERIC_TEAM_AVERAGE[key];
-      isReal[key] = false;
-    }
+    if (values.length >= 2) { averages[key] = values.reduce((a,b)=>a+b,0)/values.length; isReal[key] = true; }
+    else { averages[key] = GENERIC_TEAM_AVERAGE[key]; isReal[key] = false; }
   }
   return { averages, isReal, matchesAnalyzed: fixtures.length };
 }
@@ -151,10 +130,9 @@ async function handlePredict(qs) {
   const [homeStats, awayStats] = await Promise.all([teamAverages(homeId), teamAverages(awayId)]);
   const markets = [];
   for (const [key, label] of Object.entries(STAT_NAMES)) {
-    const h = homeStats.averages[key];
-    const a = awayStats.averages[key];
+    const h = homeStats.averages[key], a = awayStats.averages[key];
     const predicted = Math.round((h + a) * 10) / 10;
-    markets.push({ marketLabel: label, predictedTotal: predicted, homeAvg: Math.round(h * 10) / 10, awayAvg: Math.round(a * 10) / 10, suggestedLine: roundLine(predicted), isEstimate: !homeStats.isReal[key] || !awayStats.isReal[key] });
+    markets.push({ marketLabel: label, predictedTotal: predicted, homeAvg: Math.round(h*10)/10, awayAvg: Math.round(a*10)/10, suggestedLine: roundLine(predicted), isEstimate: !homeStats.isReal[key] || !awayStats.isReal[key] });
   }
   return { homeMatchesAnalyzed: homeStats.matchesAnalyzed, awayMatchesAnalyzed: awayStats.matchesAnalyzed, markets };
 }
@@ -164,23 +142,29 @@ async function handleLiveCompare(qs) {
   const homeId = parseInt(qs.home, 10);
   const awayId = parseInt(qs.away, 10);
   if (!fixtureId || !homeId || !awayId) throw new Error('Informe "fixture", "home" e "away".');
-  const [homeStats, awayStats, liveJson] = await Promise.all([teamAverages(homeId), teamAverages(awayId), apiFootballGet('/fixtures/statistics', { fixture: fixtureId })]);
+  const [homeStats, awayStats, liveJson] = await Promise.all([
+    teamAverages(homeId), teamAverages(awayId),
+    apiFootballGet('/fixtures/statistics', { fixture: fixtureId }),
+  ]);
   const markets = [];
   for (const [key, label] of Object.entries(STAT_NAMES)) {
-    const h = homeStats.averages[key];
-    const a = awayStats.averages[key];
+    const h = homeStats.averages[key], a = awayStats.averages[key];
     const predicted = Math.round((h + a) * 10) / 10;
     let actual = null;
     if (key === 'cards') {
-      actual = [(extractStat(liveJson, homeId, 'Yellow Cards') || 0) + (extractStat(liveJson, homeId, 'Red Cards') || 0) + (extractStat(liveJson, awayId, 'Yellow Cards') || 0) + (extractStat(liveJson, awayId, 'Red Cards') || 0)].find(() => true);
+      const yH = extractStat(liveJson, homeId, 'Yellow Cards'), rH = extractStat(liveJson, homeId, 'Red Cards');
+      const yA = extractStat(liveJson, awayId, 'Yellow Cards'), rA = extractStat(liveJson, awayId, 'Red Cards');
+      actual = (yH !== null || yA !== null) ? (yH||0)+(rH||0)+(yA||0)+(rA||0) : null;
     } else if (key === 'yellow_cards') {
-      actual = (extractStat(liveJson, homeId, 'Yellow Cards') || 0) + (extractStat(liveJson, awayId, 'Yellow Cards') || 0);
+      const yH = extractStat(liveJson, homeId, 'Yellow Cards'), yA = extractStat(liveJson, awayId, 'Yellow Cards');
+      actual = (yH !== null || yA !== null) ? (yH||0)+(yA||0) : null;
+    } else if (key === 'goals') {
+      actual = null;
     } else if (STAT_API_NAME[key]) {
-      const vH = extractStat(liveJson, homeId, STAT_API_NAME[key]);
-      const vA = extractStat(liveJson, awayId, STAT_API_NAME[key]);
-      actual = (vH !== null || vA !== null) ? (vH || 0) + (vA || 0) : null;
+      const vH = extractStat(liveJson, homeId, STAT_API_NAME[key]), vA = extractStat(liveJson, awayId, STAT_API_NAME[key]);
+      actual = (vH !== null || vA !== null) ? (vH||0)+(vA||0) : null;
     }
-    markets.push({ marketLabel: label, predictedTotal: predicted, suggestedLine: roundLine(predicted), isEstimate: !homeStats.isReal[key] || !awayStats.isReal[key], actual });
+    markets.push({ marketLabel: label, predictedTotal: predicted, suggestedLine: roundLine(predicted), isEstimate: !homeStats.isReal[key]||!awayStats.isReal[key], actual });
   }
   return { markets };
 }
