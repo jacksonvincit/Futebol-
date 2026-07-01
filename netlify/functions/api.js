@@ -11,17 +11,22 @@ const STAT_NAMES = {
   fouls: 'Faltas',
   offsides: 'Impedimentos',
   goals: 'Gols',
+  passes: 'Passes totais',
+  goalkeeper_saves: 'Defesas do goleiro',
+  tackles: 'Desarmes',
 };
 
 const GENERIC_TEAM_AVERAGE = {
   shots_total: 12, shots_on_target: 4.5, shots_off_target: 5.5,
-  corners: 5, cards: 2.2, yellow_cards: 1.9, fouls: 11, offsides: 1.8, goals: 1.3,
+  corners: 5, cards: 2.2, yellow_cards: 1.9, fouls: 11,
+  offsides: 1.8, goals: 1.3, passes: 420, goalkeeper_saves: 3.5, tackles: 14,
 };
 
 const STAT_API_NAME = {
   shots_total: 'Total Shots', shots_on_target: 'Shots on Goal',
   shots_off_target: 'Shots off Goal', corners: 'Corner Kicks',
-  fouls: 'Fouls', offsides: 'Offsides',
+  fouls: 'Fouls', offsides: 'Offsides', passes: 'Total passes',
+  goalkeeper_saves: 'Goalkeeper Saves', tackles: 'Total tackles',
 };
 
 async function apiFootballGet(path, params = {}) {
@@ -82,7 +87,11 @@ function extractStat(statsResponse, teamId, statName) {
 async function teamAverages(teamId) {
   const fixturesJson = await apiFootballGet('/fixtures', { team: teamId, last: MAX_MATCHES_PER_TEAM, status: 'FT' });
   const fixtures = fixturesJson.response || [];
-  const totals = { shots_total: [], shots_on_target: [], shots_off_target: [], corners: [], cards: [], yellow_cards: [], fouls: [], offsides: [], goals: [] };
+  const totals = {
+    shots_total: [], shots_on_target: [], shots_off_target: [],
+    corners: [], cards: [], yellow_cards: [], fouls: [],
+    offsides: [], goals: [], passes: [], goalkeeper_saves: [], tackles: [],
+  };
 
   for (const fx of fixtures) {
     const fixtureId = fx.fixture.id;
@@ -99,6 +108,9 @@ async function teamAverages(teamId) {
       const offsides = extractStat(statsJson, teamId, 'Offsides');
       const yellow = extractStat(statsJson, teamId, 'Yellow Cards');
       const red = extractStat(statsJson, teamId, 'Red Cards');
+      const passes = extractStat(statsJson, teamId, 'Total passes');
+      const saves = extractStat(statsJson, teamId, 'Goalkeeper Saves');
+      const tackles = extractStat(statsJson, teamId, 'Total tackles');
       if (shots !== null) totals.shots_total.push(shots);
       if (shotsOn !== null) totals.shots_on_target.push(shotsOn);
       if (shotsOff !== null) totals.shots_off_target.push(shotsOff);
@@ -107,13 +119,21 @@ async function teamAverages(teamId) {
       if (offsides !== null) totals.offsides.push(offsides);
       if (yellow !== null) totals.yellow_cards.push(yellow);
       if (yellow !== null || red !== null) totals.cards.push((yellow || 0) + (red || 0));
+      if (passes !== null) totals.passes.push(passes);
+      if (saves !== null) totals.goalkeeper_saves.push(saves);
+      if (tackles !== null) totals.tackles.push(tackles);
     } catch (_) {}
   }
 
   const averages = {}, isReal = {};
   for (const [key, values] of Object.entries(totals)) {
-    if (values.length >= 2) { averages[key] = values.reduce((a,b)=>a+b,0)/values.length; isReal[key] = true; }
-    else { averages[key] = GENERIC_TEAM_AVERAGE[key]; isReal[key] = false; }
+    if (values.length >= 2) {
+      averages[key] = values.reduce((a, b) => a + b, 0) / values.length;
+      isReal[key] = true;
+    } else {
+      averages[key] = GENERIC_TEAM_AVERAGE[key];
+      isReal[key] = false;
+    }
   }
   return { averages, isReal, matchesAnalyzed: fixtures.length };
 }
@@ -123,18 +143,63 @@ function roundLine(predicted) {
   return predicted - floor >= 0.5 ? floor + 0.5 : floor - 0.5;
 }
 
+// Gera sugestões de "mais" e "menos" para cada mercado
+function buildMarkets(homeStats, awayStats) {
+  const markets = [];
+  for (const [key, label] of Object.entries(STAT_NAMES)) {
+    const h = homeStats.averages[key], a = awayStats.averages[key];
+    const predicted = Math.round((h + a) * 10) / 10;
+    const line = roundLine(predicted);
+    const isEstimate = !homeStats.isReal[key] || !awayStats.isReal[key];
+    // probabilidade simples baseada na distância da linha
+    const diffOver = predicted - line;
+    const overProb = Math.min(95, Math.max(30, Math.round(50 + (diffOver / Math.max(1, predicted)) * 60)));
+    const underProb = 100 - overProb;
+    markets.push({
+      marketKey: key,
+      marketLabel: label,
+      predictedTotal: predicted,
+      homeAvg: Math.round(h * 10) / 10,
+      awayAvg: Math.round(a * 10) / 10,
+      suggestedLine: line,
+      overProb,
+      underProb,
+      isEstimate,
+      // qual lado tem maior probabilidade
+      bestSide: overProb >= underProb ? 'over' : 'under',
+      bestProb: Math.max(overProb, underProb),
+    });
+  }
+  return markets;
+}
+
 async function handlePredict(qs) {
   const homeId = parseInt(qs.home, 10);
   const awayId = parseInt(qs.away, 10);
   if (!homeId || !awayId) throw new Error('Informe "home" e "away".');
   const [homeStats, awayStats] = await Promise.all([teamAverages(homeId), teamAverages(awayId)]);
-  const markets = [];
-  for (const [key, label] of Object.entries(STAT_NAMES)) {
-    const h = homeStats.averages[key], a = awayStats.averages[key];
-    const predicted = Math.round((h + a) * 10) / 10;
-    markets.push({ marketLabel: label, predictedTotal: predicted, homeAvg: Math.round(h*10)/10, awayAvg: Math.round(a*10)/10, suggestedLine: roundLine(predicted), isEstimate: !homeStats.isReal[key] || !awayStats.isReal[key] });
-  }
-  return { homeMatchesAnalyzed: homeStats.matchesAnalyzed, awayMatchesAnalyzed: awayStats.matchesAnalyzed, markets };
+  const markets = buildMarkets(homeStats, awayStats);
+
+  // monta bilhete com as 13 melhores apostas por probabilidade
+  const ticket = [...markets]
+    .sort((a, b) => b.bestProb - a.bestProb)
+    .slice(0, 13)
+    .map(m => ({
+      marketLabel: m.marketLabel,
+      side: m.bestSide,
+      line: m.suggestedLine,
+      prob: m.bestProb,
+      label: m.bestSide === 'over'
+        ? `Mais de ${m.suggestedLine} ${m.marketLabel.toLowerCase()}`
+        : `Menos de ${m.suggestedLine} ${m.marketLabel.toLowerCase()}`,
+    }));
+
+  return {
+    homeMatchesAnalyzed: homeStats.matchesAnalyzed,
+    awayMatchesAnalyzed: awayStats.matchesAnalyzed,
+    markets,
+    ticket,
+  };
 }
 
 async function handleLiveCompare(qs) {
