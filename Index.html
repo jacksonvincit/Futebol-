@@ -3,324 +3,452 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>FuteStat — Jogos e Previsões</title>
+<title>FuteStat — Análise Estatística de Futebol</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0b1f17; --panel: #122a20; --panel-2: #0e241b; --line: #1f3b2c;
-  --text: #edf3ee; --muted: #8fa79b; --lime: #c8ff4d; --cyan: #5fd8e0; --amber: #ffb15c;
-  --font-display: 'Oswald', sans-serif; --font-body: 'Inter', sans-serif; --font-mono: 'IBM Plex Mono', monospace;
+  --bg: #0d1f16; --panel: #132b1e; --panel-2: #0f2218; --card: #172e21;
+  --line: #1e3d2b; --line2: #254d38; --text: #f0f5f1; --muted: #7a9e8a;
+  --lime: #c5f135; --lime2: #a8d428; --cyan: #4fd6df; --amber: #f5a623; --red: #e84b4b;
+  --font-d: 'Oswald', sans-serif; --font-b: 'Inter', sans-serif; --font-m: 'IBM Plex Mono', monospace;
 }
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  margin: 0; color: var(--text); font-family: var(--font-body); line-height: 1.5;
-  background-color: #050f0a;
+  color: var(--text); font-family: var(--font-b); line-height: 1.5; min-height: 100vh;
+  background-color: #080f0a;
   background-image:
-    radial-gradient(ellipse 1100px 600px at 20% -15%, rgba(255,255,255,0.10), transparent 55%),
-    radial-gradient(ellipse 1100px 600px at 100% -10%, rgba(200,255,77,0.10), transparent 55%),
-    radial-gradient(ellipse 1400px 700px at 50% 110%, rgba(95,216,224,0.07), transparent 60%),
-    repeating-linear-gradient(100deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 60px, rgba(0,0,0,0.06) 60px, rgba(0,0,0,0.06) 120px),
-    linear-gradient(180deg, #0c2117 0%, #081710 45%, #04100a 100%);
-  background-attachment: fixed; position: relative;
+    radial-gradient(ellipse 140% 60% at 50% -5%, rgba(197,241,53,0.09) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 40% at 10% 30%, rgba(79,214,223,0.06) 0%, transparent 50%),
+    repeating-linear-gradient(105deg, rgba(255,255,255,0.028) 0px, rgba(255,255,255,0.028) 55px, rgba(0,0,0,0.05) 55px, rgba(0,0,0,0.05) 110px),
+    linear-gradient(180deg, #0c2118 0%, #07140d 50%, #050e09 100%);
+  background-attachment: fixed;
 }
 body::before {
-  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background-image:
-    radial-gradient(circle at 50% 0%, rgba(255,255,255,0.10), transparent 30%),
-    radial-gradient(circle at 50% 50%, transparent 0%, transparent 35%, rgba(0,0,0,0.55) 100%);
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background: radial-gradient(ellipse 100% 45% at 50% 0%, rgba(255,255,255,0.07) 0%, transparent 60%),
+    radial-gradient(circle at 50% 55%, transparent 30%, rgba(0,0,0,0.6) 100%);
 }
 body::after {
-  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.5; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.4; mix-blend-mode:overlay;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
 }
-.topbar, .disclaimer, main, .footer { position: relative; z-index: 1; }
-.live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ff4444; margin-right: 5px; animation: pulse 1.2s ease-in-out infinite; }
-@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
-.live-badge { display: inline-flex; align-items: center; font-size: 11px; color: #ff6666; font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.05em; }
-.elapsed { font-family: var(--font-mono); color: var(--lime); font-size: 12px; margin-left: 6px; }
-.live-panel { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 12px; }
-.live-panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
-.live-panel-head h4 { margin: 0; font-family: var(--font-display); font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--lime); }
-.btn-close-live { background: transparent; border: 1px solid var(--line); color: var(--muted); font-size: 11px; border-radius: 4px; padding: 3px 8px; cursor: pointer; }
-.compare-row { display: grid; grid-template-columns: 1fr 70px 70px; gap: 6px; align-items: center; padding: 5px 0; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,0.04); }
-.compare-row:last-child { border-bottom: none; }
-.compare-row .cr-label { color: var(--text); }
-.compare-row .cr-pred { font-family: var(--font-mono); color: var(--muted); text-align: center; }
-.compare-row .cr-actual { font-family: var(--font-mono); font-weight: 600; text-align: center; }
-.cr-actual.beating { color: var(--lime); }
-.cr-actual.below { color: #ff7777; }
-.cr-actual.exact { color: var(--cyan); }
-.compare-header { display: grid; grid-template-columns: 1fr 70px 70px; gap: 6px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; padding: 0 0 4px; border-bottom: 1px solid var(--line); }
-.compare-header span:last-child, .compare-header span:nth-child(2) { text-align: center; }
-.update-info { color: var(--muted); font-size: 10.5px; margin-top: 8px; text-align: right; }
-.btn-live { background: rgba(255,60,60,0.12); border: 1px solid rgba(255,60,60,0.4); color: #ff8888; font-size: 11.5px; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 8px; display: flex; align-items: center; gap: 5px; }
-.topbar { display: flex; align-items: center; padding: 24px clamp(16px, 5vw, 48px) 8px; }
-.brand { display: flex; align-items: center; gap: 14px; }
-.brand-mark { font-family: var(--font-mono); font-weight: 600; font-size: 14px; letter-spacing: 0.08em; border: 1px solid var(--lime); color: var(--lime); padding: 6px 9px; border-radius: 4px; }
-.brand h1 { font-family: var(--font-display); font-weight: 700; font-size: 24px; margin: 0; text-transform: uppercase; }
-.brand-sub { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
-.disclaimer { margin: 8px clamp(16px, 5vw, 48px) 0; padding: 14px 18px; background: #1d1306; border: 1px solid #5a3c12; border-left: 4px solid var(--amber); border-radius: 6px; color: #f1d9b3; font-size: 13.5px; }
-main { padding: 20px clamp(16px, 5vw, 48px) 40px; max-width: 720px; margin: 0 auto; }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
-.panel-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
-.panel-head h2 { font-family: var(--font-display); font-size: 17px; text-transform: uppercase; letter-spacing: 0.03em; margin: 0; }
-.tabs { display: flex; gap: 6px; }
-.tab { background: transparent; border: 1px solid var(--line); color: var(--muted); padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; }
-.tab.active { border-color: var(--lime); color: var(--lime); }
-.fixtures-list { display: flex; flex-direction: column; gap: 8px; }
-.fixture-row { background: linear-gradient(135deg, var(--panel-2), #0c1f17); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 13.5px; cursor: pointer; transition: border-color 0.15s; }
-.fixture-row:active { border-color: var(--lime); }
-.fixture-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.fixture-row .league { color: var(--muted); font-size: 11px; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
-.fixture-score { font-family: var(--font-mono); color: var(--lime); font-weight: 600; white-space: nowrap; font-size: 15px; }
-.teams-row { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
-.team-crest { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); }
-.team-names { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.team-name-line { display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.empty { color: var(--muted); font-size: 14px; }
-.league-filter { width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--font-body); font-size: 13.5px; margin-bottom: 10px; }
-.estimate-tag { display: inline-block; font-size: 10px; color: var(--amber); border: 1px solid var(--amber); border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: middle; }
-.predict-box { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 10px; }
-.predict-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; }
-.predict-row .pv { font-family: var(--font-mono); font-weight: 600; color: var(--lime); font-size: 16px; }
-.predict-sub { color: var(--muted); font-size: 11px; }
-.predict-meta { color: var(--muted); font-size: 11.5px; margin-bottom: 6px; }
-.footer { padding: 18px clamp(16px, 5vw, 48px) 30px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); max-width: 720px; margin: 0 auto; }
+.z { position:relative; z-index:1; }
+.topbar {
+  background: linear-gradient(90deg, #0a1c12 0%, #0e2419 50%, #0a1c12 100%);
+  border-bottom: 2px solid var(--lime2);
+  padding: 0 clamp(12px,4vw,40px);
+  display:flex; align-items:center; justify-content:space-between;
+  height:58px; position:relative; z-index:10;
+}
+.brand { display:flex; align-items:center; gap:12px; }
+.brand-icon {
+  width:38px; height:38px; border-radius:8px;
+  background: linear-gradient(135deg, var(--lime) 0%, var(--lime2) 100%);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-m); font-weight:600; font-size:13px; color:#0a1c12;
+  box-shadow: 0 0 16px rgba(197,241,53,0.4);
+}
+.brand-name { font-family:var(--font-d); font-size:22px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; }
+.brand-name span { color:var(--lime); }
+.brand-tag { font-size:10.5px; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; }
+.topbar-right { font-family:var(--font-m); font-size:11px; color:var(--muted); }
+.notice {
+  background: linear-gradient(90deg, #1a1000, #1a1400, #1a1000);
+  border-bottom: 1px solid #3d2800; padding: 8px clamp(12px,4vw,40px);
+  font-size:12px; color:#c8a050; display:flex; align-items:flex-start; gap:8px; position:relative; z-index:1;
+}
+.notice-icon { flex-shrink:0; font-size:14px; margin-top:1px; }
+main { max-width:760px; margin:0 auto; padding:16px clamp(10px,3vw,24px) 60px; position:relative; z-index:1; }
+.filter-bar { display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+.scope-tabs { display:flex; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.scope-tab {
+  padding:8px 18px; font-family:var(--font-d); font-size:13px; letter-spacing:0.04em; text-transform:uppercase;
+  background:transparent; border:none; color:var(--muted); cursor:pointer; transition:all 0.15s;
+}
+.scope-tab.active { background:var(--lime); color:#07140d; font-weight:600; }
+.league-select {
+  flex:1; min-width:160px; background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+  padding:8px 12px; border-radius:8px; font-family:var(--font-b); font-size:13px;
+}
+.section-label {
+  font-family:var(--font-d); font-size:11px; letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--muted); padding:8px 0 6px; border-bottom:1px solid var(--line); margin-bottom:10px;
+  display:flex; align-items:center; gap:6px;
+}
+.section-label span { background:var(--lime); color:#07140d; border-radius:3px; font-size:10px; padding:1px 6px; }
+.fixtures-list { display:flex; flex-direction:column; gap:6px; }
+.fx-card {
+  background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  overflow:hidden; cursor:pointer; transition:border-color 0.15s;
+}
+.fx-card:hover { border-color:var(--line2); }
+.fx-card.active-card { border-color:var(--lime2); }
+.fx-header {
+  display:flex; align-items:center; padding:7px 14px; gap:8px;
+  background:linear-gradient(90deg, rgba(197,241,53,0.04), transparent);
+  border-bottom:1px solid var(--line);
+}
+.fx-league-logo { width:14px; height:14px; object-fit:contain; flex-shrink:0; }
+.fx-league-name { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; flex:1; }
+.fx-time { font-family:var(--font-m); font-size:10.5px; color:var(--muted); }
+.live-pill {
+  display:inline-flex; align-items:center; gap:4px;
+  background:rgba(232,75,75,0.15); border:1px solid rgba(232,75,75,0.4);
+  border-radius:20px; padding:2px 8px; font-size:10px; color:#ff7777;
+  font-family:var(--font-m); font-weight:600; letter-spacing:0.05em;
+}
+.live-dot { width:6px; height:6px; border-radius:50%; background:#ff4444; animation:pulse 1.2s ease-in-out infinite; flex-shrink:0; display:inline-block; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+.fx-body { display:flex; align-items:center; padding:12px 14px; gap:12px; }
+.fx-teams { flex:1; display:flex; flex-direction:column; gap:6px; }
+.fx-team { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:500; }
+.fx-crest { width:24px; height:24px; object-fit:contain; flex-shrink:0; filter:drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
+.fx-score-block { text-align:center; min-width:54px; }
+.fx-score { font-family:var(--font-m); font-size:22px; font-weight:600; color:var(--lime); letter-spacing:0.05em; }
+.fx-status { font-size:10px; color:var(--muted); margin-top:2px; }
+.fx-arrow { color:var(--muted); font-size:11px; padding:0 2px; transition:transform 0.2s; }
+.fx-card.active-card .fx-arrow { transform:rotate(180deg); }
+.predict-panel { border-top:1px solid var(--line); background:var(--panel-2); padding:14px; display:none; }
+.fx-card.active-card .predict-panel { display:block; }
+.predict-meta {
+  font-size:11.5px; color:var(--muted); margin-bottom:12px;
+  padding-bottom:10px; border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+}
+.meta-chip {
+  background:rgba(255,255,255,0.06); border:1px solid var(--line2);
+  border-radius:4px; padding:2px 8px; font-size:10.5px; color:var(--muted);
+}
+.markets-grid { display:flex; flex-direction:column; gap:8px; }
+.market-card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 12px; }
+.mc-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px; }
+.mc-label { font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.mc-est { font-size:9px; color:var(--amber); border:1px solid var(--amber); border-radius:3px; padding:1px 4px; }
+.mc-value { font-family:var(--font-m); font-size:20px; font-weight:600; color:var(--lime); line-height:1; }
+.mc-line-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.mc-line-label { font-size:11px; color:var(--muted); flex:1; }
+.mc-line-val {
+  font-family:var(--font-m); font-size:11px;
+  background:rgba(197,241,53,0.1); color:var(--lime);
+  border:1px solid rgba(197,241,53,0.25); border-radius:4px; padding:2px 8px;
+}
+.mc-teams { display:flex; gap:8px; margin-bottom:8px; }
+.mc-team-val { flex:1; background:rgba(255,255,255,0.04); border:1px solid var(--line); border-radius:6px; padding:5px 8px; text-align:center; }
+.mc-team-name { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mc-team-avg { font-family:var(--font-m); font-size:14px; font-weight:600; }
+.mc-bar-row { display:flex; align-items:center; gap:8px; }
+.mc-bar-label { font-size:10px; color:var(--muted); width:90px; flex-shrink:0; }
+.mc-bar-track { flex:1; height:6px; background:rgba(255,255,255,0.07); border-radius:3px; overflow:hidden; }
+.mc-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--lime2),var(--lime)); }
+.mc-bar-pct { font-family:var(--font-m); font-size:10px; color:var(--muted); width:34px; text-align:right; flex-shrink:0; }
+.live-btn {
+  margin-top:12px; width:100%; padding:10px;
+  background:rgba(232,75,75,0.12); border:1px solid rgba(232,75,75,0.35);
+  border-radius:8px; color:#ff8888; font-family:var(--font-d);
+  font-size:13px; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.live-compare { margin-top:12px; border-top:1px dashed var(--line2); padding-top:12px; }
+.lc-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.lc-title { font-family:var(--font-d); font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:var(--lime); display:flex; align-items:center; gap:6px; }
+.lc-close { background:transparent; border:1px solid var(--line); color:var(--muted); font-size:11px; border-radius:4px; padding:3px 8px; cursor:pointer; }
+.lc-cols { display:grid; grid-template-columns:1fr 80px 90px; gap:6px; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; padding-bottom:6px; border-bottom:1px solid var(--line); margin-bottom:4px; }
+.lc-cols span:not(:first-child) { text-align:center; }
+.lc-row { display:grid; grid-template-columns:1fr 80px 90px; gap:6px; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:12.5px; }
+.lc-row:last-of-type { border-bottom:none; }
+.lc-pred { font-family:var(--font-m); color:var(--muted); text-align:center; font-size:12px; }
+.lc-actual { text-align:center; }
+.lc-actual-inner { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-m); font-weight:600; font-size:13px; }
+.lc-actual-inner.beating { color:var(--lime); }
+.lc-actual-inner.below { color:var(--red); }
+.lc-actual-inner.exact { color:var(--cyan); }
+.lc-actual-inner.pending { color:var(--muted); font-size:11px; }
+.lc-update { font-size:10.5px; color:var(--muted); text-align:right; margin-top:8px; }
+.footer { position:relative; z-index:1; border-top:1px solid var(--line); padding:20px clamp(12px,4vw,40px) 30px; }
+.footer-main { max-width:760px; margin:0 auto; }
+.footer-copy { font-size:12px; color:var(--muted); margin-bottom:10px; }
+.footer-dev { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; padding-top:10px; border-top:1px solid var(--line); }
+.footer-dev-credit { font-size:12px; color:var(--muted); }
+.footer-dev-credit strong { color:var(--lime); }
+.footer-badge { font-family:var(--font-m); font-size:10px; color:var(--muted); border:1px solid var(--line2); border-radius:4px; padding:3px 8px; }
+.empty { color:var(--muted); font-size:13.5px; padding:8px 0; }
 </style>
 </head>
 <body>
 
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark">FT</span>
-      <div>
-        <h1>FuteStat</h1>
-        <p class="brand-sub">Toque num jogo para ver a previsão estatística</p>
-      </div>
+<header class="topbar z">
+  <div class="brand">
+    <div class="brand-icon">FT</div>
+    <div>
+      <div class="brand-name">Fute<span>Stat</span></div>
+      <div class="brand-tag">Análise Estatística · Futebol</div>
     </div>
-  </header>
-
-  <div class="disclaimer" role="note">
-    A previsão é a <strong>média recente</strong> de chutes, escanteios, cartões, faltas e gols dos dois
-    times somada — não é garantia de resultado. Quando um time não tem jogos recentes suficientes,
-    usamos uma <strong>média genérica de referência</strong> (marcada como "estimativa").
-    Nenhuma ferramenta bate as odds das casas de apostas. Jogue com responsabilidade, +18.
   </div>
+  <div class="topbar-right" id="clock"></div>
+</header>
 
-  <main>
-    <section class="panel" id="fixtures-panel">
-      <div class="panel-head">
-        <h2>Jogos</h2>
-        <div class="tabs" id="fixture-tabs">
-          <button class="tab active" data-scope="today">Hoje</button>
-          <button class="tab" data-scope="live">Ao vivo</button>
-        </div>
-      </div>
-      <select id="league-filter" class="league-filter">
-        <option value="">Todas as ligas</option>
-      </select>
-      <div id="fixtures-list" class="fixtures-list"><p class="empty">Carregando jogos…</p></div>
-    </section>
-  </main>
+<div class="notice z">
+  <span class="notice-icon">⚠️</span>
+  <span>As previsões são médias estatísticas de jogos passados — não são garantia de resultado. Odds das casas já refletem essas probabilidades. Jogue com responsabilidade (+18).</span>
+</div>
 
-  <footer class="footer">
-    <p>FuteStat não é casa de apostas e não garante resultados. Dados via API-Football.
-      Se apostar deixar de ser divertido, procure ajuda: <strong>0800 891 6080</strong> (CVV).</p>
-    <p style="margin-top:10px; border-top: 1px solid var(--line); padding-top: 10px;">
-      Desenvolvido por <strong style="color: var(--lime);">Jackson Vincit</strong> · FuteStat v1.0
-    </p>
-  </footer>
+<main>
+  <div class="filter-bar">
+    <div class="scope-tabs" id="scope-tabs">
+      <button class="scope-tab active" data-scope="today">Hoje</button>
+      <button class="scope-tab" data-scope="live"><span class="live-dot" style="margin-right:4px"></span>Ao vivo</button>
+    </div>
+    <select class="league-select" id="league-filter">
+      <option value="">Todas as ligas</option>
+    </select>
+  </div>
+  <div class="section-label">
+    Jogos <span id="fixture-count">0</span>
+  </div>
+  <div class="fixtures-list" id="fixtures-list">
+    <p class="empty">Carregando jogos…</p>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-main">
+    <p class="footer-copy">FuteStat não é casa de apostas e não oferece garantia de resultados. Dados via API-Football. Se apostar deixar de ser divertido, ligue <strong>0800 891 6080</strong> (CVV).</p>
+    <div class="footer-dev">
+      <span class="footer-dev-credit">Desenvolvido por <strong>Jackson Vincit</strong></span>
+      <span class="footer-badge">FuteStat v2.0</span>
+    </div>
+  </div>
+</footer>
 
 <script>
 const API = '/.netlify/functions/api';
-const fixturesList = document.getElementById('fixtures-list');
-const fixtureTabs = document.getElementById('fixture-tabs');
+const list = document.getElementById('fixtures-list');
 const leagueFilter = document.getElementById('league-filter');
-let currentFixtures = [];
-let allFixtures = [];
+const fixtureCount = document.getElementById('fixture-count');
+const clock = document.getElementById('clock');
+
+let allFixtures = [], currentFixtures = [];
 const liveTimers = {};
+const openCards = new Set();
+const predictCache = {};
 
-function stateLabel(statusShort, elapsed) {
-  if (statusShort === 'FT' || statusShort === 'AET' || statusShort === 'PEN') return 'Encerrado';
-  if (statusShort === 'NS') return 'Agendado';
-  if (statusShort === 'HT') return 'Intervalo';
-  if (elapsed) return `<span class="live-badge"><span class="live-dot"></span>AO VIVO</span><span class="elapsed">${elapsed}'</span>`;
-  return '<span class="live-badge"><span class="live-dot"></span>AO VIVO</span>';
+setInterval(() => {
+  clock.textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}, 1000);
+
+function isLive(s) { return !['NS','FT','AET','PEN','CANC','PST','ABD','WO','AWD','TBD'].includes(s||''); }
+
+function statusDisplay(fx) {
+  const s = fx.statusShort;
+  if (s==='NS') return new Date(fx.startingAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if (s==='FT') return 'Encerrado';
+  if (s==='HT') return 'Intervalo';
+  if (isLive(s)) return fx.elapsed ? `${fx.elapsed}'` : 'Ao vivo';
+  return s||'';
 }
 
-function isLive(statusShort) {
-  return !['NS','FT','AET','PEN','CANC','PST','ABD','WO','AWD'].includes(statusShort);
-}
-
-function populateLeagueFilter(fixtures) {
-  const leagues = [];
-  const seen = new Set();
+function populateLeagues(fixtures) {
+  const seen = new Map();
   for (const f of fixtures) {
-    if (f.leagueId && !seen.has(f.leagueId)) {
-      seen.add(f.leagueId);
-      leagues.push({ id: f.leagueId, label: f.leagueCountry ? `${f.league} (${f.leagueCountry})` : f.league });
-    }
+    if (f.leagueId && !seen.has(f.leagueId))
+      seen.set(f.leagueId, f.leagueCountry ? `${f.league} · ${f.leagueCountry}` : f.league);
   }
-  leagues.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+  const sorted = [...seen.entries()].sort((a,b)=>(a[1]||'').localeCompare(b[1]||''));
   leagueFilter.innerHTML = '<option value="">Todas as ligas</option>' +
-    leagues.map((l) => `<option value="${l.id}">${l.label}</option>`).join('');
+    sorted.map(([id,name])=>`<option value="${id}">${name}</option>`).join('');
 }
-
-function applyLeagueFilter() {
-  const selected = leagueFilter.value;
-  renderFixtures(selected ? allFixtures.filter((f) => String(f.leagueId) === selected) : allFixtures);
-}
-
-leagueFilter.addEventListener('change', applyLeagueFilter);
 
 function renderFixtures(fixtures) {
   currentFixtures = fixtures;
-  if (!fixtures.length) { fixturesList.innerHTML = '<p class="empty">Nenhum jogo encontrado.</p>'; return; }
-  fixturesList.innerHTML = fixtures.map((f, idx) => {
+  fixtureCount.textContent = fixtures.length;
+  if (!fixtures.length) { list.innerHTML = '<p class="empty">Nenhum jogo encontrado.</p>'; return; }
+  list.innerHTML = fixtures.map((f,idx) => {
     const live = isLive(f.statusShort);
-    const scoreStr = (f.homeGoals !== null && f.awayGoals !== null)
-      ? `${f.homeGoals} - ${f.awayGoals}` : stateLabel(f.statusShort, f.elapsed);
-    const homeCrest = f.homeLogo ? `<img class="team-crest" src="${f.homeLogo}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : '';
-    const awayCrest = f.awayLogo ? `<img class="team-crest" src="${f.awayLogo}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : '';
-    return `<div class="fixture-row" data-idx="${idx}">
-      <span class="league">${f.league || ''}</span>
-      <div class="fixture-top">
-        <div class="teams-row">
-          <div class="team-names">
-            <span class="team-name-line">${homeCrest}${f.home}</span>
-            <span class="team-name-line">${awayCrest}${f.away}</span>
-          </div>
+    const score = f.homeGoals!==null && f.awayGoals!==null ? `${f.homeGoals} - ${f.awayGoals}` : '--';
+    const stat = statusDisplay(f);
+    const livePill = live ? `<span class="live-pill"><span class="live-dot"></span>AO VIVO · ${f.elapsed||''}${f.elapsed?'\'':''}</span>` : '';
+    const hc = f.homeLogo ? `<img class="fx-crest" src="${f.homeLogo}" alt="" loading="lazy" onerror="this.style.display='none'">` : '<span style="width:24px;display:inline-block"></span>';
+    const ac = f.awayLogo ? `<img class="fx-crest" src="${f.awayLogo}" alt="" loading="lazy" onerror="this.style.display='none'">` : '<span style="width:24px;display:inline-block"></span>';
+    const lc = f.leagueLogo ? `<img class="fx-league-logo" src="${f.leagueLogo}" alt="" onerror="this.style.display='none'">` : '';
+    return `<div class="fx-card" id="fxcard-${idx}" data-idx="${idx}">
+      <div class="fx-header">${lc}<span class="fx-league-name">${f.league||''}</span>${livePill||`<span class="fx-time">${stat}</span>`}</div>
+      <div class="fx-body">
+        <div class="fx-teams">
+          <div class="fx-team">${hc}<span>${f.home}</span></div>
+          <div class="fx-team">${ac}<span>${f.away}</span></div>
         </div>
-        <div class="fixture-score">${scoreStr}</div>
+        <div class="fx-score-block"><div class="fx-score">${score}</div><div class="fx-status">${live ? stat+'\'':stat}</div></div>
+        <span class="fx-arrow">▼</span>
       </div>
-      <div class="predict-box" id="predict-${idx}" hidden></div>
-      ${live ? `<div class="live-panel" id="live-${idx}" hidden></div>` : ''}
+      <div class="predict-panel" id="pp-${idx}"><p class="empty">Carregando análise…</p></div>
     </div>`;
   }).join('');
 }
 
-async function loadFixtures(scope) {
-  Object.values(liveTimers).forEach(clearInterval);
-  fixturesList.innerHTML = '<p class="empty">Carregando jogos…</p>';
+function renderMarkets(markets, homeName, awayName, matchesH, matchesA) {
+  return markets.map(m => {
+    const conf = m.isEstimate ? 30 : Math.min(100, Math.round(((matchesH+matchesA)/2)/5*100));
+    const confLabel = conf>=70?'Alta confiança':conf>=40?'Confiança média':'Estimativa';
+    return `<div class="market-card">
+      <div class="mc-top">
+        <div class="mc-label">${m.marketLabel}${m.isEstimate?'<span class="mc-est">Estimativa</span>':''}</div>
+        <div class="mc-value">${m.predictedTotal}</div>
+      </div>
+      <div class="mc-line-row"><span class="mc-line-label">Linha sugerida</span><span class="mc-line-val">mais de ${m.suggestedLine}</span></div>
+      <div class="mc-teams">
+        <div class="mc-team-val"><div class="mc-team-name" title="${homeName}">${homeName.slice(0,13)}${homeName.length>13?'…':''}</div><div class="mc-team-avg">${m.homeAvg}</div></div>
+        <div class="mc-team-val"><div class="mc-team-name" title="${awayName}">${awayName.slice(0,13)}${awayName.length>13?'…':''}</div><div class="mc-team-avg">${m.awayAvg}</div></div>
+      </div>
+      <div class="mc-bar-row">
+        <span class="mc-bar-label">${confLabel}</span>
+        <div class="mc-bar-track"><div class="mc-bar-fill" style="width:${conf}%"></div></div>
+        <span class="mc-bar-pct">${conf}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPredictPanel(idx, fx, json) {
+  const pp = document.getElementById(`pp-${idx}`);
+  const live = isLive(fx.statusShort);
+  pp.innerHTML = `
+    <div class="predict-meta">
+      <span class="meta-chip">🏠 ${fx.home}: ${json.homeMatchesAnalyzed} jogos</span>
+      <span class="meta-chip">✈️ ${fx.away}: ${json.awayMatchesAnalyzed} jogos</span>
+      <span class="meta-chip">📊 ${json.markets.length} mercados</span>
+    </div>
+    <div class="markets-grid">${renderMarkets(json.markets,fx.home,fx.away,json.homeMatchesAnalyzed,json.awayMatchesAnalyzed)}</div>
+    ${live?`<button class="live-btn" id="livebtn-${idx}"><span class="live-dot"></span> Acompanhar ao vivo — Previsão vs Resultado</button>`:''}
+    <div class="live-compare" id="lc-${idx}" style="display:none"></div>`;
+  if (live) document.getElementById(`livebtn-${idx}`).addEventListener('click',()=>toggleLive(idx,fx,json.markets));
+}
+
+async function openPredict(idx) {
+  const fx = currentFixtures[idx];
+  const card = document.getElementById(`fxcard-${idx}`);
+  if (!fx||!fx.homeId||!fx.awayId) return;
+  if (openCards.has(idx)) { openCards.delete(idx); card.classList.remove('active-card'); return; }
+  openCards.add(idx); card.classList.add('active-card');
+  if (predictCache[idx]) { renderPredictPanel(idx,fx,predictCache[idx]); return; }
   try {
-    const res = await fetch(`${API}?action=fixtures&scope=${scope}`);
+    const url = new URL(API,location.origin);
+    url.searchParams.set('action','predict');
+    url.searchParams.set('home',fx.homeId);
+    url.searchParams.set('away',fx.awayId);
+    const res = await fetch(url);
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erro ao buscar jogos');
-    allFixtures = json.fixtures || [];
-    populateLeagueFilter(allFixtures);
-    leagueFilter.value = '';
-    renderFixtures(allFixtures);
-  } catch (err) {
-    fixturesList.innerHTML = `<p class="empty">Não foi possível carregar (${err.message}).</p>`;
+    if (!res.ok) throw new Error(json.error);
+    predictCache[idx] = json;
+    renderPredictPanel(idx,fx,json);
+  } catch(e) {
+    document.getElementById(`pp-${idx}`).innerHTML=`<p class="empty">Erro: ${e.message}</p>`;
   }
 }
 
-fixtureTabs.addEventListener('click', (e) => {
-  const btn = e.target.closest('.tab');
+function renderLiveCompare(panel, markets, liveData, ts) {
+  const time = new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const rows = liveData.markets.map(lm => {
+    const pred = markets.find(m=>m.marketLabel===lm.marketLabel);
+    if (!pred) return '';
+    let actualHtml;
+    if (lm.actual===null) {
+      actualHtml=`<span class="lc-actual-inner pending">Aguardando…</span>`;
+    } else {
+      const cls = lm.actual>pred.suggestedLine?'beating':lm.actual<pred.suggestedLine?'below':'exact';
+      const icon = cls==='beating'?'✅':cls==='below'?'🔴':'➡️';
+      actualHtml=`<span class="lc-actual-inner ${cls}">${icon} ${lm.actual}</span>`;
+    }
+    return `<div class="lc-row"><div>${lm.marketLabel}</div><div class="lc-pred">${pred.predictedTotal}</div><div class="lc-actual">${actualHtml}</div></div>`;
+  }).join('');
+  panel.innerHTML=`
+    <div class="lc-head">
+      <div class="lc-title"><span class="live-dot"></span> Tempo real · Previsão vs Atual</div>
+      <button class="lc-close" id="lcclose-${panel.id}">✕ Fechar</button>
+    </div>
+    <div class="lc-cols"><span>Mercado</span><span>Previsão</span><span>Atual</span></div>
+    ${rows||'<p class="empty">Dados ao vivo ainda não disponíveis.</p>'}
+    <p class="lc-update">Atualizado às ${time} · a cada 30s</p>`;
+  panel.querySelector(`#lcclose-${panel.id}`).addEventListener('click',()=>{
+    panel.style.display='none';
+    const key=panel.id;
+    if (liveTimers[key]) { clearInterval(liveTimers[key]); delete liveTimers[key]; }
+    const btn=document.getElementById(`livebtn-${panel.id.replace('lc-','')}`);
+    if (btn) btn.style.display='flex';
+  });
+}
+
+async function fetchLiveCompare(idx,fx,markets) {
+  const panel=document.getElementById(`lc-${idx}`);
+  if (!panel||panel.style.display==='none') return;
+  try {
+    const url=new URL(API,location.origin);
+    url.searchParams.set('action','live_compare');
+    url.searchParams.set('fixture',fx.id);
+    url.searchParams.set('home',fx.homeId);
+    url.searchParams.set('away',fx.awayId);
+    const res=await fetch(url);
+    const json=await res.json();
+    if (!res.ok) throw new Error(json.error);
+    renderLiveCompare(panel,markets,json,Date.now());
+  } catch(e) {
+    if (panel) panel.innerHTML=`<p class="empty">Erro: ${e.message}</p>`;
+  }
+}
+
+function toggleLive(idx,fx,markets) {
+  const panel=document.getElementById(`lc-${idx}`);
+  const btn=document.getElementById(`livebtn-${idx}`);
+  if (!panel) return;
+  if (panel.style.display!=='none') {
+    panel.style.display='none';
+    if (liveTimers[`lc-${idx}`]) { clearInterval(liveTimers[`lc-${idx}`]); delete liveTimers[`lc-${idx}`]; }
+    if (btn) btn.style.display='flex';
+    return;
+  }
+  panel.style.display='block';
+  if (btn) btn.style.display='none';
+  panel.innerHTML='<p class="empty">⏳ Buscando estatísticas ao vivo…</p>';
+  fetchLiveCompare(idx,fx,markets);
+  liveTimers[`lc-${idx}`]=setInterval(()=>fetchLiveCompare(idx,fx,markets),30000);
+}
+
+list.addEventListener('click', e => {
+  if (e.target.closest('.live-btn')||e.target.closest('.live-compare')||e.target.closest('.lc-close')) return;
+  const card=e.target.closest('.fx-card');
+  if (!card) return;
+  openPredict(parseInt(card.dataset.idx));
+});
+
+async function loadFixtures(scope) {
+  Object.values(liveTimers).forEach(clearInterval);
+  openCards.clear();
+  Object.keys(predictCache).forEach(k=>delete predictCache[k]);
+  list.innerHTML='<p class="empty">⏳ Carregando jogos…</p>';
+  try {
+    const res=await fetch(`${API}?action=fixtures&scope=${scope}`);
+    const json=await res.json();
+    if (!res.ok) throw new Error(json.error);
+    allFixtures=json.fixtures||[];
+    populateLeagues(allFixtures);
+    leagueFilter.value='';
+    renderFixtures(allFixtures);
+  } catch(e) {
+    list.innerHTML=`<p class="empty">Não foi possível carregar (${e.message}). Verifique a APIFOOTBALL_KEY na Netlify.</p>`;
+  }
+}
+
+document.getElementById('scope-tabs').addEventListener('click', e => {
+  const btn=e.target.closest('.scope-tab');
   if (!btn) return;
-  document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+  document.querySelectorAll('.scope-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
   loadFixtures(btn.dataset.scope);
 });
 
-async function showPredict(idx, fx) {
-  const box = document.getElementById(`predict-${idx}`);
-  if (!box.hidden) { box.hidden = true; return; }
-  box.hidden = false;
-  box.innerHTML = '<p class="empty">Calculando previsão…</p>';
-  try {
-    const url = new URL(API, window.location.origin);
-    url.searchParams.set('action', 'predict');
-    url.searchParams.set('home', fx.homeId);
-    url.searchParams.set('away', fx.awayId);
-    const res = await fetch(url);
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error);
-    const liveBtn = isLive(fx.statusShort)
-      ? `<button class="btn-live" id="btn-live-${idx}"><span class="live-dot"></span> Acompanhar ao vivo</button>` : '';
-    box.innerHTML = `
-      <p class="predict-meta">Baseado em ${json.homeMatchesAnalyzed} jogos de ${fx.home} e ${json.awayMatchesAnalyzed} jogos de ${fx.away}</p>
-      ${json.markets.map((m) => `
-        <div class="predict-row">
-          <div>${m.marketLabel}${m.isEstimate ? '<span class="estimate-tag">estimativa</span>' : ''}
-            <div class="predict-sub">${fx.home}: ${m.homeAvg} · ${fx.away}: ${m.awayAvg} · linha: mais de ${m.suggestedLine}</div>
-          </div>
-          <div class="pv">${m.predictedTotal}</div>
-        </div>`).join('')}
-      ${liveBtn}`;
-    if (isLive(fx.statusShort)) {
-      document.getElementById(`btn-live-${idx}`).addEventListener('click', () => toggleLive(idx, fx, json.markets));
-    }
-  } catch (err) {
-    box.innerHTML = `<p class="empty">Erro: ${err.message}</p>`;
-  }
-}
-
-function renderCompare(panel, markets, liveData, updatedAt) {
-  const timeStr = new Date(updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const rows = liveData.markets.map((lm) => {
-    const pred = markets.find((m) => m.marketLabel === lm.marketLabel);
-    if (!pred || lm.actual === null) return '';
-    const line = pred.suggestedLine;
-    const cls = lm.actual > line ? 'beating' : lm.actual < line ? 'below' : 'exact';
-    const icon = cls === 'beating' ? '✅' : cls === 'below' ? '🔴' : '➡️';
-    return `<div class="compare-row"><div class="cr-label">${lm.marketLabel}</div><div class="cr-pred">prev. ${pred.predictedTotal}</div><div class="cr-actual ${cls}">${icon} ${lm.actual}</div></div>`;
-  }).join('');
-  panel.innerHTML = `
-    <div class="live-panel-head">
-      <h4><span class="live-dot"></span> Tempo real · Previsão vs Resultado</h4>
-      <button class="btn-close-live" id="close-live-${panel.id}">✕ Fechar</button>
-    </div>
-    <div class="compare-header"><span>Mercado</span><span>Previsão</span><span>Atual</span></div>
-    ${rows || '<p class="empty">Estatísticas ao vivo ainda não disponíveis para esse jogo.</p>'}
-    <p class="update-info">Atualizado às ${timeStr} · a cada 30s</p>`;
-  panel.querySelector(`#close-live-${panel.id}`).addEventListener('click', () => {
-    panel.hidden = true;
-    if (liveTimers[panel.id]) { clearInterval(liveTimers[panel.id]); delete liveTimers[panel.id]; }
-  });
-}
-
-async function fetchLiveCompare(idx, fx, markets) {
-  const panel = document.getElementById(`live-${idx}`);
-  if (!panel) return;
-  try {
-    const url = new URL(API, window.location.origin);
-    url.searchParams.set('action', 'live_compare');
-    url.searchParams.set('fixture', fx.id);
-    url.searchParams.set('home', fx.homeId);
-    url.searchParams.set('away', fx.awayId);
-    const res = await fetch(url);
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error);
-    renderCompare(panel, markets, json, Date.now());
-  } catch (err) {
-    if (panel) panel.innerHTML = `<p class="empty">Erro ao buscar dados ao vivo: ${err.message}</p>`;
-  }
-}
-
-function toggleLive(idx, fx, markets) {
-  const panel = document.getElementById(`live-${idx}`);
-  if (!panel) return;
-  if (!panel.hidden) {
-    panel.hidden = true;
-    if (liveTimers[`live-${idx}`]) { clearInterval(liveTimers[`live-${idx}`]); delete liveTimers[`live-${idx}`]; }
-    return;
-  }
-  panel.hidden = false;
-  panel.innerHTML = '<p class="empty">Buscando estatísticas ao vivo…</p>';
-  fetchLiveCompare(idx, fx, markets);
-  liveTimers[`live-${idx}`] = setInterval(() => fetchLiveCompare(idx, fx, markets), 30000);
-}
-
-fixturesList.addEventListener('click', (e) => {
-  if (e.target.closest('.btn-live') || e.target.closest('.btn-close-live') || e.target.closest('.live-panel')) return;
-  const row = e.target.closest('.fixture-row');
-  if (!row) return;
-  const idx = row.dataset.idx;
-  const fx = currentFixtures[idx];
-  if (!fx || !fx.homeId || !fx.awayId) return;
-  showPredict(idx, fx);
+leagueFilter.addEventListener('change', () => {
+  const sel=leagueFilter.value;
+  renderFixtures(sel?allFixtures.filter(f=>String(f.leagueId)===sel):allFixtures);
 });
 
 loadFixtures('today');
