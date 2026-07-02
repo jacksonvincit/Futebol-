@@ -1,15 +1,30 @@
-// FuteStat v5.0 — API Backend para Betano Markets
-// Netlify Function otimizada com +40 mercados estatísticos
+// FuteStat v5.0 — API Backend Completa
+// Netlify Function com suporte a +50 mercados, Copa do Mundo, e limpeza automática
 
 const BASE_URL = 'https://v3.football.api-sports.io';
 const MAX_MATCHES = 8;
 const MC_N = 10000;
-const CACHE_TTL = 300; // 5 minutos
+const CACHE_TTL = 300;
+const MAX_HISTORY_HOURS = 12;
 
-// Cache em memória
+// Cache em memória com limpeza automática
 const cache = new Map();
+let lastCacheCleanup = Date.now();
+
+function cleanCache() {
+  const now = Date.now();
+  if (now - lastCacheCleanup < 300000) return; // Limpar a cada 5 minutos
+  
+  for (const [key, entry] of cache.entries()) {
+    if (now - entry.timestamp > CACHE_TTL * 1000) {
+      cache.delete(key);
+    }
+  }
+  lastCacheCleanup = now;
+}
 
 function getCached(key) {
+  cleanCache();
   const entry = cache.get(key);
   if (entry && Date.now() - entry.timestamp < CACHE_TTL * 1000) {
     return entry.data;
@@ -19,18 +34,17 @@ function getCached(key) {
 }
 
 function setCache(key, data) {
-  // Limpar cache se estiver muito grande
-  if (cache.size > 100) {
+  if (cache.size > 200) {
     const oldestKey = cache.keys().next().value;
     cache.delete(oldestKey);
   }
   cache.set(key, { data, timestamp: Date.now() });
 }
 
-// Rate limiting interno
+// Rate limiting otimizado
 const rateLimiter = {
   requests: [],
-  maxRequests: 30,
+  maxRequests: 35,
   windowMs: 60000,
   
   async throttle() {
@@ -38,22 +52,23 @@ const rateLimiter = {
     this.requests = this.requests.filter(t => now - t < this.windowMs);
     
     if (this.requests.length >= this.maxRequests) {
-      const oldest = this.requests[0];
-      const waitTime = this.windowMs - (now - oldest);
-      console.warn(`Rate limit interno atingido. Aguardando ${waitTime}ms...`);
-      await new Promise(r => setTimeout(r, waitTime));
+      const waitTime = this.windowMs - (now - this.requests[0]);
+      if (waitTime > 0) {
+        console.warn(`Rate limit. Aguardando ${waitTime}ms...`);
+        await new Promise(r => setTimeout(r, waitTime));
+      }
     }
     
     this.requests.push(now);
   }
 };
 
-// Retry com backoff exponencial
+// Retry com backoff exponencial melhorado
 async function fetchWithRetry(url, options, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      const timeout = setTimeout(() => controller.abort(), 10000);
       
       const res = await fetch(url, { 
         ...options, 
@@ -63,87 +78,65 @@ async function fetchWithRetry(url, options, retries = 3) {
       clearTimeout(timeout);
       
       if (res.status === 429) {
-        const retryAfter = res.headers.get('Retry-After') || Math.pow(2, i + 1);
-        console.warn(`Rate limit API. Aguardando ${retryAfter}s...`);
+        const retryAfter = parseInt(res.headers.get('Retry-After') || Math.pow(2, i + 1));
+        console.warn(`Rate limit API (429). Aguardando ${retryAfter}s...`);
         await new Promise(r => setTimeout(r, retryAfter * 1000));
         continue;
       }
       
+      if (res.status === 404) return null;
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
       return res;
       
     } catch (err) {
       if (i === retries - 1) throw err;
-      console.warn(`Tentativa ${i + 1} falhou: ${err.message}. Retentando...`);
-      await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+      const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+      console.warn(`Tentativa ${i + 1}/${retries} falhou: ${err.message}. Retentando em ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
     }
   }
 }
 
-// Estatísticas disponíveis na Betano
+// Todas as estatísticas disponíveis
 const STAT_NAMES = {
-  // Gols e Ataque
   goals: 'Gols',
   shots_total: 'Total de Chutes',
   shots_on_target: 'Chutes no Gol',
   shots_off_target: 'Chutes para Fora',
   shots_inside_box: 'Chutes dentro da Área',
   shots_outside_box: 'Chutes fora da Área',
-  
-  // Posse e Passes
   possession: 'Posse de Bola (%)',
   passes: 'Passes Totais',
   passes_accurate: 'Passes Certos',
   passes_percentage: 'Precisão de Passes (%)',
-  
-  // Defesa
   tackles: 'Desarmes',
   interceptions: 'Interceptações',
   clearances: 'Cortes',
+  blocks: 'Bloqueios',
   goalkeeper_saves: 'Defesas do Goleiro',
-  
-  // Disciplina
-  cards: 'Cartões (Amarelo + Vermelho)',
+  cards: 'Cartões Totais',
   yellow_cards: 'Cartões Amarelos',
   red_cards: 'Cartões Vermelhos',
   fouls: 'Faltas',
-  
-  // Bola Parada
   corners: 'Escanteios',
   offsides: 'Impedimentos',
-  
-  // Outros
   substitutions: 'Substituições',
   injuries: 'Lesões',
+  dribbles: 'Dribles',
+  aerials_won: 'Duelos Aéreos Vencidos',
 };
 
-// Valores genéricos para fallback
 const GENERIC = {
-  goals: 1.3,
-  shots_total: 12,
-  shots_on_target: 4.5,
-  shots_off_target: 5.5,
-  shots_inside_box: 7,
-  shots_outside_box: 4,
-  possession: 50,
-  passes: 420,
-  passes_accurate: 340,
-  passes_percentage: 80,
-  tackles: 14,
-  interceptions: 10,
-  clearances: 18,
-  goalkeeper_saves: 3.5,
-  cards: 2.2,
-  yellow_cards: 1.9,
-  red_cards: 0.3,
-  fouls: 11,
-  corners: 5,
-  offsides: 1.8,
-  substitutions: 3.5,
-  injuries: 0.5,
+  goals: 1.3, shots_total: 12, shots_on_target: 4.5, shots_off_target: 5.5,
+  shots_inside_box: 7, shots_outside_box: 4, possession: 50,
+  passes: 420, passes_accurate: 340, passes_percentage: 80,
+  tackles: 14, interceptions: 10, clearances: 18, blocks: 4,
+  goalkeeper_saves: 3.5, cards: 2.2, yellow_cards: 1.9, red_cards: 0.3,
+  fouls: 11, corners: 5, offsides: 1.8, substitutions: 3.5,
+  injuries: 0.5, dribbles: 8, aerials_won: 15,
 };
 
-// Mapeamento API-Football -> Nossos nomes
 const STAT_API_MAP = {
   goals: 'Goals',
   shots_total: 'Total Shots',
@@ -158,6 +151,7 @@ const STAT_API_MAP = {
   tackles: 'Total tackles',
   interceptions: 'Interceptions',
   clearances: 'Clearances',
+  blocks: 'Blocks',
   goalkeeper_saves: 'Goalkeeper Saves',
   yellow_cards: 'Yellow Cards',
   red_cards: 'Red Cards',
@@ -166,32 +160,73 @@ const STAT_API_MAP = {
   offsides: 'Offsides',
   substitutions: 'Substitutions',
   injuries: 'Injuries',
+  dribbles: 'Dribbles',
+  aerials_won: 'Aerials Won',
 };
 
-// Perfis de times para fallback
-const TEAM_PROFILES = {
+// Ligas disponíveis (incluindo Copa do Mundo e torneios internacionais)
+const AVAILABLE_LEAGUES = [
+  { id: 1, name: 'Copa do Mundo', country: 'Mundial', type: 'international' },
+  { id: 6, name: 'Copa do Mundo 2026', country: 'Mundial', type: 'international' },
+  { id: 9, name: 'Copa do Mundo Sub-20', country: 'Mundial', type: 'international' },
+  { id: 2, name: 'Liga dos Campeões', country: 'Europa', type: 'international' },
+  { id: 3, name: 'Liga Europa', country: 'Europa', type: 'international' },
+  { id: 4, name: 'Eurocopa', country: 'Europa', type: 'international' },
+  { id: 13, name: 'Copa Libertadores', country: 'América do Sul', type: 'international' },
+  { id: 15, name: 'Copa América', country: 'América do Sul', type: 'international' },
+  { id: 10, name: 'Amistosos Internacionais', country: 'Mundial', type: 'friendly' },
+  { id: 71, name: 'Brasileirão Série A', country: 'Brasil', type: 'league' },
+  { id: 72, name: 'Brasileirão Série B', country: 'Brasil', type: 'league' },
+  { id: 39, name: 'Premier League', country: 'Inglaterra', type: 'league' },
+  { id: 140, name: 'La Liga', country: 'Espanha', type: 'league' },
+  { id: 135, name: 'Série A TIM', country: 'Itália', type: 'league' },
+  { id: 78, name: 'Bundesliga', country: 'Alemanha', type: 'league' },
+  { id: 61, name: 'Ligue 1', country: 'França', type: 'league' },
+  { id: 128, name: 'Liga Profesional Argentina', country: 'Argentina', type: 'league' },
+  { id: 94, name: 'Primeira Liga', country: 'Portugal', type: 'league' },
+  { id: 88, name: 'Eredivisie', country: 'Holanda', type: 'league' },
+  { id: 253, name: 'MLS', country: 'EUA', type: 'league' },
+  { id: 262, name: 'Liga MX', country: 'México', type: 'league' },
+  { id: 12, name: 'Copa Sul-Americana', country: 'América do Sul', type: 'international' },
+  { id: 5, name: 'Liga das Nações UEFA', country: 'Europa', type: 'international' },
+  { id: 11, name: 'Copa do Brasil', country: 'Brasil', type: 'cup' },
+  { id: 45, name: 'Copa da Inglaterra', country: 'Inglaterra', type: 'cup' },
+  { id: 143, name: 'Copa do Rei', country: 'Espanha', type: 'cup' },
+];
+
+// Perfis de times por estilo de jogo
+const TEAM_STYLES = {
   ofensivo: {
-    goals: 1.8, shots_total: 16, shots_on_target: 6, corners: 6.5,
-    possession: 55, passes: 480, tackles: 12, fouls: 10,
+    goals: 1.9, shots_total: 16, shots_on_target: 6.5, corners: 7,
+    possession: 58, passes: 500, tackles: 11, fouls: 9,
+    dribbles: 12, aerials_won: 14,
   },
   defensivo: {
-    goals: 0.9, shots_total: 9, shots_on_target: 3, corners: 3.5,
-    possession: 42, passes: 350, tackles: 18, fouls: 14,
+    goals: 0.8, shots_total: 8, shots_on_target: 3, corners: 3,
+    possession: 40, passes: 340, tackles: 19, fouls: 15,
+    dribbles: 5, aerials_won: 18,
   },
   equilibrado: {
-    goals: 1.4, shots_total: 12, shots_on_target: 4.5, corners: 5,
-    possession: 50, passes: 420, tackles: 14, fouls: 11,
+    goals: 1.4, shots_total: 13, shots_on_target: 5, corners: 5.5,
+    possession: 50, passes: 430, tackles: 14, fouls: 11,
+    dribbles: 8, aerials_won: 15,
   },
   contra_ataque: {
-    goals: 1.2, shots_total: 10, shots_on_target: 4, corners: 4,
-    possession: 38, passes: 320, tackles: 16, fouls: 13,
+    goals: 1.1, shots_total: 10, shots_on_target: 4, corners: 4,
+    possession: 38, passes: 310, tackles: 16, fouls: 13,
+    dribbles: 9, aerials_won: 12,
+  },
+  pressao_alta: {
+    goals: 1.7, shots_total: 15, shots_on_target: 6, corners: 6.5,
+    possession: 55, passes: 460, tackles: 15, fouls: 14,
+    dribbles: 10, aerials_won: 16,
   },
 };
 
 function getTeamProfile(teamId) {
-  const hash = (teamId * 7 + 3) % 4;
-  const profiles = Object.values(TEAM_PROFILES);
-  return { ...profiles[hash], id: teamId };
+  const hash = (teamId * 13 + 7) % Object.keys(TEAM_STYLES).length;
+  const styles = Object.values(TEAM_STYLES);
+  return { ...styles[hash], id: teamId };
 }
 
 // Funções matemáticas
@@ -206,93 +241,86 @@ function poissonRandom(lambda) {
 
 function monteCarloSimulation(lH, lA) {
   let hw = 0, dr = 0, aw = 0, btts = 0, csH = 0, csA = 0;
-  const goalDist = new Array(10).fill(0);
-  const scorelines = {};
-  let firstHalfOver05 = 0, firstHalfOver15 = 0;
-  let homeFirstGoal = 0, awayFirstGoal = 0;
-  let homeLastGoal = 0, awayLastGoal = 0;
-  let homeWinToNil = 0, awayWinToNil = 0;
-  let homeWinBothHalves = 0, awayWinBothHalves = 0;
+  const gd = new Array(10).fill(0);
+  const sl = {};
+  let fh05 = 0, fh15 = 0, hfg = 0, afg = 0, hlg = 0, alg = 0;
+  let hWinToNil = 0, aWinToNil = 0;
+  let hWinBothHalves = 0, aWinBothHalves = 0;
+  let totalShots = 0, totalShotsOnTarget = 0, totalCorners = 0;
+  let totalCards = 0, totalFouls = 0;
   
   for (let s = 0; s < MC_N; s++) {
-    const hg = poissonRandom(lH);
-    const ag = poissonRandom(lA);
+    const hg = poissonRandom(lH), ag = poissonRandom(lA);
     const total = hg + ag;
     
     if (hg > ag) {
       hw++;
-      if (ag === 0) homeWinToNil++;
+      if (ag === 0) hWinToNil++;
     } else if (hg < ag) {
       aw++;
-      if (hg === 0) awayWinToNil++;
+      if (hg === 0) aWinToNil++;
     } else {
       dr++;
     }
     
-    const bucket = Math.min(total, 9);
-    goalDist[bucket]++;
-    
+    gd[Math.min(total, 9)]++;
     if (hg > 0 && ag > 0) btts++;
     if (ag === 0) csH++;
     if (hg === 0) csA++;
     
     const key = `${Math.min(hg, 6)}-${Math.min(ag, 6)}`;
-    scorelines[key] = (scorelines[key] || 0) + 1;
+    sl[key] = (sl[key] || 0) + 1;
     
-    // Primeiro tempo
-    const hg1st = Math.floor(hg * (0.35 + Math.random() * 0.15));
-    const ag1st = Math.floor(ag * (0.35 + Math.random() * 0.15));
-    if (hg1st + ag1st > 0.5) firstHalfOver05++;
-    if (hg1st + ag1st > 1.5) firstHalfOver15++;
+    const h1 = Math.floor(hg * (0.3 + Math.random() * 0.2));
+    const a1 = Math.floor(ag * (0.3 + Math.random() * 0.2));
+    if (h1 + a1 > 0.5) fh05++;
+    if (h1 + a1 > 1.5) fh15++;
     
-    // Cronologia dos gols
-    if (hg > 0 && ag === 0) homeFirstGoal++;
-    if (ag > 0 && hg === 0) awayFirstGoal++;
-    if (hg > ag) homeLastGoal++;
-    if (ag > hg) awayLastGoal++;
+    if (hg > 0 && ag === 0) hfg++;
+    if (ag > 0 && hg === 0) afg++;
+    if (hg > ag) hlg++;
+    if (ag > hg) alg++;
     
-    // Vencer ambos os tempos
-    if (hg1st > ag1st && (hg - hg1st) > (ag - ag1st)) homeWinBothHalves++;
-    if (ag1st > hg1st && (ag - ag1st) > (hg - hg1st)) awayWinBothHalves++;
+    if (h1 > a1 && (hg - h1) > (ag - a1)) hWinBothHalves++;
+    if (a1 > h1 && (ag - a1) > (hg - h1)) aWinBothHalves++;
+    
+    totalShots += 12 + (hg + ag) * 3;
+    totalShotsOnTarget += 4 + (hg + ag) * 1.5;
+    totalCorners += 5 + (hg + ag) * 1.2;
+    totalCards += 2 + Math.floor((hg + ag) * 0.5);
+    totalFouls += 11 + Math.floor((hg + ag) * 1.5);
   }
   
   const p = v => Math.round(v / MC_N * 1000) / 10;
-  
-  // Calcular overs/unders
-  const overs = {};
-  for (let line = 0.5; line <= 5.5; line += 1) {
-    let count = 0;
-    for (let i = Math.ceil(line); i <= 9; i++) count += goalDist[i];
-    overs[`over${Math.floor(line * 10)}`] = p(count);
-    overs[`under${Math.floor(line * 10)}`] = p(MC_N - count);
-  }
+  const calcOver = line => {
+    let c = 0;
+    for (let i = Math.ceil(line); i <= 9; i++) c += gd[i];
+    return p(c);
+  };
   
   return {
-    homeWin: p(hw),
-    draw: p(dr),
-    awayWin: p(aw),
-    ...overs,
-    btts: p(btts),
-    noBtts: p(MC_N - btts),
-    csHome: p(csH),
-    csAway: p(csA),
-    firstHalfOver05: p(firstHalfOver05),
-    firstHalfOver15: p(firstHalfOver15),
-    homeFirstGoal: p(homeFirstGoal),
-    awayFirstGoal: p(awayFirstGoal),
-    homeLastGoal: p(homeLastGoal),
-    awayLastGoal: p(awayLastGoal),
-    homeWinToNil: p(homeWinToNil),
-    awayWinToNil: p(awayWinToNil),
-    homeWinBothHalves: p(homeWinBothHalves),
-    awayWinBothHalves: p(awayWinBothHalves),
-    doubleChance1X: p(hw + dr),
-    doubleChance12: p(hw + aw),
-    doubleChanceX2: p(dr + aw),
-    top5: Object.entries(scorelines)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([score, count]) => ({ score, prob: p(count) })),
+    homeWin: p(hw), draw: p(dr), awayWin: p(aw),
+    over05: calcOver(0.5), over15: calcOver(1.5), over25: calcOver(2.5),
+    over35: calcOver(3.5), over45: calcOver(4.5), over55: calcOver(5.5),
+    under15: p(MC_N - gd.slice(2).reduce((a,b)=>a+b,0)),
+    under25: p(MC_N - gd.slice(3).reduce((a,b)=>a+b,0)),
+    under35: p(MC_N - gd.slice(4).reduce((a,b)=>a+b,0)),
+    under45: p(MC_N - gd.slice(5).reduce((a,b)=>a+b,0)),
+    btts: p(btts), noBtts: p(MC_N - btts),
+    csHome: p(csH), csAway: p(csA),
+    fh05: p(fh05), fh15: p(fh15),
+    homeFirstGoal: p(hfg), awayFirstGoal: p(afg),
+    homeLastGoal: p(hlg), awayLastGoal: p(alg),
+    homeWinToNil: p(hWinToNil), awayWinToNil: p(aWinToNil),
+    homeWinBothHalves: p(hWinBothHalves), awayWinBothHalves: p(aWinBothHalves),
+    dc1x: p(hw + dr), dc12: p(hw + aw), dcx2: p(dr + aw),
+    avgShots: Math.round(totalShots / MC_N),
+    avgShotsOnTarget: Math.round(totalShotsOnTarget / MC_N),
+    avgCorners: Math.round(totalCorners / MC_N),
+    avgCards: Math.round(totalCards / MC_N),
+    avgFouls: Math.round(totalFouls / MC_N),
+    top5: Object.entries(sl).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([s,c])=>({score:s,prob:p(c)})),
+    top10: Object.entries(sl).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([s,c])=>({score:s,prob:p(c)})),
     lambdaH: Math.round(lH * 100) / 100,
     lambdaA: Math.round(lA * 100) / 100,
   };
@@ -302,8 +330,7 @@ function monteCarloSimulation(lH, lA) {
 async function apiGet(path, params = {}) {
   const key = process.env.APIFOOTBALL_KEY;
   if (!key) {
-    console.error('APIFOOTBALL_KEY não configurada');
-    throw new Error('API key não configurada. Configure APIFOOTBALL_KEY nas variáveis de ambiente.');
+    throw new Error('APIFOOTBALL_KEY não configurada nas variáveis de ambiente.');
   }
   
   const url = new URL(BASE_URL + path);
@@ -321,6 +348,8 @@ async function apiGet(path, params = {}) {
     headers: { 'x-apisports-key': key }
   });
   
+  if (!res) return { response: [] };
+  
   const data = await res.json();
   setCache(cacheKey, data);
   
@@ -332,14 +361,22 @@ function fmtDate(d) {
 }
 
 function mapFixture(item) {
+  const kickoffTime = new Date(item.fixture.date);
+  const now = new Date();
+  const hoursSinceEnd = item.fixture.status?.short === 'FT' ? 
+    (now - kickoffTime) / 3600000 : 0;
+  
   return {
     id: item.fixture.id,
-    league: item.league?.name || null,
-    leagueId: item.league?.id || null,
-    leagueCountry: item.league?.country || null,
-    leagueLogo: item.league?.logo || null,
+    league: {
+      id: item.league?.id || null,
+      name: item.league?.name || 'Amistoso Internacional',
+      country: item.league?.country || 'Mundial',
+      logo: item.league?.logo || null,
+      type: item.league?.id ? 'league' : 'friendly',
+    },
     startingAt: item.fixture.date,
-    statusShort: item.fixture.status?.short || null,
+    statusShort: item.fixture.status?.short || 'NS',
     elapsed: item.fixture.status?.elapsed || null,
     home: item.teams.home.name,
     away: item.teams.away.name,
@@ -349,6 +386,8 @@ function mapFixture(item) {
     awayLogo: item.teams.away.logo,
     homeGoals: item.goals?.home ?? null,
     awayGoals: item.goals?.away ?? null,
+    hoursSinceEnd: hoursSinceEnd,
+    shouldCleanup: hoursSinceEnd > MAX_HISTORY_HOURS,
   };
 }
 
@@ -366,26 +405,79 @@ function extractStat(resp, teamId, name) {
   return isNaN(v) ? null : v;
 }
 
-// --- HANDLERS PRINCIPAIS ---
+// --- HANDLERS ---
 async function handleFixtures(qs) {
-  if (qs.scope === 'live') {
-    const j = await apiGet('/fixtures', { live: 'all' });
-    return { 
-      fixtures: (j.response || []).map(mapFixture),
-      count: (j.response || []).length,
-    };
+  const date = qs.date || fmtDate(new Date());
+  
+  let allFixtures = [];
+  
+  // Buscar jogos ao vivo
+  if (qs.scope === 'live' || qs.scope === 'all') {
+    try {
+      const liveData = await apiGet('/fixtures', { live: 'all' });
+      if (liveData?.response) {
+        allFixtures.push(...liveData.response);
+      }
+    } catch (err) {
+      console.warn('Erro ao buscar jogos ao vivo:', err.message);
+    }
   }
   
-  const date = qs.date || fmtDate(new Date());
-  const j = await apiGet('/fixtures', { date });
-  return { 
-    fixtures: (j.response || []).map(mapFixture),
-    count: (j.response || []).length,
+  // Buscar jogos do dia
+  if (qs.scope !== 'live') {
+    try {
+      const dayData = await apiGet('/fixtures', { date });
+      if (dayData?.response) {
+        // Evitar duplicatas
+        const existingIds = new Set(allFixtures.map(f => f.fixture.id));
+        const newFixtures = dayData.response.filter(f => !existingIds.has(f.fixture.id));
+        allFixtures.push(...newFixtures);
+      }
+    } catch (err) {
+      console.warn('Erro ao buscar jogos do dia:', err.message);
+    }
+  }
+  
+  // Buscar jogos de ligas específicas (Copa do Mundo, etc.)
+  if (qs.includeLeagues) {
+    const leagueIds = qs.includeLeagues.split(',').map(Number);
+    for (const leagueId of leagueIds) {
+      try {
+        const leagueData = await apiGet('/fixtures', { league: leagueId, season: new Date().getFullYear() });
+        if (leagueData?.response) {
+          const existingIds = new Set(allFixtures.map(f => f.fixture.id));
+          const newFixtures = leagueData.response.filter(f => !existingIds.has(f.fixture.id));
+          allFixtures.push(...newFixtures);
+        }
+      } catch (err) {
+        console.warn(`Erro ao buscar liga ${leagueId}:`, err.message);
+      }
+    }
+  }
+  
+  const fixtures = allFixtures.map(mapFixture);
+  
+  // Separar por status
+  const live = fixtures.filter(f => f.statusShort === 'LIVE');
+  const ended = fixtures.filter(f => f.statusShort === 'FT' && !f.shouldCleanup);
+  const scheduled = fixtures.filter(f => ['NS', 'TBD'].includes(f.statusShort));
+  
+  // Ordenar: ao vivo primeiro, depois agendados, depois encerrados
+  const sorted = [...live, ...scheduled, ...ended];
+  
+  return {
+    fixtures: sorted,
+    total: sorted.length,
+    live: live.length,
+    scheduled: scheduled.length,
+    ended: ended.length,
+    cleaned: fixtures.filter(f => f.shouldCleanup).length,
+    leagues: [...new Set(fixtures.map(f => f.league?.name))].filter(Boolean),
   };
 }
 
 async function fetchTeamStats(teamId) {
-  const cacheKey = `team_stats_v5_${teamId}`;
+  const cacheKey = `team_v5_${teamId}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
   
@@ -393,17 +485,24 @@ async function fetchTeamStats(teamId) {
     const fj = await apiGet('/fixtures', { team: teamId, last: MAX_MATCHES, status: 'FT' });
     const fixtures = fj.response || [];
     
+    if (!fixtures.length) {
+      const profile = getTeamProfile(teamId);
+      const fallback = buildFallbackStats(profile);
+      setCache(cacheKey, fallback);
+      return fallback;
+    }
+    
     const stats = {
       fixtures: [],
       all: {},
       last3: {},
-      gf: [],
-      ga: [],
+      gf: [], ga: [],
       wins: 0, draws: 0, losses: 0,
       cleanSheets: 0, failedToScore: 0,
       homeGF: [], homeGA: [], homeWins: 0, homePlayed: 0,
       awayGF: [], awayGA: [], awayWins: 0, awayPlayed: 0,
       over25: 0, over35: 0, btts: 0,
+      totalGoals: 0,
     };
     
     for (let idx = 0; idx < fixtures.length; idx++) {
@@ -414,6 +513,7 @@ async function fetchTeamStats(teamId) {
       
       stats.gf.push(gf);
       stats.ga.push(ga);
+      stats.totalGoals += gf + ga;
       
       if (isHome) {
         stats.homeGF.push(gf);
@@ -437,7 +537,6 @@ async function fetchTeamStats(teamId) {
       if (gf + ga > 3.5) stats.over35++;
       if (gf > 0 && ga > 0) stats.btts++;
       
-      // Buscar estatísticas detalhadas (limitar para performance)
       if (idx < 5) {
         try {
           const sj = await apiGet('/fixtures/statistics', { fixture: fx.fixture.id });
@@ -447,7 +546,7 @@ async function fetchTeamStats(teamId) {
             goals: { home: fx.goals?.home ?? 0, away: fx.goals?.away ?? 0 },
           });
         } catch (err) {
-          console.warn(`Erro stats partida ${fx.fixture.id}: ${err.message}`);
+          console.warn(`Erro stats partida ${fx.fixture.id}:`, err.message);
         }
       }
     }
@@ -456,67 +555,10 @@ async function fetchTeamStats(teamId) {
     return stats;
     
   } catch (err) {
-    console.warn(`Erro stats time ${teamId}: ${err.message}`);
-    return null;
-  }
-}
-
-async function teamStats(teamId) {
-  const rawStats = await fetchTeamStats(teamId);
-  
-  if (!rawStats || rawStats.fixtures.length === 0) {
+    console.warn(`Erro stats time ${teamId}:`, err.message);
     const profile = getTeamProfile(teamId);
     return buildFallbackStats(profile);
   }
-  
-  const mk = Object.keys(STAT_NAMES);
-  const pools = { all: {}, last3: {} };
-  
-  for (const pool of Object.values(pools)) {
-    for (const k of mk) pool[k] = [];
-    pool.gf = [];
-    pool.ga = [];
-  }
-  
-  for (let idx = 0; idx < rawStats.fixtures.length; idx++) {
-    const fxData = rawStats.fixtures[idx];
-    const isRecent = idx < 3;
-    
-    pools.all.gf.push(rawStats.gf[idx]);
-    pools.all.ga.push(rawStats.ga[idx]);
-    
-    if (isRecent) {
-      pools.last3.gf.push(rawStats.gf[idx]);
-      pools.last3.ga.push(rawStats.ga[idx]);
-    }
-    
-    const fxStats = fxData.stats;
-    const push = (k, val) => {
-      if (val !== null && !isNaN(val)) {
-        pools.all[k].push(val);
-        if (isRecent) pools.last3[k].push(val);
-      }
-    };
-    
-    // Extrair todas as estatísticas
-    for (const [key, apiName] of Object.entries(STAT_API_MAP)) {
-      push(key, extractStat({ response: fxStats }, teamId, apiName));
-    }
-    
-    // Cartões combinados
-    const y = extractStat({ response: fxStats }, teamId, 'Yellow Cards');
-    const r = extractStat({ response: fxStats }, teamId, 'Red Cards');
-    push('yellow_cards', y);
-    push('red_cards', r);
-    
-    if (y !== null || r !== null) {
-      const c = (y || 0) + (r || 0);
-      pools.all.cards.push(c);
-      if (isRecent) pools.last3.cards.push(c);
-    }
-  }
-  
-  return buildStatsFromPools(pools, rawStats);
 }
 
 function buildFallbackStats(profile) {
@@ -533,75 +575,109 @@ function buildFallbackStats(profile) {
     isReal,
     matchesAnalyzed: 0,
     form: { wins: 0, draws: 0, losses: 0, played: 0, winRate: 0 },
-    homeForm: { wins: 0, played: 0, winRate: 0, goalsFor: 1.3, goalsAgainst: 1.3 },
-    awayForm: { wins: 0, played: 0, winRate: 0, goalsFor: 1.1, goalsAgainst: 1.5 },
-    over25Rate: 0.5,
-    over35Rate: 0.25,
-    bttsRate: 0.5,
-    cleanSheets: 0,
-    failedToScore: 0,
+    homeForm: { wins: 0, played: 0, winRate: 0, goalsFor: profile.goals || 1.3, goalsAgainst: 1.1 },
+    awayForm: { wins: 0, played: 0, winRate: 0, goalsFor: (profile.goals || 1.3) * 0.75, goalsAgainst: 1.4 },
+    over25Rate: 0.5, over35Rate: 0.25, bttsRate: 0.5,
+    cleanSheets: 0, failedToScore: 0,
     avgGoalsFor: profile.goals || 1.3,
     avgGoalsAgainst: 1.3,
+    style: Object.keys(TEAM_STYLES).find(k => TEAM_STYLES[k].goals === profile.goals) || 'equilibrado',
     isFallback: true,
   };
 }
 
-function buildStatsFromPools(pools, rawStats) {
-  const mk = Object.keys(STAT_NAMES);
-  const mean = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+async function teamStats(teamId) {
+  const raw = await fetchTeamStats(teamId);
   
+  if (raw.isFallback || !raw.fixtures?.length) return raw;
+  
+  const mk = Object.keys(STAT_NAMES);
+  const pools = { all: {}, last3: {} };
+  for (const pool of Object.values(pools)) {
+    for (const k of mk) pool[k] = [];
+    pool.gf = []; pool.ga = [];
+  }
+  
+  for (let idx = 0; idx < raw.fixtures.length; idx++) {
+    const fxData = raw.fixtures[idx];
+    const isRecent = idx < 3;
+    
+    pools.all.gf.push(raw.gf[idx]);
+    pools.all.ga.push(raw.ga[idx]);
+    if (isRecent) {
+      pools.last3.gf.push(raw.gf[idx]);
+      pools.last3.ga.push(raw.ga[idx]);
+    }
+    
+    for (const [key, apiName] of Object.entries(STAT_API_MAP)) {
+      const val = extractStat({ response: fxData.stats }, teamId, apiName);
+      if (val !== null && !isNaN(val)) {
+        pools.all[key].push(val);
+        if (isRecent) pools.last3[key].push(val);
+      }
+    }
+    
+    const y = extractStat({ response: fxData.stats }, teamId, 'Yellow Cards');
+    const r = extractStat({ response: fxData.stats }, teamId, 'Red Cards');
+    if (y !== null) {
+      pools.all.yellow_cards.push(y);
+      if (isRecent) pools.last3.yellow_cards.push(y);
+    }
+    if (r !== null) {
+      pools.all.red_cards.push(r);
+      if (isRecent) pools.last3.red_cards.push(r);
+    }
+    if (y !== null || r !== null) {
+      const c = (y || 0) + (r || 0);
+      pools.all.cards.push(c);
+      if (isRecent) pools.last3.cards.push(c);
+    }
+  }
+  
+  const mean = arr => arr.length ? arr.reduce((a,b) => a + b, 0) / arr.length : null;
   const wavg = k => {
-    const a3 = mean(pools.last3[k]);
-    const ag = mean(pools.all[k]);
+    const a3 = mean(pools.last3[k]), ag = mean(pools.all[k]);
     if (a3 != null && ag != null) return a3 * 0.7 + ag * 0.3;
     return ag ?? a3 ?? GENERIC[k] ?? null;
   };
   
-  const averages = {};
-  const isReal = {};
-  
+  const averages = {}, isReal = {};
   for (const k of mk) {
     averages[k] = wavg(k) ?? GENERIC[k];
     isReal[k] = (pools.all[k]?.length || 0) >= 3;
   }
-  
   averages.goalsFor = wavg('gf') ?? 1.3;
   averages.goalsAgainst = wavg('ga') ?? 1.3;
   
-  const totalMatches = rawStats.fixtures.length;
+  const total = raw.fixtures.length;
   
   return {
-    averages,
-    isReal,
-    matchesAnalyzed: totalMatches,
+    averages, isReal, matchesAnalyzed: total,
     form: {
-      wins: rawStats.wins,
-      draws: rawStats.draws,
-      losses: rawStats.losses,
-      played: totalMatches,
-      winRate: totalMatches ? rawStats.wins / totalMatches : 0,
+      wins: raw.wins, draws: raw.draws, losses: raw.losses,
+      played: total, winRate: total ? raw.wins / total : 0,
     },
     homeForm: {
-      wins: rawStats.homeWins,
-      played: rawStats.homePlayed,
-      winRate: rawStats.homePlayed ? rawStats.homeWins / rawStats.homePlayed : 0,
-      goalsFor: mean(rawStats.homeGF) ?? 1.3,
-      goalsAgainst: mean(rawStats.homeGA) ?? 1.3,
+      wins: raw.homeWins, played: raw.homePlayed,
+      winRate: raw.homePlayed ? raw.homeWins / raw.homePlayed : 0,
+      goalsFor: mean(raw.homeGF) ?? 1.3,
+      goalsAgainst: mean(raw.homeGA) ?? 1.3,
     },
     awayForm: {
-      wins: rawStats.awayWins,
-      played: rawStats.awayPlayed,
-      winRate: rawStats.awayPlayed ? rawStats.awayWins / rawStats.awayPlayed : 0,
-      goalsFor: mean(rawStats.awayGF) ?? 1.1,
-      goalsAgainst: mean(rawStats.awayGA) ?? 1.5,
+      wins: raw.awayWins, played: raw.awayPlayed,
+      winRate: raw.awayPlayed ? raw.awayWins / raw.awayPlayed : 0,
+      goalsFor: mean(raw.awayGF) ?? 1.1,
+      goalsAgainst: mean(raw.awayGA) ?? 1.5,
     },
-    over25Rate: totalMatches ? rawStats.over25 / totalMatches : 0.5,
-    over35Rate: totalMatches ? rawStats.over35 / totalMatches : 0.25,
-    bttsRate: totalMatches ? rawStats.btts / totalMatches : 0.5,
-    cleanSheets: rawStats.cleanSheets,
-    failedToScore: rawStats.failedToScore,
+    over25Rate: total ? raw.over25 / total : 0.5,
+    over35Rate: total ? raw.over35 / total : 0.25,
+    bttsRate: total ? raw.btts / total : 0.5,
+    cleanSheets: raw.cleanSheets,
+    failedToScore: raw.failedToScore,
     avgGoalsFor: averages.goalsFor,
     avgGoalsAgainst: averages.goalsAgainst,
+    avgTotalGoals: total ? raw.totalGoals / total : 2.6,
+    isFallback: false,
   };
 }
 
@@ -621,322 +697,122 @@ function roundLine(p) {
   return p - f >= 0.5 ? f + 0.5 : f - 0.5;
 }
 
-// Construir TODOS os mercados Betano
 function buildAllMarkets(mc, hS, aS, hName, aName) {
   const markets = [];
   
-  // --- RESULTADOS ---
-  markets.push({
-    key: 'match_result_home',
-    category: 'Resultado',
-    label: `Vitória ${hName}`,
-    icon: '🏠',
-    prob: mc.homeWin,
-    isValueBet: mc.homeWin > 40,
-    isEstimate: hS.matchesAnalyzed < 3,
+  // Resultados
+  markets.push({k:'1x2_home',cat:'Resultado',label:`Vitória ${hName}`,icon:'🏠',prob:mc.homeWin,val:mc.homeWin>40,est:hS.matchesAnalyzed<3});
+  markets.push({k:'1x2_draw',cat:'Resultado',label:'Empate',icon:'🤝',prob:mc.draw,val:mc.draw>30,est:hS.matchesAnalyzed<3});
+  markets.push({k:'1x2_away',cat:'Resultado',label:`Vitória ${aName}`,icon:'✈️',prob:mc.awayWin,val:mc.awayWin>40,est:aS.matchesAnalyzed<3});
+  
+  // Dupla Chance
+  markets.push({k:'dc_1x',cat:'Dupla Chance',label:`${hName} ou Empate`,icon:'🛡️',prob:mc.dc1x,val:mc.dc1x>65,est:false});
+  markets.push({k:'dc_12',cat:'Dupla Chance',label:`${hName} ou ${aName}`,icon:'⚡',prob:mc.dc12,val:mc.dc12>70,est:false});
+  markets.push({k:'dc_x2',cat:'Dupla Chance',label:`Empate ou ${aName}`,icon:'🛡️',prob:mc.dcx2,val:mc.dcx2>65,est:false});
+  
+  // Gols
+  [0.5,1.5,2.5,3.5,4.5].forEach(line => {
+    const ok = `over${Math.floor(line*10)}`, uk = `under${Math.floor(line*10)}`;
+    markets.push({k:`goals_over_${line}`,cat:'Gols',label:`Over ${line} Gols`,icon:line<=1.5?'⚽':line<=2.5?'⚽⚽':'🔥',prob:mc[ok],val:mc[ok]>(line<=1.5?75:line<=2.5?55:35),est:false});
+    markets.push({k:`goals_under_${line}`,cat:'Gols',label:`Under ${line} Gols`,icon:'🛡️',prob:mc[uk],val:mc[uk]>(line>=3.5?70:55),est:false});
   });
   
-  markets.push({
-    key: 'match_result_draw',
-    category: 'Resultado',
-    label: 'Empate',
-    icon: '🤝',
-    prob: mc.draw,
-    isValueBet: mc.draw > 30,
-    isEstimate: hS.matchesAnalyzed < 3,
+  // BTTS
+  markets.push({k:'btts_yes',cat:'BTTS',label:'Ambas Marcam Sim',icon:'⚽↔️⚽',prob:mc.btts,val:mc.btts>55,est:false});
+  markets.push({k:'btts_no',cat:'BTTS',label:'Ambas Marcam Não',icon:'🚫',prob:mc.noBtts,val:mc.noBtts>55,est:false});
+  
+  // 1º Tempo
+  markets.push({k:'fh05',cat:'1º Tempo',label:'Over 0.5 1º Tempo',icon:'⚽ 1T',prob:mc.fh05,val:mc.fh05>65,est:false});
+  markets.push({k:'fh15',cat:'1º Tempo',label:'Over 1.5 1º Tempo',icon:'⚽⚽ 1T',prob:mc.fh15,val:mc.fh15>35,est:false});
+  
+  // Cronologia
+  markets.push({k:'first_goal_home',cat:'Cronologia',label:`1º Gol ${hName}`,icon:'🏠⚽',prob:mc.homeFirstGoal,val:mc.homeFirstGoal>40,est:false});
+  markets.push({k:'first_goal_away',cat:'Cronologia',label:`1º Gol ${aName}`,icon:'✈️⚽',prob:mc.awayFirstGoal,val:mc.awayFirstGoal>35,est:false});
+  markets.push({k:'last_goal_home',cat:'Cronologia',label:`Último Gol ${hName}`,icon:'🏠⏱️',prob:mc.homeLastGoal,val:mc.homeLastGoal>35,est:false});
+  markets.push({k:'last_goal_away',cat:'Cronologia',label:`Último Gol ${aName}`,icon:'✈️⏱️',prob:mc.awayLastGoal,val:mc.awayLastGoal>30,est:false});
+  
+  // Clean Sheet
+  markets.push({k:'cs_home',cat:'Defesa',label:`Sem Sofrer ${hName}`,icon:'🏠🔒',prob:mc.csHome,val:mc.csHome>35,est:false});
+  markets.push({k:'cs_away',cat:'Defesa',label:`Sem Sofrer ${aName}`,icon:'✈️🔒',prob:mc.csAway,val:mc.csAway>30,est:false});
+  
+  // Handicap
+  markets.push({k:'handicap_home_m1',cat:'Handicap',label:`${hName} -1`,icon:'🏠-1',prob:Math.max(5,mc.homeWin-15),val:(mc.homeWin-15)>35,est:false});
+  markets.push({k:'handicap_away_p1',cat:'Handicap',label:`${aName} +1`,icon:'✈️+1',prob:Math.min(95,mc.awayWin+15),val:(mc.awayWin+15)>40,est:false});
+  
+  // Win to Nil
+  markets.push({k:'win_to_nil_home',cat:'Especiais',label:`${hName} Vence sem Sofrer`,icon:'🏠🧤',prob:mc.homeWinToNil,val:mc.homeWinToNil>20,est:false});
+  markets.push({k:'win_to_nil_away',cat:'Especiais',label:`${aName} Vence sem Sofrer`,icon:'✈️🧤',prob:mc.awayWinToNil,val:mc.awayWinToNil>15,est:false});
+  
+  // Placar Exato
+  mc.top5.forEach((sl,i) => {
+    markets.push({k:`correct_score_${sl.score}`,cat:'Placar Exato',label:`Placar ${sl.score}`,icon:'🎯',prob:sl.prob,val:sl.prob>8,est:false});
   });
   
-  markets.push({
-    key: 'match_result_away',
-    category: 'Resultado',
-    label: `Vitória ${aName}`,
-    icon: '✈️',
-    prob: mc.awayWin,
-    isValueBet: mc.awayWin > 40,
-    isEstimate: aS.matchesAnalyzed < 3,
-  });
-  
-  // --- DUPLA CHANCE ---
-  markets.push({
-    key: 'double_chance_1x',
-    category: 'Dupla Chance',
-    label: `1X (${hName} ou Empate)`,
-    icon: '🛡️',
-    prob: mc.doubleChance1X,
-    isValueBet: mc.doubleChance1X > 65,
-    isEstimate: false,
-  });
-  
-  markets.push({
-    key: 'double_chance_12',
-    category: 'Dupla Chance',
-    label: `12 (${hName} ou ${aName})`,
-    icon: '⚡',
-    prob: mc.doubleChance12,
-    isValueBet: mc.doubleChance12 > 70,
-    isEstimate: false,
-  });
-  
-  markets.push({
-    key: 'double_chance_x2',
-    category: 'Dupla Chance',
-    label: `X2 (Empate ou ${aName})`,
-    icon: '🛡️',
-    prob: mc.doubleChanceX2,
-    isValueBet: mc.doubleChanceX2 > 65,
-    isEstimate: false,
-  });
-  
-  // --- GOLS ---
-  const goalLines = [0.5, 1.5, 2.5, 3.5, 4.5];
-  goalLines.forEach(line => {
-    const overKey = `over${Math.floor(line * 10)}`;
-    const underKey = `under${Math.floor(line * 10)}`;
-    
-    markets.push({
-      key: `goals_over_${line}`,
-      category: 'Gols',
-      label: `Over ${line} Gols`,
-      icon: line <= 1.5 ? '⚽' : line <= 2.5 ? '⚽⚽' : '🔥',
-      prob: mc[overKey],
-      line: line,
-      isValueBet: mc[overKey] > (line <= 1.5 ? 75 : line <= 2.5 ? 55 : 35),
-      isEstimate: false,
-    });
-    
-    markets.push({
-      key: `goals_under_${line}`,
-      category: 'Gols',
-      label: `Under ${line} Gols`,
-      icon: '🛡️',
-      prob: mc[underKey],
-      line: line,
-      isValueBet: mc[underKey] > (line >= 3.5 ? 70 : 55),
-      isEstimate: false,
-    });
-  });
-  
-  // --- BTTS ---
-  markets.push({
-    key: 'btts_yes',
-    category: 'BTTS',
-    label: 'Ambas Marcam Sim',
-    icon: '⚽↔️⚽',
-    prob: mc.btts,
-    isValueBet: mc.btts > 55,
-    isEstimate: false,
-  });
-  
-  markets.push({
-    key: 'btts_no',
-    category: 'BTTS',
-    label: 'Ambas Marcam Não',
-    icon: '🚫',
-    prob: mc.noBtts,
-    isValueBet: mc.noBtts > 55,
-    isEstimate: false,
-  });
-  
-  // --- INTERVALO ---
-  markets.push({
-    key: 'over05_first_half',
-    category: '1º Tempo',
-    label: 'Over 0.5 1º Tempo',
-    icon: '⚽ 1T',
-    prob: mc.firstHalfOver05,
-    isValueBet: mc.firstHalfOver05 > 65,
-    isEstimate: false,
-  });
-  
-  markets.push({
-    key: 'over15_first_half',
-    category: '1º Tempo',
-    label: 'Over 1.5 1º Tempo',
-    icon: '⚽⚽ 1T',
-    prob: mc.firstHalfOver15,
-    isValueBet: mc.firstHalfOver15 > 35,
-    isEstimate: false,
-  });
-  
-  // --- CRONOLOGIA ---
-  markets.push({
-    key: 'first_goal_home',
-    category: 'Cronologia',
-    label: `1º Gol ${hName}`,
-    icon: '🏠⚽',
-    prob: mc.homeFirstGoal,
-    isValueBet: mc.homeFirstGoal > 40,
-    isEstimate: false,
-  });
-  
-  markets.push({
-    key: 'first_goal_away',
-    category: 'Cronologia',
-    label: `1º Gol ${aName}`,
-    icon: '✈️⚽',
-    prob: mc.awayFirstGoal,
-    isValueBet: mc.awayFirstGoal > 35,
-    isEstimate: false,
-  });
-  
-  markets.push({
-    key: 'last_goal_home',
-    category: 'Cronologia',
-    label: `Último Gol ${hName}`,
-    icon: '🏠⏱️',
-    prob: mc.homeLastGoal,
-    isValueBet: mc.homeLastGoal > 35,
-    isEstimate: false,
-  });
-  
-  markets.push({
-    key: 'last_goal_away',
-    category: 'Cronologia',
-    label: `Último Gol ${aName}`,
-    icon: '✈️⏱️',
-    prob: mc.awayLastGoal,
-    isValueBet: mc.awayLastGoal > 30,
-    isEstimate: false,
-  });
-  
-  // --- CLEAN SHEET ---
-  markets.push({
-    key: 'clean_sheet_home',
-    category: 'Defesa',
-    label: `Clean Sheet ${hName}`,
-    icon: '🏠🔒',
-    prob: mc.csHome,
-    isValueBet: mc.csHome > 35,
-    isEstimate: false,
-  });
-  
-  markets.push({
-    key: 'clean_sheet_away',
-    category: 'Defesa',
-    label: `Clean Sheet ${aName}`,
-    icon: '✈️🔒',
-    prob: mc.csAway,
-    isValueBet: mc.csAway > 35,
-    isEstimate: false,
-  });
-  
-  // --- HANDICAP ---
-  markets.push({
-    key: 'handicap_home_minus1',
-    category: 'Handicap',
-    label: `${hName} -1`,
-    icon: '🏠-1',
-    prob: Math.max(5, mc.homeWin - 15),
-    isValueBet: (mc.homeWin - 15) > 35,
-    isEstimate: false,
-  });
-  
-  markets.push({
-    key: 'handicap_away_plus1',
-    category: 'Handicap',
-    label: `${aName} +1`,
-    icon: '✈️+1',
-    prob: Math.min(95, mc.awayWin + 15),
-    isValueBet: (mc.awayWin + 15) > 40,
-    isEstimate: false,
-  });
-  
-  // --- PLACAR EXATO (Top 5) ---
-  mc.top5.forEach((sl, i) => {
-    markets.push({
-      key: `correct_score_${sl.score}`,
-      category: 'Placar Exato',
-      label: `Placar ${sl.score}`,
-      icon: '🎯',
-      prob: sl.prob,
-      isValueBet: sl.prob > 8,
-      isEstimate: false,
-    });
-  });
-  
-  // --- ESTATÍSTICAS BETANO ---
+  // Estatísticas
   const statLines = [
-    { stat: 'shots_total', label: 'Total Chutes', line: 22.5, icon: '🎯' },
-    { stat: 'shots_on_target', label: 'Chutes no Gol', line: 8.5, icon: '🎯✅' },
-    { stat: 'corners', label: 'Escanteios', line: 9.5, icon: '🏴' },
-    { stat: 'cards', label: 'Cartões', line: 4.5, icon: '🟨' },
-    { stat: 'fouls', label: 'Faltas', line: 22.5, icon: '⚠️' },
-    { stat: 'offsides', label: 'Impedimentos', line: 3.5, icon: '🏃' },
-    { stat: 'passes', label: 'Passes Totais', line: 800, icon: '🔄' },
-    { stat: 'tackles', label: 'Desarmes', line: 28.5, icon: '💪' },
-    { stat: 'goalkeeper_saves', label: 'Defesas', line: 5.5, icon: '🧤' },
-    { stat: 'shots_inside_box', label: 'Chutes Área', line: 14.5, icon: '🎯📦' },
-    { stat: 'interceptions', label: 'Interceptações', line: 18.5, icon: '✋' },
-    { stat: 'clearances', label: 'Cortes', line: 35.5, icon: '🧹' },
+    {k:'shots_total',label:'Total de Chutes',line:22.5,icon:'🎯'},
+    {k:'shots_on_target',label:'Chutes no Gol',line:8.5,icon:'🎯✅'},
+    {k:'shots_inside_box',label:'Chutes na Área',line:14.5,icon:'📦'},
+    {k:'corners',label:'Escanteios',line:9.5,icon:'🏴'},
+    {k:'cards',label:'Cartões',line:4.5,icon:'🟨'},
+    {k:'fouls',label:'Faltas',line:22.5,icon:'⚠️'},
+    {k:'offsides',label:'Impedimentos',line:3.5,icon:'🏃'},
+    {k:'passes',label:'Passes',line:800,icon:'🔄'},
+    {k:'tackles',label:'Desarmes',line:28.5,icon:'💪'},
+    {k:'interceptions',label:'Interceptações',line:18.5,icon:'✋'},
+    {k:'clearances',label:'Cortes',line:35.5,icon:'🧹'},
+    {k:'goalkeeper_saves',label:'Defesas',line:5.5,icon:'🧤'},
+    {k:'dribbles',label:'Dribles',line:16.5,icon:'🏃‍♂️'},
+    {k:'aerials_won',label:'Duelos Aéreos',line:28.5,icon:'✈️'},
   ];
   
   statLines.forEach(sl => {
-    const hVal = hS.averages[sl.stat] ?? GENERIC[sl.stat];
-    const aVal = aS.averages[sl.stat] ?? GENERIC[sl.stat];
-    const total = hVal + aVal;
+    const h = hS.averages[sl.k] ?? GENERIC[sl.k];
+    const a = aS.averages[sl.k] ?? GENERIC[sl.k];
+    const total = h + a;
     const overProb = Math.min(95, Math.max(25, Math.round(50 + ((total - sl.line) / Math.max(1, sl.line)) * 60)));
-    const isEst = !hS.isReal[sl.stat] || !aS.isReal[sl.stat];
+    const isEst = !hS.isReal[sl.k] || !aS.isReal[sl.k];
     
     markets.push({
-      key: `stats_${sl.stat}_over`,
-      category: 'Estatísticas',
-      label: `${sl.label} Over ${sl.line}`,
-      icon: sl.icon,
-      prob: overProb,
+      k: `stat_${sl.k}_over`, cat: 'Estatísticas',
+      label: `${sl.label} +${sl.line}`, icon: sl.icon,
+      prob: overProb, val: overProb > 55 && !isEst, est: isEst,
       predictedTotal: Math.round(total * 10) / 10,
-      homeAvg: Math.round(hVal * 10) / 10,
-      awayAvg: Math.round(aVal * 10) / 10,
-      suggestedLine: sl.line,
-      isValueBet: overProb > 55 && !isEst,
-      isEstimate: isEst,
+      homeAvg: Math.round(h * 10) / 10, awayAvg: Math.round(a * 10) / 10,
     });
     
     markets.push({
-      key: `stats_${sl.stat}_under`,
-      category: 'Estatísticas',
-      label: `${sl.label} Under ${sl.line}`,
-      icon: sl.icon,
-      prob: 100 - overProb,
+      k: `stat_${sl.k}_under`, cat: 'Estatísticas',
+      label: `${sl.label} -${sl.line}`, icon: sl.icon,
+      prob: 100 - overProb, val: (100 - overProb) > 55 && !isEst, est: isEst,
       predictedTotal: Math.round(total * 10) / 10,
-      homeAvg: Math.round(hVal * 10) / 10,
-      awayAvg: Math.round(aVal * 10) / 10,
-      suggestedLine: sl.line,
-      isValueBet: (100 - overProb) > 55 && !isEst,
-      isEstimate: isEst,
+      homeAvg: Math.round(h * 10) / 10, awayAvg: Math.round(a * 10) / 10,
     });
   });
   
   return markets;
 }
 
-function findBestBet(markets, mc, hS, aS, hName, aName) {
-  // Priorizar mercados não-estimados com alta probabilidade
+function findBestBet(markets, mc, hS, aS) {
   const candidates = markets
-    .filter(m => !m.isEstimate || m.prob > 60)
+    .filter(m => !m.est || m.prob > 60)
     .sort((a, b) => {
-      if (a.isEstimate !== b.isEstimate) return a.isEstimate ? 1 : -1;
-      if (a.isValueBet !== b.isValueBet) return a.isValueBet ? -1 : 1;
+      if (a.est !== b.est) return a.est ? 1 : -1;
+      if (a.val !== b.val) return a.val ? -1 : 1;
       return b.prob - a.prob;
     });
   
   const best = candidates[0] || markets[0];
   
-  const confidence = best.prob >= 75 ? 'Alta' : best.prob >= 60 ? 'Média' : 'Baixa';
-  const risk = best.prob >= 75 ? 'Baixo' : best.prob >= 60 ? 'Médio' : 'Alto';
-  
   return {
-    market: best.label,
-    key: best.key,
-    category: best.category,
+    market: best.label, key: best.k, category: best.cat,
     prob: best.prob,
-    confidence,
-    risk,
-    valueBet: best.isValueBet,
-    isEstimate: best.isEstimate,
+    confidence: best.prob >= 75 ? 'Alta' : best.prob >= 60 ? 'Média' : 'Baixa',
+    risk: best.prob >= 75 ? 'Baixo' : best.prob >= 60 ? 'Médio' : 'Alto',
+    valueBet: best.val,
+    isEstimate: best.est,
     impliedOdds: Math.round((1 / (best.prob / 100)) * 1.08 * 100) / 100,
-    justification: `Análise de ${MC_N.toLocaleString()} simulações Monte Carlo + Poisson. 
-      Baseado em ${Math.min(hS.matchesAnalyzed, aS.matchesAnalyzed)} partidas analisadas por equipe.
-      ${best.isEstimate ? '(Dados parcialmente estimados)' : '(Dados reais)'}`,
+    justification: `Análise de ${MC_N.toLocaleString()} simulações Monte Carlo + Poisson. ${best.est ? '(Dados parcialmente estimados)' : '(Baseado em dados reais)'}`,
   };
 }
 
@@ -945,172 +821,67 @@ function genFactors(hS, aS, mc, hName, aName) {
   const pct = v => Math.round(v * 100);
   const rnd = v => Math.round(v * 10) / 10;
   
-  // Forma recente
   if (hS.matchesAnalyzed >= 3) {
-    factors.push({
-      icon: '📊',
-      text: `${hName}: ${hS.form.wins}V/${hS.form.draws}E/${hS.form.losses}D nos últimos ${hS.matchesAnalyzed} jogos`,
-    });
+    factors.push({icon:'📊',text:`${hName}: ${hS.form.wins}V/${hS.form.draws}E/${hS.form.losses}D nos últimos ${hS.matchesAnalyzed} jogos`});
   }
-  
   if (aS.matchesAnalyzed >= 3) {
-    factors.push({
-      icon: '📊',
-      text: `${aName}: ${aS.form.wins}V/${aS.form.draws}E/${aS.form.losses}D nos últimos ${aS.matchesAnalyzed} jogos`,
-    });
+    factors.push({icon:'📊',text:`${aName}: ${aS.form.wins}V/${aS.form.draws}E/${aS.form.losses}D nos últimos ${aS.matchesAnalyzed} jogos`});
   }
-  
-  // Casa/Fora
   if (hS.homeForm.played >= 2) {
-    factors.push({
-      icon: hS.homeForm.winRate >= 0.5 ? '🟢' : '🔴',
-      text: `${hName} em casa: ${hS.homeForm.wins}/${hS.homeForm.played} vitórias, ${rnd(hS.homeForm.goalsFor)} gols/jogo`,
-    });
+    factors.push({icon:hS.homeForm.winRate>=.5?'🟢':'🔴',text:`${hName} em casa: ${hS.homeForm.wins}/${hS.homeForm.played} vitórias, ${rnd(hS.homeForm.goalsFor)} gols/jogo`});
   }
-  
   if (aS.awayForm.played >= 2) {
-    factors.push({
-      icon: aS.awayForm.winRate >= 0.4 ? '🟢' : '🔴',
-      text: `${aName} fora: ${aS.awayForm.wins}/${aS.awayForm.played} vitórias, ${rnd(aS.awayForm.goalsFor)} gols/jogo`,
-    });
+    factors.push({icon:aS.awayForm.winRate>=.4?'🟢':'🔴',text:`${aName} fora: ${aS.awayForm.wins}/${aS.awayForm.played} vitórias, ${rnd(aS.awayForm.goalsFor)} gols/jogo`});
   }
   
-  // Gols
-  factors.push({
-    icon: '⚽',
-    text: `${hName}: média ${rnd(hS.avgGoalsFor)} gols marcados / ${rnd(hS.avgGoalsAgainst)} sofridos`,
-  });
+  factors.push({icon:'⚽',text:`${hName}: média ${rnd(hS.avgGoalsFor)} gols / ${rnd(hS.avgGoalsAgainst)} sofridos`});
+  factors.push({icon:'⚽',text:`${aName}: média ${rnd(aS.avgGoalsFor)} gols / ${rnd(aS.avgGoalsAgainst)} sofridos`});
+  factors.push({icon:'📈',text:`Over 2.5: ${hName} ${pct(hS.over25Rate)}% | ${aName} ${pct(aS.over25Rate)}%`});
+  factors.push({icon:'🤝',text:`BTTS: ${hName} ${pct(hS.bttsRate)}% | ${aName} ${pct(aS.bttsRate)}%`});
   
-  factors.push({
-    icon: '⚽',
-    text: `${aName}: média ${rnd(aS.avgGoalsFor)} gols marcados / ${rnd(aS.avgGoalsAgainst)} sofridos`,
-  });
+  if (hS.cleanSheets > 0) factors.push({icon:'🔒',text:`${hName}: ${hS.cleanSheets} jogos sem sofrer gols`});
+  if (aS.failedToScore > 0) factors.push({icon:'⚠️',text:`${aName}: ${aS.failedToScore} jogos sem marcar`});
   
-  // Over/Under histórico
-  factors.push({
-    icon: '📈',
-    text: `${hName}: Over 2.5 em ${pct(hS.over25Rate)}% dos jogos | ${aName}: ${pct(aS.over25Rate)}%`,
-  });
+  if (mc.homeWin > 50) factors.push({icon:'📈',text:`Monte Carlo: ${hName} favorito (${mc.homeWin}%)`});
+  else if (mc.awayWin > 50) factors.push({icon:'📈',text:`Monte Carlo: ${aName} favorito (${mc.awayWin}%)`});
+  else factors.push({icon:'⚖️',text:`Jogo equilibrado: empate ${mc.draw}%`});
   
-  factors.push({
-    icon: '🤝',
-    text: `BTTS ocorreu em ${pct(hS.bttsRate)}% (${hName}) e ${pct(aS.bttsRate)}% (${aName}) dos jogos`,
-  });
-  
-  // Clean Sheets
-  if (hS.cleanSheets > 0) {
-    factors.push({
-      icon: '🔒',
-      text: `${hName}: ${hS.cleanSheets} clean sheets nos últimos ${hS.matchesAnalyzed} jogos`,
-    });
-  }
-  
-  if (aS.failedToScore > 0) {
-    factors.push({
-      icon: '⚠️',
-      text: `${aName} não marcou em ${aS.failedToScore}/${aS.matchesAnalyzed} jogos recentes`,
-    });
-  }
-  
-  // Monte Carlo insights
-  if (mc.homeWin > 50) {
-    factors.push({
-      icon: '📈',
-      text: `Monte Carlo: ${hName} favorito com ${mc.homeWin}% de vitória`,
-    });
-  } else if (mc.awayWin > 50) {
-    factors.push({
-      icon: '📈',
-      text: `Monte Carlo: ${aName} favorito com ${mc.awayWin}% de vitória`,
-    });
-  } else {
-    factors.push({
-      icon: '⚖️',
-      text: `Jogo equilibrado: empate ${mc.draw}% (Monte Carlo 10k)`,
-    });
-  }
-  
-  if (mc.btts > 60) {
-    factors.push({ icon: '⚽', text: `BTTS provável: ${mc.btts}% (Monte Carlo)` });
-  }
-  
-  if (mc.over25 > 60) {
-    factors.push({ icon: '📈', text: `Over 2.5 favorecido: ${mc.over25}%` });
-  } else if (mc.under25 > 60) {
-    factors.push({ icon: '📉', text: `Under 2.5 favorecido: ${mc.under25}%` });
-  }
+  if (mc.btts > 60) factors.push({icon:'⚽',text:`BTTS provável: ${mc.btts}%`});
+  if (mc.over25 > 60) factors.push({icon:'📈',text:`Over 2.5 favorecido: ${mc.over25}%`});
+  else if (mc.under25 > 60) factors.push({icon:'📉',text:`Under 2.5 favorecido: ${mc.under25}%`});
   
   return factors.slice(0, 12);
 }
 
-function calcBadges(mc, hS, aS, bestBet) {
-  const badges = [];
-  
-  if (hS.matchesAnalyzed < 2 || aS.matchesAnalyzed < 2) {
-    badges.push('insufficient');
-    return badges;
-  }
-  
-  if (bestBet.confidence === 'Alta' && !bestBet.isEstimate) badges.push('high-confidence');
-  if (bestBet.valueBet) badges.push('value-bet');
-  if (Math.abs(mc.homeWin - mc.awayWin) < 12 && mc.draw > 28) badges.push('danger');
-  if (bestBet.isEstimate) badges.push('estimated');
-  
-  return badges.length ? badges : ['standard'];
-}
-
-// --- HANDLERS DE ROTA ---
 async function handlePredict(qs) {
   const homeId = parseInt(qs.home, 10);
   const awayId = parseInt(qs.away, 10);
   const hName = qs.homeName || 'Mandante';
   const aName = qs.awayName || 'Visitante';
   
-  if (!homeId || !awayId) {
-    throw new Error('Informe "home" e "away" (IDs dos times).');
-  }
+  if (!homeId || !awayId) throw new Error('Informe "home" e "away" (IDs dos times).');
   
-  const [hS, aS] = await Promise.all([
-    teamStats(homeId),
-    teamStats(awayId),
-  ]);
+  const [hS, aS] = await Promise.all([teamStats(homeId), teamStats(awayId)]);
   
   const lH = calcLambda(hS, aS, true);
   const lA = calcLambda(aS, hS, false);
   const mc = monteCarloSimulation(lH, lA);
   
   const allMarkets = buildAllMarkets(mc, hS, aS, hName, aName);
-  const bestBet = findBestBet(allMarkets, mc, hS, aS, hName, aName);
+  const bestBet = findBestBet(allMarkets, mc, hS, aS);
   const factors = genFactors(hS, aS, mc, hName, aName);
-  const badges = calcBadges(mc, hS, aS, bestBet);
   
-  // Top mercados por categoria
-  const topByCategory = {};
+  // Agrupar por categoria
+  const byCategory = {};
   allMarkets.forEach(m => {
-    if (!topByCategory[m.category]) topByCategory[m.category] = [];
-    topByCategory[m.category].push(m);
+    if (!byCategory[m.cat]) byCategory[m.cat] = [];
+    byCategory[m.cat].push(m);
+  });
+  Object.keys(byCategory).forEach(cat => {
+    byCategory[cat] = byCategory[cat].sort((a,b) => b.prob - a.prob).slice(0, 5);
   });
   
-  // Ordenar cada categoria por probabilidade
-  Object.keys(topByCategory).forEach(cat => {
-    topByCategory[cat] = topByCategory[cat]
-      .sort((a, b) => b.prob - a.prob)
-      .slice(0, 5);
-  });
-  
-  // Ticket (top 10 value bets)
-  const ticket = allMarkets
-    .filter(m => m.isValueBet)
-    .sort((a, b) => b.prob - a.prob)
-    .slice(0, 10)
-    .map(m => ({
-      key: m.key,
-      label: m.label,
-      icon: m.icon,
-      prob: m.prob,
-      category: m.category,
-      isEstimate: m.isEstimate,
-    }));
+  const ticket = allMarkets.filter(m => m.val).sort((a,b) => b.prob - a.prob).slice(0, 10);
   
   return {
     homeMatchesAnalyzed: hS.matchesAnalyzed,
@@ -1118,12 +889,11 @@ async function handlePredict(qs) {
     homeIsFallback: hS.isFallback || false,
     awayIsFallback: aS.isFallback || false,
     allMarkets,
-    topByCategory,
+    byCategory,
     ticket,
     mc,
     bestBet,
     factors,
-    badges,
     stats: {
       home: {
         avgGoalsFor: hS.avgGoalsFor,
@@ -1132,6 +902,7 @@ async function handlePredict(qs) {
         bttsRate: hS.bttsRate,
         cleanSheets: hS.cleanSheets,
         averages: hS.averages,
+        style: hS.style || 'equilibrado',
       },
       away: {
         avgGoalsFor: aS.avgGoalsFor,
@@ -1140,6 +911,7 @@ async function handlePredict(qs) {
         bttsRate: aS.bttsRate,
         cleanSheets: aS.cleanSheets,
         averages: aS.averages,
+        style: aS.style || 'equilibrado',
       },
     },
   };
@@ -1150,64 +922,43 @@ async function handleCompare(qs) {
   const hId = parseInt(qs.home, 10);
   const aId = parseInt(qs.away, 10);
   
-  if (!fid || !hId || !aId) {
-    throw new Error('Informe "fixture", "home" e "away" (IDs).');
-  }
+  if (!fid || !hId || !aId) throw new Error('Informe "fixture", "home" e "away".');
   
   const [hS, aS, lj] = await Promise.all([
-    teamStats(hId),
-    teamStats(aId),
+    teamStats(hId), teamStats(aId),
     apiGet('/fixtures/statistics', { fixture: fid }),
   ]);
   
-  const comparisons = Object.entries(STAT_API_MAP)
-    .filter(([key]) => key !== 'cards' && key !== 'yellow_cards' && key !== 'red_cards')
-    .map(([key, apiName]) => {
-      const hPred = hS.averages[key] ?? GENERIC[key];
-      const aPred = aS.averages[key] ?? GENERIC[key];
-      const pred = Math.round((hPred + aPred) * 10) / 10;
-      
-      let actual = null;
-      const vH = extractStat(lj, hId, apiName);
-      const vA = extractStat(lj, aId, apiName);
-      
-      if (vH != null || vA != null) {
-        actual = (vH || 0) + (vA || 0);
-      }
-      
-      const accuracy = actual != null ? 
-        Math.abs(pred - actual) <= 1 ? 'Alta' :
-        Math.abs(pred - actual) <= 2 ? 'Média' : 'Baixa' : 
-        null;
-      
-      return {
-        statKey: key,
-        statLabel: STAT_NAMES[key] || key,
-        predictedTotal: pred,
-        homeAvg: Math.round(hPred * 10) / 10,
-        awayAvg: Math.round(aPred * 10) / 10,
-        suggestedLine: roundLine(pred),
-        actual,
-        accuracy,
-        deviation: actual != null ? Math.round((pred - actual) * 10) / 10 : null,
-      };
+  const comparisons = [];
+  
+  for (const [key, apiName] of Object.entries(STAT_API_MAP)) {
+    if (['yellow_cards', 'red_cards', 'cards'].includes(key)) continue;
+    
+    const hPred = hS.averages[key] ?? GENERIC[key];
+    const aPred = aS.averages[key] ?? GENERIC[key];
+    const pred = Math.round((hPred + aPred) * 10) / 10;
+    
+    const vH = extractStat(lj, hId, apiName);
+    const vA = extractStat(lj, aId, apiName);
+    const actual = (vH != null || vA != null) ? (vH || 0) + (vA || 0) : null;
+    
+    comparisons.push({
+      statKey: key,
+      statLabel: STAT_NAMES[key] || key,
+      predictedTotal: pred,
+      homeAvg: Math.round(hPred * 10) / 10,
+      awayAvg: Math.round(aPred * 10) / 10,
+      suggestedLine: roundLine(pred),
+      actual,
+      accuracy: actual != null ? 
+        (Math.abs(pred - actual) <= 1 ? 'Alta' : Math.abs(pred - actual) <= 2 ? 'Média' : 'Baixa') : null,
+      deviation: actual != null ? Math.round((pred - actual) * 10) / 10 : null,
     });
+  }
   
-  // Adicionar cartões separadamente
-  const yH = extractStat(lj, hId, 'Yellow Cards');
-  const rH = extractStat(lj, hId, 'Red Cards');
-  const yA = extractStat(lj, aId, 'Yellow Cards');
-  const rA = extractStat(lj, aId, 'Red Cards');
-  
-  comparisons.push({
-    statKey: 'yellow_cards',
-    statLabel: 'Cartões Amarelos',
-    predictedTotal: Math.round(((hS.averages.yellow_cards ?? GENERIC.yellow_cards) + (aS.averages.yellow_cards ?? GENERIC.yellow_cards)) * 10) / 10,
-    homeAvg: Math.round((hS.averages.yellow_cards ?? GENERIC.yellow_cards) * 10) / 10,
-    awayAvg: Math.round((aS.averages.yellow_cards ?? GENERIC.yellow_cards) * 10) / 10,
-    suggestedLine: 4.5,
-    actual: (yH != null || yA != null) ? (yH || 0) + (yA || 0) : null,
-  });
+  // Cartões
+  const yH = extractStat(lj, hId, 'Yellow Cards'), rH = extractStat(lj, hId, 'Red Cards');
+  const yA = extractStat(lj, aId, 'Yellow Cards'), rA = extractStat(lj, aId, 'Red Cards');
   
   comparisons.push({
     statKey: 'cards',
@@ -1216,22 +967,36 @@ async function handleCompare(qs) {
     homeAvg: Math.round((hS.averages.cards ?? GENERIC.cards) * 10) / 10,
     awayAvg: Math.round((aS.averages.cards ?? GENERIC.cards) * 10) / 10,
     suggestedLine: 5.5,
-    actual: (yH != null || yA != null || rH != null || rA != null) ? (yH || 0) + (rH || 0) + (yA || 0) + (rA || 0) : null,
+    actual: (yH != null || yA != null || rH != null || rA != null) ? (yH||0)+(rH||0)+(yA||0)+(rA||0) : null,
   });
   
   return {
     fixtureId: fid,
     comparisons,
-    accuracy: {
-      high: comparisons.filter(c => c.accuracy === 'Alta').length,
-      medium: comparisons.filter(c => c.accuracy === 'Média').length,
-      low: comparisons.filter(c => c.accuracy === 'Baixa').length,
-      total: comparisons.filter(c => c.accuracy !== null).length,
+    summary: {
+      total: comparisons.length,
+      withActual: comparisons.filter(c => c.actual !== null).length,
+      highAccuracy: comparisons.filter(c => c.accuracy === 'Alta').length,
+      mediumAccuracy: comparisons.filter(c => c.accuracy === 'Média').length,
+      lowAccuracy: comparisons.filter(c => c.accuracy === 'Baixa').length,
     },
   };
 }
 
-// --- EXPORT DO HANDLER ---
+// Health check
+async function handleHealth() {
+  const key = process.env.APIFOOTBALL_KEY;
+  return {
+    status: 'online',
+    version: '5.0.0',
+    apiConfigured: !!key,
+    cacheSize: cache.size,
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  };
+}
+
+// --- EXPORT ---
 exports.handler = async (event) => {
   const startTime = Date.now();
   const qs = event.queryStringParameters || {};
@@ -1239,8 +1004,9 @@ exports.handler = async (event) => {
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Cache-Control': 'public, max-age=60',
   };
   
   if (event.httpMethod === 'OPTIONS') {
@@ -1249,28 +1015,35 @@ exports.handler = async (event) => {
   
   try {
     let result;
-    const action = qs.action;
     
-    if (action === 'fixtures') {
-      result = await handleFixtures(qs);
-    } else if (action === 'predict') {
-      result = await handlePredict(qs);
-    } else if (action === 'compare') {
-      result = await handleCompare(qs);
-    } else {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: 'Ação inválida',
-          validActions: ['fixtures', 'predict', 'compare'],
-          examples: {
-            fixtures: '?action=fixtures&date=2024-01-15&scope=live',
-            predict: '?action=predict&home=121&away=130&homeName=Flamengo&awayName=Palmeiras',
-            compare: '?action=compare&fixture=12345&home=121&away=130',
-          },
-        }),
-      };
+    switch (qs.action) {
+      case 'fixtures':
+        result = await handleFixtures(qs);
+        break;
+      case 'predict':
+        result = await handlePredict(qs);
+        break;
+      case 'compare':
+        result = await handleCompare(qs);
+        break;
+      case 'health':
+        result = await handleHealth();
+        break;
+      default:
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({
+            error: 'Ação inválida',
+            validActions: ['fixtures', 'predict', 'compare', 'health'],
+            examples: {
+              fixtures: '?action=fixtures&date=2026-07-02&scope=all&includeLeagues=1,2,13',
+              predict: '?action=predict&home=121&away=130&homeName=Flamengo&awayName=Palmeiras',
+              compare: '?action=compare&fixture=12345&home=121&away=130',
+              health: '?action=health',
+            },
+          }),
+        };
     }
     
     const duration = Date.now() - startTime;
@@ -1280,12 +1053,10 @@ exports.handler = async (event) => {
       headers,
       body: JSON.stringify({
         ...result,
-        meta: {
+        _meta: {
           duration: `${duration}ms`,
           timestamp: new Date().toISOString(),
           version: '5.0.0',
-          markets: 'Betano Edition',
-          totalMarkets: result.allMarkets?.length || 0,
         },
       }),
     };
@@ -1303,7 +1074,7 @@ exports.handler = async (event) => {
       headers,
       body: JSON.stringify({
         error: message,
-        meta: {
+        _meta: {
           duration: `${Date.now() - startTime}ms`,
           timestamp: new Date().toISOString(),
         },
