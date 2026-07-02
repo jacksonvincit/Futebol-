@@ -1,5 +1,5 @@
 // FuteStat v5.0 — API Backend Completa
-// Netlify Function com suporte a +50 mercados, Copa do Mundo, e limpeza automática
+// Suporte a Copa do Mundo 2026, +60 mercados estatísticos, campo 3D
 
 const BASE_URL = 'https://v3.football.api-sports.io';
 const MAX_MATCHES = 8;
@@ -7,20 +7,20 @@ const MC_N = 10000;
 const CACHE_TTL = 300;
 const MAX_HISTORY_HOURS = 12;
 
-// Cache em memória com limpeza automática
+// Cache inteligente
 const cache = new Map();
-let lastCacheCleanup = Date.now();
+let lastCleanup = Date.now();
 
 function cleanCache() {
   const now = Date.now();
-  if (now - lastCacheCleanup < 300000) return; // Limpar a cada 5 minutos
+  if (now - lastCleanup < 300000) return;
   
   for (const [key, entry] of cache.entries()) {
     if (now - entry.timestamp > CACHE_TTL * 1000) {
       cache.delete(key);
     }
   }
-  lastCacheCleanup = now;
+  lastCleanup = now;
 }
 
 function getCached(key) {
@@ -41,7 +41,7 @@ function setCache(key, data) {
   cache.set(key, { data, timestamp: Date.now() });
 }
 
-// Rate limiting otimizado
+// Rate limiting
 const rateLimiter = {
   requests: [],
   maxRequests: 35,
@@ -63,7 +63,7 @@ const rateLimiter = {
   }
 };
 
-// Retry com backoff exponencial melhorado
+// Retry com backoff
 async function fetchWithRetry(url, options, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -98,7 +98,7 @@ async function fetchWithRetry(url, options, retries = 3) {
   }
 }
 
-// Todas as estatísticas disponíveis
+// Todas as estatísticas disponíveis (incluindo laterais e tiros de meta)
 const STAT_NAMES = {
   goals: 'Gols',
   shots_total: 'Total de Chutes',
@@ -125,6 +125,15 @@ const STAT_NAMES = {
   injuries: 'Lesões',
   dribbles: 'Dribles',
   aerials_won: 'Duelos Aéreos Vencidos',
+  throw_ins: 'Laterais',
+  goal_kicks: 'Tiros de Meta',
+  free_kicks: 'Cobranças de Falta',
+  hit_woodwork: 'Bolas na Trave',
+  big_chances: 'Grandes Chances',
+  big_chances_missed: 'Grandes Chances Perdidas',
+  counter_attacks: 'Contra-Ataques',
+  long_balls: 'Bolas Longas',
+  crosses: 'Cruzamentos',
 };
 
 const GENERIC = {
@@ -135,6 +144,9 @@ const GENERIC = {
   goalkeeper_saves: 3.5, cards: 2.2, yellow_cards: 1.9, red_cards: 0.3,
   fouls: 11, corners: 5, offsides: 1.8, substitutions: 3.5,
   injuries: 0.5, dribbles: 8, aerials_won: 15,
+  throw_ins: 22, goal_kicks: 12, free_kicks: 8,
+  hit_woodwork: 0.3, big_chances: 2.5, big_chances_missed: 1.5,
+  counter_attacks: 3, long_balls: 45, crosses: 16,
 };
 
 const STAT_API_MAP = {
@@ -162,23 +174,37 @@ const STAT_API_MAP = {
   injuries: 'Injuries',
   dribbles: 'Dribbles',
   aerials_won: 'Aerials Won',
+  throw_ins: 'Throw-ins',
+  goal_kicks: 'Goal Kicks',
+  free_kicks: 'Free Kicks',
+  hit_woodwork: 'Hit Woodwork',
+  big_chances: 'Big Chances',
+  big_chances_missed: 'Big Chances Missed',
+  counter_attacks: 'Counter Attacks',
+  long_balls: 'Long Balls',
+  crosses: 'Crosses',
 };
 
-// Ligas disponíveis (incluindo Copa do Mundo e torneios internacionais)
+// Ligas completas incluindo Copa do Mundo 2026
 const AVAILABLE_LEAGUES = [
-  { id: 1, name: 'Copa do Mundo', country: 'Mundial', type: 'international' },
-  { id: 6, name: 'Copa do Mundo 2026', country: 'Mundial', type: 'international' },
-  { id: 9, name: 'Copa do Mundo Sub-20', country: 'Mundial', type: 'international' },
-  { id: 2, name: 'Liga dos Campeões', country: 'Europa', type: 'international' },
-  { id: 3, name: 'Liga Europa', country: 'Europa', type: 'international' },
-  { id: 4, name: 'Eurocopa', country: 'Europa', type: 'international' },
-  { id: 13, name: 'Copa Libertadores', country: 'América do Sul', type: 'international' },
-  { id: 15, name: 'Copa América', country: 'América do Sul', type: 'international' },
+  { id: 1, name: 'Copa do Mundo 2026', country: 'Mundial', type: 'world_cup', featured: true },
+  { id: 33, name: 'Copa do Mundo 2026 - Qual. CONMEBOL', country: 'América do Sul', type: 'qualifier' },
+  { id: 34, name: 'Copa do Mundo 2026 - Qual. UEFA', country: 'Europa', type: 'qualifier' },
+  { id: 6, name: 'Copa do Mundo 2026 - Qual. África', country: 'África', type: 'qualifier' },
+  { id: 7, name: 'Copa do Mundo 2026 - Qual. Ásia', country: 'Ásia', type: 'qualifier' },
+  { id: 9, name: 'Copa do Mundo Sub-20', country: 'Mundial', type: 'youth' },
+  { id: 2, name: 'Liga dos Campeões', country: 'Europa', type: 'continental', featured: true },
+  { id: 3, name: 'Liga Europa', country: 'Europa', type: 'continental' },
+  { id: 4, name: 'Eurocopa', country: 'Europa', type: 'national' },
+  { id: 5, name: 'Liga das Nações UEFA', country: 'Europa', type: 'national' },
+  { id: 13, name: 'Copa Libertadores', country: 'América do Sul', type: 'continental', featured: true },
+  { id: 15, name: 'Copa América', country: 'América do Sul', type: 'national' },
+  { id: 12, name: 'Copa Sul-Americana', country: 'América do Sul', type: 'continental' },
   { id: 10, name: 'Amistosos Internacionais', country: 'Mundial', type: 'friendly' },
-  { id: 71, name: 'Brasileirão Série A', country: 'Brasil', type: 'league' },
+  { id: 71, name: 'Brasileirão Série A', country: 'Brasil', type: 'league', featured: true },
   { id: 72, name: 'Brasileirão Série B', country: 'Brasil', type: 'league' },
-  { id: 39, name: 'Premier League', country: 'Inglaterra', type: 'league' },
-  { id: 140, name: 'La Liga', country: 'Espanha', type: 'league' },
+  { id: 39, name: 'Premier League', country: 'Inglaterra', type: 'league', featured: true },
+  { id: 140, name: 'La Liga', country: 'Espanha', type: 'league', featured: true },
   { id: 135, name: 'Série A TIM', country: 'Itália', type: 'league' },
   { id: 78, name: 'Bundesliga', country: 'Alemanha', type: 'league' },
   { id: 61, name: 'Ligue 1', country: 'França', type: 'league' },
@@ -187,39 +213,44 @@ const AVAILABLE_LEAGUES = [
   { id: 88, name: 'Eredivisie', country: 'Holanda', type: 'league' },
   { id: 253, name: 'MLS', country: 'EUA', type: 'league' },
   { id: 262, name: 'Liga MX', country: 'México', type: 'league' },
-  { id: 12, name: 'Copa Sul-Americana', country: 'América do Sul', type: 'international' },
-  { id: 5, name: 'Liga das Nações UEFA', country: 'Europa', type: 'international' },
   { id: 11, name: 'Copa do Brasil', country: 'Brasil', type: 'cup' },
   { id: 45, name: 'Copa da Inglaterra', country: 'Inglaterra', type: 'cup' },
   { id: 143, name: 'Copa do Rei', country: 'Espanha', type: 'cup' },
+  { id: 18, name: 'Mundial de Clubes', country: 'Mundial', type: 'continental' },
+  { id: 848, name: 'CONCACAF Nations League', country: 'América do Norte', type: 'national' },
 ];
 
-// Perfis de times por estilo de jogo
+// Perfis de times
 const TEAM_STYLES = {
   ofensivo: {
     goals: 1.9, shots_total: 16, shots_on_target: 6.5, corners: 7,
     possession: 58, passes: 500, tackles: 11, fouls: 9,
-    dribbles: 12, aerials_won: 14,
+    dribbles: 12, aerials_won: 14, throw_ins: 24, goal_kicks: 10,
+    crosses: 20, long_balls: 40, big_chances: 3.5,
   },
   defensivo: {
     goals: 0.8, shots_total: 8, shots_on_target: 3, corners: 3,
     possession: 40, passes: 340, tackles: 19, fouls: 15,
-    dribbles: 5, aerials_won: 18,
+    dribbles: 5, aerials_won: 18, throw_ins: 18, goal_kicks: 15,
+    crosses: 10, long_balls: 55, big_chances: 1.2,
   },
   equilibrado: {
     goals: 1.4, shots_total: 13, shots_on_target: 5, corners: 5.5,
     possession: 50, passes: 430, tackles: 14, fouls: 11,
-    dribbles: 8, aerials_won: 15,
+    dribbles: 8, aerials_won: 15, throw_ins: 22, goal_kicks: 12,
+    crosses: 16, long_balls: 45, big_chances: 2.5,
   },
   contra_ataque: {
     goals: 1.1, shots_total: 10, shots_on_target: 4, corners: 4,
     possession: 38, passes: 310, tackles: 16, fouls: 13,
-    dribbles: 9, aerials_won: 12,
+    dribbles: 9, aerials_won: 12, throw_ins: 19, goal_kicks: 14,
+    crosses: 14, long_balls: 50, big_chances: 1.8,
   },
   pressao_alta: {
     goals: 1.7, shots_total: 15, shots_on_target: 6, corners: 6.5,
     possession: 55, passes: 460, tackles: 15, fouls: 14,
-    dribbles: 10, aerials_won: 16,
+    dribbles: 10, aerials_won: 16, throw_ins: 23, goal_kicks: 9,
+    crosses: 18, long_balls: 38, big_chances: 3.0,
   },
 };
 
@@ -229,7 +260,7 @@ function getTeamProfile(teamId) {
   return { ...styles[hash], id: teamId };
 }
 
-// Funções matemáticas
+// --- MATEMÁTICA ---
 function poissonRandom(lambda) {
   if (lambda <= 0) return 0;
   if (lambda > 20) lambda = 20;
@@ -246,8 +277,12 @@ function monteCarloSimulation(lH, lA) {
   let fh05 = 0, fh15 = 0, hfg = 0, afg = 0, hlg = 0, alg = 0;
   let hWinToNil = 0, aWinToNil = 0;
   let hWinBothHalves = 0, aWinBothHalves = 0;
+  
+  // Estatísticas acumuladas
   let totalShots = 0, totalShotsOnTarget = 0, totalCorners = 0;
-  let totalCards = 0, totalFouls = 0;
+  let totalCards = 0, totalFouls = 0, totalThrowIns = 0;
+  let totalGoalKicks = 0, totalPasses = 0, totalTackles = 0;
+  let totalSaves = 0, totalOffsides = 0, totalCrosses = 0;
   
   for (let s = 0; s < MC_N; s++) {
     const hg = poissonRandom(lH), ag = poissonRandom(lA);
@@ -271,27 +306,40 @@ function monteCarloSimulation(lH, lA) {
     const key = `${Math.min(hg, 6)}-${Math.min(ag, 6)}`;
     sl[key] = (sl[key] || 0) + 1;
     
+    // Primeiro tempo
     const h1 = Math.floor(hg * (0.3 + Math.random() * 0.2));
     const a1 = Math.floor(ag * (0.3 + Math.random() * 0.2));
     if (h1 + a1 > 0.5) fh05++;
     if (h1 + a1 > 1.5) fh15++;
     
+    // Cronologia
     if (hg > 0 && ag === 0) hfg++;
     if (ag > 0 && hg === 0) afg++;
     if (hg > ag) hlg++;
     if (ag > hg) alg++;
     
+    // Vencer ambos os tempos
     if (h1 > a1 && (hg - h1) > (ag - a1)) hWinBothHalves++;
     if (a1 > h1 && (ag - a1) > (hg - h1)) aWinBothHalves++;
     
-    totalShots += 12 + (hg + ag) * 3;
-    totalShotsOnTarget += 4 + (hg + ag) * 1.5;
-    totalCorners += 5 + (hg + ag) * 1.2;
-    totalCards += 2 + Math.floor((hg + ag) * 0.5);
-    totalFouls += 11 + Math.floor((hg + ag) * 1.5);
+    // Estatísticas baseadas nos gols
+    const intensity = (hg + ag) / 3;
+    totalShots += 12 + intensity * 4;
+    totalShotsOnTarget += 4 + intensity * 2;
+    totalCorners += 5 + intensity * 1.5;
+    totalCards += 2 + intensity * 0.6;
+    totalFouls += 11 + intensity * 2;
+    totalThrowIns += 22 + intensity * 1.5;
+    totalGoalKicks += 12 + intensity * 1;
+    totalPasses += 420 + intensity * 30;
+    totalTackles += 14 + intensity * 2;
+    totalSaves += 3.5 + intensity * 1;
+    totalOffsides += 1.8 + intensity * 0.4;
+    totalCrosses += 16 + intensity * 2;
   }
   
   const p = v => Math.round(v / MC_N * 1000) / 10;
+  
   const calcOver = line => {
     let c = 0;
     for (let i = Math.ceil(line); i <= 9; i++) c += gd[i];
@@ -314,11 +362,21 @@ function monteCarloSimulation(lH, lA) {
     homeWinToNil: p(hWinToNil), awayWinToNil: p(aWinToNil),
     homeWinBothHalves: p(hWinBothHalves), awayWinBothHalves: p(aWinBothHalves),
     dc1x: p(hw + dr), dc12: p(hw + aw), dcx2: p(dr + aw),
+    
+    // Estatísticas médias
     avgShots: Math.round(totalShots / MC_N),
     avgShotsOnTarget: Math.round(totalShotsOnTarget / MC_N),
     avgCorners: Math.round(totalCorners / MC_N),
     avgCards: Math.round(totalCards / MC_N),
     avgFouls: Math.round(totalFouls / MC_N),
+    avgThrowIns: Math.round(totalThrowIns / MC_N),
+    avgGoalKicks: Math.round(totalGoalKicks / MC_N),
+    avgPasses: Math.round(totalPasses / MC_N),
+    avgTackles: Math.round(totalTackles / MC_N),
+    avgSaves: Math.round(totalSaves / MC_N),
+    avgOffsides: Math.round(totalOffsides / MC_N),
+    avgCrosses: Math.round(totalCrosses / MC_N),
+    
     top5: Object.entries(sl).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([s,c])=>({score:s,prob:p(c)})),
     top10: Object.entries(sl).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([s,c])=>({score:s,prob:p(c)})),
     lambdaH: Math.round(lH * 100) / 100,
@@ -326,7 +384,7 @@ function monteCarloSimulation(lH, lA) {
   };
 }
 
-// API Functions
+// --- API ---
 async function apiGet(path, params = {}) {
   const key = process.env.APIFOOTBALL_KEY;
   if (!key) {
@@ -388,6 +446,8 @@ function mapFixture(item) {
     awayGoals: item.goals?.away ?? null,
     hoursSinceEnd: hoursSinceEnd,
     shouldCleanup: hoursSinceEnd > MAX_HISTORY_HOURS,
+    venue: item.fixture?.venue?.name || null,
+    referee: item.fixture?.referee || null,
   };
 }
 
@@ -428,7 +488,6 @@ async function handleFixtures(qs) {
     try {
       const dayData = await apiGet('/fixtures', { date });
       if (dayData?.response) {
-        // Evitar duplicatas
         const existingIds = new Set(allFixtures.map(f => f.fixture.id));
         const newFixtures = dayData.response.filter(f => !existingIds.has(f.fixture.id));
         allFixtures.push(...newFixtures);
@@ -438,12 +497,15 @@ async function handleFixtures(qs) {
     }
   }
   
-  // Buscar jogos de ligas específicas (Copa do Mundo, etc.)
+  // Buscar ligas específicas (Copa do Mundo 2026, etc.)
   if (qs.includeLeagues) {
     const leagueIds = qs.includeLeagues.split(',').map(Number);
     for (const leagueId of leagueIds) {
       try {
-        const leagueData = await apiGet('/fixtures', { league: leagueId, season: new Date().getFullYear() });
+        const leagueData = await apiGet('/fixtures', { 
+          league: leagueId, 
+          season: qs.season || new Date().getFullYear() 
+        });
         if (leagueData?.response) {
           const existingIds = new Set(allFixtures.map(f => f.fixture.id));
           const newFixtures = leagueData.response.filter(f => !existingIds.has(f.fixture.id));
@@ -457,12 +519,10 @@ async function handleFixtures(qs) {
   
   const fixtures = allFixtures.map(mapFixture);
   
-  // Separar por status
   const live = fixtures.filter(f => f.statusShort === 'LIVE');
   const ended = fixtures.filter(f => f.statusShort === 'FT' && !f.shouldCleanup);
-  const scheduled = fixtures.filter(f => ['NS', 'TBD'].includes(f.statusShort));
+  const scheduled = fixtures.filter(f => ['NS', 'TBD', 'PST'].includes(f.statusShort));
   
-  // Ordenar: ao vivo primeiro, depois agendados, depois encerrados
   const sorted = [...live, ...scheduled, ...ended];
   
   return {
@@ -473,6 +533,8 @@ async function handleFixtures(qs) {
     ended: ended.length,
     cleaned: fixtures.filter(f => f.shouldCleanup).length,
     leagues: [...new Set(fixtures.map(f => f.league?.name))].filter(Boolean),
+    availableLeagues: AVAILABLE_LEAGUES,
+    date: date,
   };
 }
 
@@ -502,7 +564,9 @@ async function fetchTeamStats(teamId) {
       homeGF: [], homeGA: [], homeWins: 0, homePlayed: 0,
       awayGF: [], awayGA: [], awayWins: 0, awayPlayed: 0,
       over25: 0, over35: 0, btts: 0,
+      over15: 0, under25: 0,
       totalGoals: 0,
+      recentForm: [],
     };
     
     for (let idx = 0; idx < fixtures.length; idx++) {
@@ -516,13 +580,11 @@ async function fetchTeamStats(teamId) {
       stats.totalGoals += gf + ga;
       
       if (isHome) {
-        stats.homeGF.push(gf);
-        stats.homeGA.push(ga);
+        stats.homeGF.push(gf); stats.homeGA.push(ga);
         stats.homePlayed++;
         if (gf > ga) stats.homeWins++;
       } else {
-        stats.awayGF.push(gf);
-        stats.awayGA.push(ga);
+        stats.awayGF.push(gf); stats.awayGA.push(ga);
         stats.awayPlayed++;
         if (gf > ga) stats.awayWins++;
       }
@@ -533,10 +595,15 @@ async function fetchTeamStats(teamId) {
       
       if (ga === 0) stats.cleanSheets++;
       if (gf === 0) stats.failedToScore++;
+      if (gf + ga > 1.5) stats.over15++;
       if (gf + ga > 2.5) stats.over25++;
       if (gf + ga > 3.5) stats.over35++;
+      if (gf + ga < 2.5) stats.under25++;
       if (gf > 0 && ga > 0) stats.btts++;
       
+      stats.recentForm.push(gf > ga ? 'W' : gf === ga ? 'D' : 'L');
+      
+      // Buscar estatísticas detalhadas
       if (idx < 5) {
         try {
           const sj = await apiGet('/fixtures/statistics', { fixture: fx.fixture.id });
@@ -544,6 +611,7 @@ async function fetchTeamStats(teamId) {
             id: fx.fixture.id,
             stats: sj.response || [],
             goals: { home: fx.goals?.home ?? 0, away: fx.goals?.away ?? 0 },
+            date: fx.fixture.date,
           });
         } catch (err) {
           console.warn(`Erro stats partida ${fx.fixture.id}:`, err.message);
@@ -574,13 +642,15 @@ function buildFallbackStats(profile) {
     averages,
     isReal,
     matchesAnalyzed: 0,
-    form: { wins: 0, draws: 0, losses: 0, played: 0, winRate: 0 },
+    form: { wins: 0, draws: 0, losses: 0, played: 0, winRate: 0, recent: [] },
     homeForm: { wins: 0, played: 0, winRate: 0, goalsFor: profile.goals || 1.3, goalsAgainst: 1.1 },
     awayForm: { wins: 0, played: 0, winRate: 0, goalsFor: (profile.goals || 1.3) * 0.75, goalsAgainst: 1.4 },
-    over25Rate: 0.5, over35Rate: 0.25, bttsRate: 0.5,
+    over15Rate: 0.7, over25Rate: 0.5, over35Rate: 0.25,
+    under25Rate: 0.5, bttsRate: 0.5,
     cleanSheets: 0, failedToScore: 0,
     avgGoalsFor: profile.goals || 1.3,
     avgGoalsAgainst: 1.3,
+    avgTotalGoals: 2.6,
     style: Object.keys(TEAM_STYLES).find(k => TEAM_STYLES[k].goals === profile.goals) || 'equilibrado',
     isFallback: true,
   };
@@ -656,6 +726,7 @@ async function teamStats(teamId) {
     form: {
       wins: raw.wins, draws: raw.draws, losses: raw.losses,
       played: total, winRate: total ? raw.wins / total : 0,
+      recent: raw.recentForm,
     },
     homeForm: {
       wins: raw.homeWins, played: raw.homePlayed,
@@ -669,16 +740,31 @@ async function teamStats(teamId) {
       goalsFor: mean(raw.awayGF) ?? 1.1,
       goalsAgainst: mean(raw.awayGA) ?? 1.5,
     },
+    over15Rate: total ? raw.over15 / total : 0.7,
     over25Rate: total ? raw.over25 / total : 0.5,
     over35Rate: total ? raw.over35 / total : 0.25,
+    under25Rate: total ? raw.under25 / total : 0.5,
     bttsRate: total ? raw.btts / total : 0.5,
     cleanSheets: raw.cleanSheets,
     failedToScore: raw.failedToScore,
     avgGoalsFor: averages.goalsFor,
     avgGoalsAgainst: averages.goalsAgainst,
     avgTotalGoals: total ? raw.totalGoals / total : 2.6,
+    style: classifyStyle(averages),
     isFallback: false,
   };
+}
+
+function classifyStyle(averages) {
+  const gf = averages.goalsFor || 1.3;
+  const ga = averages.goalsAgainst || 1.3;
+  const poss = averages.possession || 50;
+  
+  if (gf > 1.6 && poss > 52) return 'ofensivo';
+  if (ga < 1.0 && poss < 48) return 'defensivo';
+  if (gf < 1.1 && poss < 45) return 'contra_ataque';
+  if (gf > 1.4 && averages.fouls > 12) return 'pressao_alta';
+  return 'equilibrado';
 }
 
 function calcLambda(attacker, defender, isHome) {
@@ -700,55 +786,58 @@ function roundLine(p) {
 function buildAllMarkets(mc, hS, aS, hName, aName) {
   const markets = [];
   
-  // Resultados
+  // --- RESULTADOS ---
   markets.push({k:'1x2_home',cat:'Resultado',label:`Vitória ${hName}`,icon:'🏠',prob:mc.homeWin,val:mc.homeWin>40,est:hS.matchesAnalyzed<3});
   markets.push({k:'1x2_draw',cat:'Resultado',label:'Empate',icon:'🤝',prob:mc.draw,val:mc.draw>30,est:hS.matchesAnalyzed<3});
   markets.push({k:'1x2_away',cat:'Resultado',label:`Vitória ${aName}`,icon:'✈️',prob:mc.awayWin,val:mc.awayWin>40,est:aS.matchesAnalyzed<3});
   
-  // Dupla Chance
+  // --- DUPLA CHANCE ---
   markets.push({k:'dc_1x',cat:'Dupla Chance',label:`${hName} ou Empate`,icon:'🛡️',prob:mc.dc1x,val:mc.dc1x>65,est:false});
   markets.push({k:'dc_12',cat:'Dupla Chance',label:`${hName} ou ${aName}`,icon:'⚡',prob:mc.dc12,val:mc.dc12>70,est:false});
   markets.push({k:'dc_x2',cat:'Dupla Chance',label:`Empate ou ${aName}`,icon:'🛡️',prob:mc.dcx2,val:mc.dcx2>65,est:false});
   
-  // Gols
-  [0.5,1.5,2.5,3.5,4.5].forEach(line => {
+  // --- GOLS ---
+  [0.5, 1.5, 2.5, 3.5, 4.5].forEach(line => {
     const ok = `over${Math.floor(line*10)}`, uk = `under${Math.floor(line*10)}`;
-    markets.push({k:`goals_over_${line}`,cat:'Gols',label:`Over ${line} Gols`,icon:line<=1.5?'⚽':line<=2.5?'⚽⚽':'🔥',prob:mc[ok],val:mc[ok]>(line<=1.5?75:line<=2.5?55:35),est:false});
-    markets.push({k:`goals_under_${line}`,cat:'Gols',label:`Under ${line} Gols`,icon:'🛡️',prob:mc[uk],val:mc[uk]>(line>=3.5?70:55),est:false});
+    markets.push({k:`goals_over_${line}`,cat:'Gols',label:`Over ${line} Gols`,icon:line<=1.5?'⚽':line<=2.5?'⚽⚽':'🔥',prob:mc[ok],line,val:mc[ok]>(line<=1.5?75:line<=2.5?55:35),est:false});
+    markets.push({k:`goals_under_${line}`,cat:'Gols',label:`Under ${line} Gols`,icon:'🛡️',prob:mc[uk],line,val:mc[uk]>(line>=3.5?70:55),est:false});
   });
   
-  // BTTS
+  // --- BTTS ---
   markets.push({k:'btts_yes',cat:'BTTS',label:'Ambas Marcam Sim',icon:'⚽↔️⚽',prob:mc.btts,val:mc.btts>55,est:false});
   markets.push({k:'btts_no',cat:'BTTS',label:'Ambas Marcam Não',icon:'🚫',prob:mc.noBtts,val:mc.noBtts>55,est:false});
   
-  // 1º Tempo
+  // --- 1º TEMPO ---
   markets.push({k:'fh05',cat:'1º Tempo',label:'Over 0.5 1º Tempo',icon:'⚽ 1T',prob:mc.fh05,val:mc.fh05>65,est:false});
   markets.push({k:'fh15',cat:'1º Tempo',label:'Over 1.5 1º Tempo',icon:'⚽⚽ 1T',prob:mc.fh15,val:mc.fh15>35,est:false});
   
-  // Cronologia
+  // --- CRONOLOGIA ---
   markets.push({k:'first_goal_home',cat:'Cronologia',label:`1º Gol ${hName}`,icon:'🏠⚽',prob:mc.homeFirstGoal,val:mc.homeFirstGoal>40,est:false});
   markets.push({k:'first_goal_away',cat:'Cronologia',label:`1º Gol ${aName}`,icon:'✈️⚽',prob:mc.awayFirstGoal,val:mc.awayFirstGoal>35,est:false});
   markets.push({k:'last_goal_home',cat:'Cronologia',label:`Último Gol ${hName}`,icon:'🏠⏱️',prob:mc.homeLastGoal,val:mc.homeLastGoal>35,est:false});
   markets.push({k:'last_goal_away',cat:'Cronologia',label:`Último Gol ${aName}`,icon:'✈️⏱️',prob:mc.awayLastGoal,val:mc.awayLastGoal>30,est:false});
   
-  // Clean Sheet
-  markets.push({k:'cs_home',cat:'Defesa',label:`Sem Sofrer ${hName}`,icon:'🏠🔒',prob:mc.csHome,val:mc.csHome>35,est:false});
-  markets.push({k:'cs_away',cat:'Defesa',label:`Sem Sofrer ${aName}`,icon:'✈️🔒',prob:mc.csAway,val:mc.csAway>30,est:false});
+  // --- CLEAN SHEET ---
+  markets.push({k:'cs_home',cat:'Defesa',label:`${hName} sem sofrer`,icon:'🏠🔒',prob:mc.csHome,val:mc.csHome>35,est:false});
+  markets.push({k:'cs_away',cat:'Defesa',label:`${aName} sem sofrer`,icon:'✈️🔒',prob:mc.csAway,val:mc.csAway>30,est:false});
   
-  // Handicap
+  // --- HANDICAP ---
   markets.push({k:'handicap_home_m1',cat:'Handicap',label:`${hName} -1`,icon:'🏠-1',prob:Math.max(5,mc.homeWin-15),val:(mc.homeWin-15)>35,est:false});
   markets.push({k:'handicap_away_p1',cat:'Handicap',label:`${aName} +1`,icon:'✈️+1',prob:Math.min(95,mc.awayWin+15),val:(mc.awayWin+15)>40,est:false});
   
-  // Win to Nil
-  markets.push({k:'win_to_nil_home',cat:'Especiais',label:`${hName} Vence sem Sofrer`,icon:'🏠🧤',prob:mc.homeWinToNil,val:mc.homeWinToNil>20,est:false});
-  markets.push({k:'win_to_nil_away',cat:'Especiais',label:`${aName} Vence sem Sofrer`,icon:'✈️🧤',prob:mc.awayWinToNil,val:mc.awayWinToNil>15,est:false});
+  // --- WIN TO NIL ---
+  markets.push({k:'win_to_nil_home',cat:'Especiais',label:`${hName} vence sem sofrer`,icon:'🏠🧤',prob:mc.homeWinToNil,val:mc.homeWinToNil>20,est:false});
+  markets.push({k:'win_to_nil_away',cat:'Especiais',label:`${aName} vence sem sofrer`,icon:'✈️🧤',prob:mc.awayWinToNil,val:mc.awayWinToNil>15,est:false});
   
-  // Placar Exato
-  mc.top5.forEach((sl,i) => {
+  // --- WIN BOTH HALVES ---
+  markets.push({k:'win_both_halves_home',cat:'Especiais',label:`${hName} vence ambos tempos`,icon:'🏠⏱️',prob:mc.homeWinBothHalves,val:mc.homeWinBothHalves>15,est:false});
+  
+  // --- PLACAR EXATO ---
+  mc.top5.forEach(sl => {
     markets.push({k:`correct_score_${sl.score}`,cat:'Placar Exato',label:`Placar ${sl.score}`,icon:'🎯',prob:sl.prob,val:sl.prob>8,est:false});
   });
   
-  // Estatísticas
+  // --- ESTATÍSTICAS (incluindo laterais e tiros de meta) ---
   const statLines = [
     {k:'shots_total',label:'Total de Chutes',line:22.5,icon:'🎯'},
     {k:'shots_on_target',label:'Chutes no Gol',line:8.5,icon:'🎯✅'},
@@ -762,8 +851,14 @@ function buildAllMarkets(mc, hS, aS, hName, aName) {
     {k:'interceptions',label:'Interceptações',line:18.5,icon:'✋'},
     {k:'clearances',label:'Cortes',line:35.5,icon:'🧹'},
     {k:'goalkeeper_saves',label:'Defesas',line:5.5,icon:'🧤'},
+    {k:'throw_ins',label:'Laterais',line:42.5,icon:'📥'},
+    {k:'goal_kicks',label:'Tiros de Meta',line:22.5,icon:'🥅'},
+    {k:'crosses',label:'Cruzamentos',line:30.5,icon:'↗️'},
     {k:'dribbles',label:'Dribles',line:16.5,icon:'🏃‍♂️'},
     {k:'aerials_won',label:'Duelos Aéreos',line:28.5,icon:'✈️'},
+    {k:'free_kicks',label:'Cobranças de Falta',line:15.5,icon:'🦶'},
+    {k:'long_balls',label:'Bolas Longas',line:85.5,icon:'🚀'},
+    {k:'big_chances',label:'Grandes Chances',line:4.5,icon:'💥'},
   ];
   
   statLines.forEach(sl => {
@@ -777,16 +872,18 @@ function buildAllMarkets(mc, hS, aS, hName, aName) {
       k: `stat_${sl.k}_over`, cat: 'Estatísticas',
       label: `${sl.label} +${sl.line}`, icon: sl.icon,
       prob: overProb, val: overProb > 55 && !isEst, est: isEst,
-      predictedTotal: Math.round(total * 10) / 10,
-      homeAvg: Math.round(h * 10) / 10, awayAvg: Math.round(a * 10) / 10,
+      pt: Math.round(total * 10) / 10,
+      ha: Math.round(h * 10) / 10, aa: Math.round(a * 10) / 10,
+      line: sl.line,
     });
     
     markets.push({
       k: `stat_${sl.k}_under`, cat: 'Estatísticas',
       label: `${sl.label} -${sl.line}`, icon: sl.icon,
       prob: 100 - overProb, val: (100 - overProb) > 55 && !isEst, est: isEst,
-      predictedTotal: Math.round(total * 10) / 10,
-      homeAvg: Math.round(h * 10) / 10, awayAvg: Math.round(a * 10) / 10,
+      pt: Math.round(total * 10) / 10,
+      ha: Math.round(h * 10) / 10, aa: Math.round(a * 10) / 10,
+      line: sl.line,
     });
   });
   
@@ -805,7 +902,9 @@ function findBestBet(markets, mc, hS, aS) {
   const best = candidates[0] || markets[0];
   
   return {
-    market: best.label, key: best.k, category: best.cat,
+    market: best.label,
+    key: best.k,
+    category: best.cat,
     prob: best.prob,
     confidence: best.prob >= 75 ? 'Alta' : best.prob >= 60 ? 'Média' : 'Baixa',
     risk: best.prob >= 75 ? 'Baixo' : best.prob >= 60 ? 'Médio' : 'Alto',
@@ -813,6 +912,8 @@ function findBestBet(markets, mc, hS, aS) {
     isEstimate: best.est,
     impliedOdds: Math.round((1 / (best.prob / 100)) * 1.08 * 100) / 100,
     justification: `Análise de ${MC_N.toLocaleString()} simulações Monte Carlo + Poisson. ${best.est ? '(Dados parcialmente estimados)' : '(Baseado em dados reais)'}`,
+    line: best.line || null,
+    predictedTotal: best.pt || null,
   };
 }
 
@@ -822,35 +923,31 @@ function genFactors(hS, aS, mc, hName, aName) {
   const rnd = v => Math.round(v * 10) / 10;
   
   if (hS.matchesAnalyzed >= 3) {
-    factors.push({icon:'📊',text:`${hName}: ${hS.form.wins}V/${hS.form.draws}E/${hS.form.losses}D nos últimos ${hS.matchesAnalyzed} jogos`});
+    factors.push({icon:'📊',text:`${hName}: ${hS.form.wins}V/${hS.form.draws}E/${hS.form.losses}D em ${hS.matchesAnalyzed} jogos`});
   }
   if (aS.matchesAnalyzed >= 3) {
-    factors.push({icon:'📊',text:`${aName}: ${aS.form.wins}V/${aS.form.draws}E/${aS.form.losses}D nos últimos ${aS.matchesAnalyzed} jogos`});
+    factors.push({icon:'📊',text:`${aName}: ${aS.form.wins}V/${aS.form.draws}E/${aS.form.losses}D em ${aS.matchesAnalyzed} jogos`});
   }
   if (hS.homeForm.played >= 2) {
-    factors.push({icon:hS.homeForm.winRate>=.5?'🟢':'🔴',text:`${hName} em casa: ${hS.homeForm.wins}/${hS.homeForm.played} vitórias, ${rnd(hS.homeForm.goalsFor)} gols/jogo`});
+    factors.push({icon:hS.homeForm.winRate>=.5?'🟢':'🔴',text:`${hName} em casa: ${hS.homeForm.wins}/${hS.homeForm.played} vitórias, ${rnd(hS.homeForm.goalsFor)} gols/j`});
   }
   if (aS.awayForm.played >= 2) {
-    factors.push({icon:aS.awayForm.winRate>=.4?'🟢':'🔴',text:`${aName} fora: ${aS.awayForm.wins}/${aS.awayForm.played} vitórias, ${rnd(aS.awayForm.goalsFor)} gols/jogo`});
+    factors.push({icon:aS.awayForm.winRate>=.4?'🟢':'🔴',text:`${aName} fora: ${aS.awayForm.wins}/${aS.awayForm.played} vitórias, ${rnd(aS.awayForm.goalsFor)} gols/j`});
   }
-  
-  factors.push({icon:'⚽',text:`${hName}: média ${rnd(hS.avgGoalsFor)} gols / ${rnd(hS.avgGoalsAgainst)} sofridos`});
-  factors.push({icon:'⚽',text:`${aName}: média ${rnd(aS.avgGoalsFor)} gols / ${rnd(aS.avgGoalsAgainst)} sofridos`});
+  factors.push({icon:'⚽',text:`${hName}: ${rnd(hS.avgGoalsFor)} gols/j | ${rnd(hS.avgGoalsAgainst)} sofridos/j`});
+  factors.push({icon:'⚽',text:`${aName}: ${rnd(aS.avgGoalsFor)} gols/j | ${rnd(aS.avgGoalsAgainst)} sofridos/j`});
   factors.push({icon:'📈',text:`Over 2.5: ${hName} ${pct(hS.over25Rate)}% | ${aName} ${pct(aS.over25Rate)}%`});
   factors.push({icon:'🤝',text:`BTTS: ${hName} ${pct(hS.bttsRate)}% | ${aName} ${pct(aS.bttsRate)}%`});
+  if (hS.cleanSheets>0) factors.push({icon:'🔒',text:`${hName}: ${hS.cleanSheets} jogos sem sofrer`});
+  if (aS.failedToScore>0) factors.push({icon:'⚠️',text:`${aName}: ${aS.failedToScore} jogos sem marcar`});
+  if (mc.homeWin>50) factors.push({icon:'📈',text:`Monte Carlo: ${hName} favorito (${mc.homeWin}%)`});
+  else if (mc.awayWin>50) factors.push({icon:'📈',text:`Monte Carlo: ${aName} favorito (${mc.awayWin}%)`});
+  else factors.push({icon:'⚖️',text:`Equilibrado: empate ${mc.draw}%`});
+  if (mc.btts>60) factors.push({icon:'⚽',text:`BTTS provável: ${mc.btts}%`});
+  if (mc.over25>60) factors.push({icon:'📈',text:`Over 2.5 favorecido: ${mc.over25}%`});
+  else if (mc.under25>60) factors.push({icon:'📉',text:`Under 2.5 favorecido: ${mc.under25}%`});
   
-  if (hS.cleanSheets > 0) factors.push({icon:'🔒',text:`${hName}: ${hS.cleanSheets} jogos sem sofrer gols`});
-  if (aS.failedToScore > 0) factors.push({icon:'⚠️',text:`${aName}: ${aS.failedToScore} jogos sem marcar`});
-  
-  if (mc.homeWin > 50) factors.push({icon:'📈',text:`Monte Carlo: ${hName} favorito (${mc.homeWin}%)`});
-  else if (mc.awayWin > 50) factors.push({icon:'📈',text:`Monte Carlo: ${aName} favorito (${mc.awayWin}%)`});
-  else factors.push({icon:'⚖️',text:`Jogo equilibrado: empate ${mc.draw}%`});
-  
-  if (mc.btts > 60) factors.push({icon:'⚽',text:`BTTS provável: ${mc.btts}%`});
-  if (mc.over25 > 60) factors.push({icon:'📈',text:`Over 2.5 favorecido: ${mc.over25}%`});
-  else if (mc.under25 > 60) factors.push({icon:'📉',text:`Under 2.5 favorecido: ${mc.under25}%`});
-  
-  return factors.slice(0, 12);
+  return factors.slice(0, 14);
 }
 
 async function handlePredict(qs) {
@@ -878,16 +975,19 @@ async function handlePredict(qs) {
     byCategory[m.cat].push(m);
   });
   Object.keys(byCategory).forEach(cat => {
-    byCategory[cat] = byCategory[cat].sort((a,b) => b.prob - a.prob).slice(0, 5);
+    byCategory[cat] = byCategory[cat].sort((a,b) => b.prob - a.prob).slice(0, 6);
   });
   
-  const ticket = allMarkets.filter(m => m.val).sort((a,b) => b.prob - a.prob).slice(0, 10);
+  // Top value bets
+  const ticket = allMarkets.filter(m => m.val).sort((a,b) => b.prob - a.prob).slice(0, 12);
   
   return {
     homeMatchesAnalyzed: hS.matchesAnalyzed,
     awayMatchesAnalyzed: aS.matchesAnalyzed,
     homeIsFallback: hS.isFallback || false,
     awayIsFallback: aS.isFallback || false,
+    homeStyle: hS.style || 'equilibrado',
+    awayStyle: aS.style || 'equilibrado',
     allMarkets,
     byCategory,
     ticket,
@@ -898,18 +998,28 @@ async function handlePredict(qs) {
       home: {
         avgGoalsFor: hS.avgGoalsFor,
         avgGoalsAgainst: hS.avgGoalsAgainst,
+        over15Rate: hS.over15Rate,
         over25Rate: hS.over25Rate,
+        over35Rate: hS.over35Rate,
         bttsRate: hS.bttsRate,
         cleanSheets: hS.cleanSheets,
+        form: hS.form,
+        homeForm: hS.homeForm,
+        awayForm: hS.awayForm,
         averages: hS.averages,
         style: hS.style || 'equilibrado',
       },
       away: {
         avgGoalsFor: aS.avgGoalsFor,
         avgGoalsAgainst: aS.avgGoalsAgainst,
+        over15Rate: aS.over15Rate,
         over25Rate: aS.over25Rate,
+        over35Rate: aS.over35Rate,
         bttsRate: aS.bttsRate,
         cleanSheets: aS.cleanSheets,
+        form: aS.form,
+        homeForm: aS.homeForm,
+        awayForm: aS.awayForm,
         averages: aS.averages,
         style: aS.style || 'equilibrado',
       },
@@ -979,11 +1089,12 @@ async function handleCompare(qs) {
       highAccuracy: comparisons.filter(c => c.accuracy === 'Alta').length,
       mediumAccuracy: comparisons.filter(c => c.accuracy === 'Média').length,
       lowAccuracy: comparisons.filter(c => c.accuracy === 'Baixa').length,
+      avgDeviation: comparisons.filter(c => c.deviation !== null).reduce((a,c) => a + Math.abs(c.deviation), 0) / 
+                   (comparisons.filter(c => c.deviation !== null).length || 1),
     },
   };
 }
 
-// Health check
 async function handleHealth() {
   const key = process.env.APIFOOTBALL_KEY;
   return {
@@ -992,6 +1103,7 @@ async function handleHealth() {
     apiConfigured: !!key,
     cacheSize: cache.size,
     uptime: process.uptime(),
+    memoryUsage: process.memoryUsage(),
     timestamp: new Date().toISOString(),
   };
 }
@@ -1026,6 +1138,9 @@ exports.handler = async (event) => {
       case 'compare':
         result = await handleCompare(qs);
         break;
+      case 'leagues':
+        result = { leagues: AVAILABLE_LEAGUES };
+        break;
       case 'health':
         result = await handleHealth();
         break;
@@ -1035,11 +1150,12 @@ exports.handler = async (event) => {
           headers,
           body: JSON.stringify({
             error: 'Ação inválida',
-            validActions: ['fixtures', 'predict', 'compare', 'health'],
+            validActions: ['fixtures', 'predict', 'compare', 'leagues', 'health'],
             examples: {
               fixtures: '?action=fixtures&date=2026-07-02&scope=all&includeLeagues=1,2,13',
               predict: '?action=predict&home=121&away=130&homeName=Flamengo&awayName=Palmeiras',
               compare: '?action=compare&fixture=12345&home=121&away=130',
+              leagues: '?action=leagues',
               health: '?action=health',
             },
           }),
@@ -1057,6 +1173,7 @@ exports.handler = async (event) => {
           duration: `${duration}ms`,
           timestamp: new Date().toISOString(),
           version: '5.0.0',
+          api: 'FuteStat API',
         },
       }),
     };
