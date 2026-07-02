@@ -1,5 +1,8 @@
+
 // FuteStat v5.0 — API Backend Completa
-// Suporte a Copa do Mundo 2026, +60 mercados estatísticos, campo 3D
+// ATUALIZADO: 02/07/2026
+// Suporte a 25+ ligas incluindo Copa do Mundo 2026
+// +60 mercados estatísticos com laterais, tiros de meta, etc.
 
 const BASE_URL = 'https://v3.football.api-sports.io';
 const MAX_MATCHES = 8;
@@ -7,7 +10,7 @@ const MC_N = 10000;
 const CACHE_TTL = 300;
 const MAX_HISTORY_HOURS = 12;
 
-// Cache inteligente
+// Cache inteligente com limpeza automática
 const cache = new Map();
 let lastCleanup = Date.now();
 
@@ -41,7 +44,7 @@ function setCache(key, data) {
   cache.set(key, { data, timestamp: Date.now() });
 }
 
-// Rate limiting
+// Rate limiting otimizado
 const rateLimiter = {
   requests: [],
   maxRequests: 35,
@@ -63,7 +66,7 @@ const rateLimiter = {
   }
 };
 
-// Retry com backoff
+// Retry com backoff exponencial e jitter
 async function fetchWithRetry(url, options, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -98,55 +101,67 @@ async function fetchWithRetry(url, options, retries = 3) {
   }
 }
 
-// Todas as estatísticas disponíveis (incluindo laterais e tiros de meta)
+// ============================================
+// TODAS AS ESTATÍSTICAS DISPONÍVEIS
+// ============================================
 const STAT_NAMES = {
+  // Ataque
   goals: 'Gols',
   shots_total: 'Total de Chutes',
   shots_on_target: 'Chutes no Gol',
   shots_off_target: 'Chutes para Fora',
   shots_inside_box: 'Chutes dentro da Área',
   shots_outside_box: 'Chutes fora da Área',
+  big_chances: 'Grandes Chances',
+  big_chances_missed: 'Grandes Chances Perdidas',
+  hit_woodwork: 'Bolas na Trave',
+  
+  // Posse e Passes
   possession: 'Posse de Bola (%)',
   passes: 'Passes Totais',
   passes_accurate: 'Passes Certos',
   passes_percentage: 'Precisão de Passes (%)',
+  long_balls: 'Bolas Longas',
+  crosses: 'Cruzamentos',
+  
+  // Defesa
   tackles: 'Desarmes',
   interceptions: 'Interceptações',
   clearances: 'Cortes',
   blocks: 'Bloqueios',
   goalkeeper_saves: 'Defesas do Goleiro',
+  
+  // Disciplina
   cards: 'Cartões Totais',
   yellow_cards: 'Cartões Amarelos',
   red_cards: 'Cartões Vermelhos',
   fouls: 'Faltas',
+  
+  // Bola Parada
   corners: 'Escanteios',
   offsides: 'Impedimentos',
+  throw_ins: 'Laterais',
+  goal_kicks: 'Tiros de Meta',
+  free_kicks: 'Cobranças de Falta',
+  
+  // Outros
   substitutions: 'Substituições',
   injuries: 'Lesões',
   dribbles: 'Dribles',
   aerials_won: 'Duelos Aéreos Vencidos',
-  throw_ins: 'Laterais',
-  goal_kicks: 'Tiros de Meta',
-  free_kicks: 'Cobranças de Falta',
-  hit_woodwork: 'Bolas na Trave',
-  big_chances: 'Grandes Chances',
-  big_chances_missed: 'Grandes Chances Perdidas',
   counter_attacks: 'Contra-Ataques',
-  long_balls: 'Bolas Longas',
-  crosses: 'Cruzamentos',
 };
 
 const GENERIC = {
   goals: 1.3, shots_total: 12, shots_on_target: 4.5, shots_off_target: 5.5,
-  shots_inside_box: 7, shots_outside_box: 4, possession: 50,
-  passes: 420, passes_accurate: 340, passes_percentage: 80,
-  tackles: 14, interceptions: 10, clearances: 18, blocks: 4,
-  goalkeeper_saves: 3.5, cards: 2.2, yellow_cards: 1.9, red_cards: 0.3,
-  fouls: 11, corners: 5, offsides: 1.8, substitutions: 3.5,
-  injuries: 0.5, dribbles: 8, aerials_won: 15,
-  throw_ins: 22, goal_kicks: 12, free_kicks: 8,
-  hit_woodwork: 0.3, big_chances: 2.5, big_chances_missed: 1.5,
-  counter_attacks: 3, long_balls: 45, crosses: 16,
+  shots_inside_box: 7, shots_outside_box: 4, big_chances: 2.5, big_chances_missed: 1.5,
+  hit_woodwork: 0.3, possession: 50, passes: 420, passes_accurate: 340,
+  passes_percentage: 80, long_balls: 45, crosses: 16, tackles: 14,
+  interceptions: 10, clearances: 18, blocks: 4, goalkeeper_saves: 3.5,
+  cards: 2.2, yellow_cards: 1.9, red_cards: 0.3, fouls: 11,
+  corners: 5, offsides: 1.8, throw_ins: 22, goal_kicks: 12,
+  free_kicks: 8, substitutions: 3.5, injuries: 0.5, dribbles: 8,
+  aerials_won: 15, counter_attacks: 3,
 };
 
 const STAT_API_MAP = {
@@ -156,10 +171,15 @@ const STAT_API_MAP = {
   shots_off_target: 'Shots off Goal',
   shots_inside_box: 'Shots insidebox',
   shots_outside_box: 'Shots outsidebox',
+  big_chances: 'Big Chances',
+  big_chances_missed: 'Big Chances Missed',
+  hit_woodwork: 'Hit Woodwork',
   possession: 'Ball Possession',
   passes: 'Total passes',
   passes_accurate: 'Passes accurate',
   passes_percentage: 'Passes %',
+  long_balls: 'Long Balls',
+  crosses: 'Crosses',
   tackles: 'Total tackles',
   interceptions: 'Interceptions',
   clearances: 'Clearances',
@@ -170,87 +190,87 @@ const STAT_API_MAP = {
   fouls: 'Fouls',
   corners: 'Corner Kicks',
   offsides: 'Offsides',
+  throw_ins: 'Throw-ins',
+  goal_kicks: 'Goal Kicks',
+  free_kicks: 'Free Kicks',
   substitutions: 'Substitutions',
   injuries: 'Injuries',
   dribbles: 'Dribbles',
   aerials_won: 'Aerials Won',
-  throw_ins: 'Throw-ins',
-  goal_kicks: 'Goal Kicks',
-  free_kicks: 'Free Kicks',
-  hit_woodwork: 'Hit Woodwork',
-  big_chances: 'Big Chances',
-  big_chances_missed: 'Big Chances Missed',
   counter_attacks: 'Counter Attacks',
-  long_balls: 'Long Balls',
-  crosses: 'Crosses',
 };
 
-// Ligas completas incluindo Copa do Mundo 2026
+// ============================================
+// 25+ LIGAS DISPONÍVEIS
+// ============================================
 const AVAILABLE_LEAGUES = [
-  { id: 1, name: 'Copa do Mundo 2026', country: 'Mundial', type: 'world_cup', featured: true },
-  { id: 33, name: 'Copa do Mundo 2026 - Qual. CONMEBOL', country: 'América do Sul', type: 'qualifier' },
-  { id: 34, name: 'Copa do Mundo 2026 - Qual. UEFA', country: 'Europa', type: 'qualifier' },
-  { id: 6, name: 'Copa do Mundo 2026 - Qual. África', country: 'África', type: 'qualifier' },
-  { id: 7, name: 'Copa do Mundo 2026 - Qual. Ásia', country: 'Ásia', type: 'qualifier' },
-  { id: 9, name: 'Copa do Mundo Sub-20', country: 'Mundial', type: 'youth' },
-  { id: 2, name: 'Liga dos Campeões', country: 'Europa', type: 'continental', featured: true },
-  { id: 3, name: 'Liga Europa', country: 'Europa', type: 'continental' },
-  { id: 4, name: 'Eurocopa', country: 'Europa', type: 'national' },
-  { id: 5, name: 'Liga das Nações UEFA', country: 'Europa', type: 'national' },
-  { id: 13, name: 'Copa Libertadores', country: 'América do Sul', type: 'continental', featured: true },
-  { id: 15, name: 'Copa América', country: 'América do Sul', type: 'national' },
-  { id: 12, name: 'Copa Sul-Americana', country: 'América do Sul', type: 'continental' },
-  { id: 10, name: 'Amistosos Internacionais', country: 'Mundial', type: 'friendly' },
-  { id: 71, name: 'Brasileirão Série A', country: 'Brasil', type: 'league', featured: true },
-  { id: 72, name: 'Brasileirão Série B', country: 'Brasil', type: 'league' },
-  { id: 39, name: 'Premier League', country: 'Inglaterra', type: 'league', featured: true },
-  { id: 140, name: 'La Liga', country: 'Espanha', type: 'league', featured: true },
-  { id: 135, name: 'Série A TIM', country: 'Itália', type: 'league' },
-  { id: 78, name: 'Bundesliga', country: 'Alemanha', type: 'league' },
-  { id: 61, name: 'Ligue 1', country: 'França', type: 'league' },
-  { id: 128, name: 'Liga Profesional Argentina', country: 'Argentina', type: 'league' },
-  { id: 94, name: 'Primeira Liga', country: 'Portugal', type: 'league' },
-  { id: 88, name: 'Eredivisie', country: 'Holanda', type: 'league' },
-  { id: 253, name: 'MLS', country: 'EUA', type: 'league' },
-  { id: 262, name: 'Liga MX', country: 'México', type: 'league' },
-  { id: 11, name: 'Copa do Brasil', country: 'Brasil', type: 'cup' },
-  { id: 45, name: 'Copa da Inglaterra', country: 'Inglaterra', type: 'cup' },
-  { id: 143, name: 'Copa do Rei', country: 'Espanha', type: 'cup' },
-  { id: 18, name: 'Mundial de Clubes', country: 'Mundial', type: 'continental' },
-  { id: 848, name: 'CONCACAF Nations League', country: 'América do Norte', type: 'national' },
+  // Mundial
+  { id: 1, name: '🏆 Copa do Mundo 2026', country: 'Mundial', type: 'world_cup', featured: true },
+  { id: 10, name: '🌍 Amistosos Internacionais', country: 'Mundial', type: 'friendly' },
+  { id: 18, name: '🌍 Mundial de Clubes', country: 'Mundial', type: 'continental' },
+  { id: 9, name: '🌍 Copa do Mundo Sub-20', country: 'Mundial', type: 'youth' },
+  
+  // América do Sul
+  { id: 71, name: '🇧🇷 Brasileirão Série A', country: 'Brasil', type: 'league', featured: true },
+  { id: 72, name: '🇧🇷 Brasileirão Série B', country: 'Brasil', type: 'league' },
+  { id: 11, name: '🇧🇷 Copa do Brasil', country: 'Brasil', type: 'cup' },
+  { id: 13, name: '🌎 Copa Libertadores', country: 'América do Sul', type: 'continental', featured: true },
+  { id: 15, name: '🌎 Copa América', country: 'América do Sul', type: 'national' },
+  { id: 12, name: '🌎 Copa Sul-Americana', country: 'América do Sul', type: 'continental' },
+  { id: 128, name: '🇦🇷 Liga Profesional Argentina', country: 'Argentina', type: 'league' },
+  
+  // Europa
+  { id: 2, name: '⭐ Liga dos Campeões', country: 'Europa', type: 'continental', featured: true },
+  { id: 3, name: '⭐ Liga Europa', country: 'Europa', type: 'continental' },
+  { id: 4, name: '🏆 Eurocopa', country: 'Europa', type: 'national' },
+  { id: 5, name: '🏆 Liga das Nações UEFA', country: 'Europa', type: 'national' },
+  { id: 39, name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', country: 'Inglaterra', type: 'league', featured: true },
+  { id: 45, name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Copa da Inglaterra', country: 'Inglaterra', type: 'cup' },
+  { id: 140, name: '🇪🇸 La Liga', country: 'Espanha', type: 'league', featured: true },
+  { id: 143, name: '🇪🇸 Copa do Rei', country: 'Espanha', type: 'cup' },
+  { id: 135, name: '🇮🇹 Série A TIM', country: 'Itália', type: 'league' },
+  { id: 78, name: '🇩🇪 Bundesliga', country: 'Alemanha', type: 'league' },
+  { id: 61, name: '🇫🇷 Ligue 1', country: 'França', type: 'league' },
+  { id: 94, name: '🇵🇹 Primeira Liga', country: 'Portugal', type: 'league' },
+  { id: 88, name: '🇳🇱 Eredivisie', country: 'Holanda', type: 'league' },
+  
+  // América do Norte
+  { id: 253, name: '🇺🇸 MLS', country: 'EUA', type: 'league' },
+  { id: 262, name: '🇲🇽 Liga MX', country: 'México', type: 'league' },
+  { id: 848, name: '🌎 CONCACAF Nations League', country: 'América do Norte', type: 'national' },
 ];
 
-// Perfis de times
+// Perfis de times para fallback
 const TEAM_STYLES = {
   ofensivo: {
     goals: 1.9, shots_total: 16, shots_on_target: 6.5, corners: 7,
     possession: 58, passes: 500, tackles: 11, fouls: 9,
     dribbles: 12, aerials_won: 14, throw_ins: 24, goal_kicks: 10,
-    crosses: 20, long_balls: 40, big_chances: 3.5,
+    crosses: 20, long_balls: 40, big_chances: 3.5, shots_inside_box: 10,
   },
   defensivo: {
     goals: 0.8, shots_total: 8, shots_on_target: 3, corners: 3,
     possession: 40, passes: 340, tackles: 19, fouls: 15,
     dribbles: 5, aerials_won: 18, throw_ins: 18, goal_kicks: 15,
-    crosses: 10, long_balls: 55, big_chances: 1.2,
+    crosses: 10, long_balls: 55, big_chances: 1.2, shots_inside_box: 4,
   },
   equilibrado: {
     goals: 1.4, shots_total: 13, shots_on_target: 5, corners: 5.5,
     possession: 50, passes: 430, tackles: 14, fouls: 11,
     dribbles: 8, aerials_won: 15, throw_ins: 22, goal_kicks: 12,
-    crosses: 16, long_balls: 45, big_chances: 2.5,
+    crosses: 16, long_balls: 45, big_chances: 2.5, shots_inside_box: 7,
   },
   contra_ataque: {
     goals: 1.1, shots_total: 10, shots_on_target: 4, corners: 4,
     possession: 38, passes: 310, tackles: 16, fouls: 13,
     dribbles: 9, aerials_won: 12, throw_ins: 19, goal_kicks: 14,
-    crosses: 14, long_balls: 50, big_chances: 1.8,
+    crosses: 14, long_balls: 50, big_chances: 1.8, shots_inside_box: 5,
   },
   pressao_alta: {
     goals: 1.7, shots_total: 15, shots_on_target: 6, corners: 6.5,
     possession: 55, passes: 460, tackles: 15, fouls: 14,
     dribbles: 10, aerials_won: 16, throw_ins: 23, goal_kicks: 9,
-    crosses: 18, long_balls: 38, big_chances: 3.0,
+    crosses: 18, long_balls: 38, big_chances: 3.0, shots_inside_box: 9,
   },
 };
 
@@ -260,7 +280,9 @@ function getTeamProfile(teamId) {
   return { ...styles[hash], id: teamId };
 }
 
-// --- MATEMÁTICA ---
+// ============================================
+// MOTOR MATEMÁTICO
+// ============================================
 function poissonRandom(lambda) {
   if (lambda <= 0) return 0;
   if (lambda > 20) lambda = 20;
@@ -278,11 +300,13 @@ function monteCarloSimulation(lH, lA) {
   let hWinToNil = 0, aWinToNil = 0;
   let hWinBothHalves = 0, aWinBothHalves = 0;
   
-  // Estatísticas acumuladas
+  // Acumuladores de estatísticas
   let totalShots = 0, totalShotsOnTarget = 0, totalCorners = 0;
   let totalCards = 0, totalFouls = 0, totalThrowIns = 0;
   let totalGoalKicks = 0, totalPasses = 0, totalTackles = 0;
   let totalSaves = 0, totalOffsides = 0, totalCrosses = 0;
+  let totalFreeKicks = 0, totalLongBalls = 0, totalDribbles = 0;
+  let totalAerials = 0, totalInterceptions = 0, totalClearances = 0;
   
   for (let s = 0; s < MC_N; s++) {
     const hg = poissonRandom(lH), ag = poissonRandom(lA);
@@ -306,7 +330,7 @@ function monteCarloSimulation(lH, lA) {
     const key = `${Math.min(hg, 6)}-${Math.min(ag, 6)}`;
     sl[key] = (sl[key] || 0) + 1;
     
-    // Primeiro tempo
+    // Primeiro tempo (35-45% dos gols)
     const h1 = Math.floor(hg * (0.3 + Math.random() * 0.2));
     const a1 = Math.floor(ag * (0.3 + Math.random() * 0.2));
     if (h1 + a1 > 0.5) fh05++;
@@ -322,7 +346,7 @@ function monteCarloSimulation(lH, lA) {
     if (h1 > a1 && (hg - h1) > (ag - a1)) hWinBothHalves++;
     if (a1 > h1 && (ag - a1) > (hg - h1)) aWinBothHalves++;
     
-    // Estatísticas baseadas nos gols
+    // Estatísticas correlacionadas com intensidade do jogo
     const intensity = (hg + ag) / 3;
     totalShots += 12 + intensity * 4;
     totalShotsOnTarget += 4 + intensity * 2;
@@ -336,6 +360,12 @@ function monteCarloSimulation(lH, lA) {
     totalSaves += 3.5 + intensity * 1;
     totalOffsides += 1.8 + intensity * 0.4;
     totalCrosses += 16 + intensity * 2;
+    totalFreeKicks += 8 + intensity * 1;
+    totalLongBalls += 45 + intensity * 5;
+    totalDribbles += 8 + intensity * 1.5;
+    totalAerials += 15 + intensity * 2;
+    totalInterceptions += 10 + intensity * 1.5;
+    totalClearances += 18 + intensity * 2;
   }
   
   const p = v => Math.round(v / MC_N * 1000) / 10;
@@ -347,23 +377,36 @@ function monteCarloSimulation(lH, lA) {
   };
   
   return {
+    // Resultados
     homeWin: p(hw), draw: p(dr), awayWin: p(aw),
+    
+    // Gols
     over05: calcOver(0.5), over15: calcOver(1.5), over25: calcOver(2.5),
     over35: calcOver(3.5), over45: calcOver(4.5), over55: calcOver(5.5),
     under15: p(MC_N - gd.slice(2).reduce((a,b)=>a+b,0)),
     under25: p(MC_N - gd.slice(3).reduce((a,b)=>a+b,0)),
     under35: p(MC_N - gd.slice(4).reduce((a,b)=>a+b,0)),
     under45: p(MC_N - gd.slice(5).reduce((a,b)=>a+b,0)),
+    
+    // BTTS e Clean Sheets
     btts: p(btts), noBtts: p(MC_N - btts),
     csHome: p(csH), csAway: p(csA),
+    
+    // Primeiro Tempo
     fh05: p(fh05), fh15: p(fh15),
+    
+    // Cronologia
     homeFirstGoal: p(hfg), awayFirstGoal: p(afg),
     homeLastGoal: p(hlg), awayLastGoal: p(alg),
+    
+    // Especiais
     homeWinToNil: p(hWinToNil), awayWinToNil: p(aWinToNil),
     homeWinBothHalves: p(hWinBothHalves), awayWinBothHalves: p(aWinBothHalves),
+    
+    // Dupla Chance
     dc1x: p(hw + dr), dc12: p(hw + aw), dcx2: p(dr + aw),
     
-    // Estatísticas médias
+    // Médias estatísticas
     avgShots: Math.round(totalShots / MC_N),
     avgShotsOnTarget: Math.round(totalShotsOnTarget / MC_N),
     avgCorners: Math.round(totalCorners / MC_N),
@@ -376,15 +419,26 @@ function monteCarloSimulation(lH, lA) {
     avgSaves: Math.round(totalSaves / MC_N),
     avgOffsides: Math.round(totalOffsides / MC_N),
     avgCrosses: Math.round(totalCrosses / MC_N),
+    avgFreeKicks: Math.round(totalFreeKicks / MC_N),
+    avgLongBalls: Math.round(totalLongBalls / MC_N),
+    avgDribbles: Math.round(totalDribbles / MC_N),
+    avgAerials: Math.round(totalAerials / MC_N),
+    avgInterceptions: Math.round(totalInterceptions / MC_N),
+    avgClearances: Math.round(totalClearances / MC_N),
     
+    // Placar exato
     top5: Object.entries(sl).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([s,c])=>({score:s,prob:p(c)})),
     top10: Object.entries(sl).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([s,c])=>({score:s,prob:p(c)})),
+    
+    // Lambdas
     lambdaH: Math.round(lH * 100) / 100,
     lambdaA: Math.round(lA * 100) / 100,
   };
 }
 
-// --- API ---
+// ============================================
+// FUNÇÕES DE API
+// ============================================
 async function apiGet(path, params = {}) {
   const key = process.env.APIFOOTBALL_KEY;
   if (!key) {
@@ -424,14 +478,17 @@ function mapFixture(item) {
   const hoursSinceEnd = item.fixture.status?.short === 'FT' ? 
     (now - kickoffTime) / 3600000 : 0;
   
+  const leagueInfo = AVAILABLE_LEAGUES.find(l => l.id === item.league?.id);
+  
   return {
     id: item.fixture.id,
     league: {
       id: item.league?.id || null,
-      name: item.league?.name || 'Amistoso Internacional',
-      country: item.league?.country || 'Mundial',
+      name: leagueInfo?.name || item.league?.name || 'Amistoso Internacional',
+      country: leagueInfo?.country || item.league?.country || 'Mundial',
       logo: item.league?.logo || null,
-      type: item.league?.id ? 'league' : 'friendly',
+      type: leagueInfo?.type || 'friendly',
+      featured: leagueInfo?.featured || false,
     },
     startingAt: item.fixture.date,
     statusShort: item.fixture.status?.short || 'NS',
@@ -465,7 +522,9 @@ function extractStat(resp, teamId, name) {
   return isNaN(v) ? null : v;
 }
 
-// --- HANDLERS ---
+// ============================================
+// HANDLERS PRINCIPAIS
+// ============================================
 async function handleFixtures(qs) {
   const date = qs.date || fmtDate(new Date());
   
@@ -563,9 +622,8 @@ async function fetchTeamStats(teamId) {
       cleanSheets: 0, failedToScore: 0,
       homeGF: [], homeGA: [], homeWins: 0, homePlayed: 0,
       awayGF: [], awayGA: [], awayWins: 0, awayPlayed: 0,
-      over25: 0, over35: 0, btts: 0,
-      over15: 0, under25: 0,
-      totalGoals: 0,
+      over15: 0, over25: 0, over35: 0, under25: 0,
+      btts: 0, totalGoals: 0,
       recentForm: [],
     };
     
@@ -783,6 +841,9 @@ function roundLine(p) {
   return p - f >= 0.5 ? f + 0.5 : f - 0.5;
 }
 
+// ============================================
+// CONSTRUÇÃO DE MERCADOS
+// ============================================
 function buildAllMarkets(mc, hS, aS, hName, aName) {
   const markets = [];
   
@@ -829,19 +890,17 @@ function buildAllMarkets(mc, hS, aS, hName, aName) {
   markets.push({k:'win_to_nil_home',cat:'Especiais',label:`${hName} vence sem sofrer`,icon:'🏠🧤',prob:mc.homeWinToNil,val:mc.homeWinToNil>20,est:false});
   markets.push({k:'win_to_nil_away',cat:'Especiais',label:`${aName} vence sem sofrer`,icon:'✈️🧤',prob:mc.awayWinToNil,val:mc.awayWinToNil>15,est:false});
   
-  // --- WIN BOTH HALVES ---
-  markets.push({k:'win_both_halves_home',cat:'Especiais',label:`${hName} vence ambos tempos`,icon:'🏠⏱️',prob:mc.homeWinBothHalves,val:mc.homeWinBothHalves>15,est:false});
-  
   // --- PLACAR EXATO ---
   mc.top5.forEach(sl => {
     markets.push({k:`correct_score_${sl.score}`,cat:'Placar Exato',label:`Placar ${sl.score}`,icon:'🎯',prob:sl.prob,val:sl.prob>8,est:false});
   });
   
-  // --- ESTATÍSTICAS (incluindo laterais e tiros de meta) ---
+  // --- ESTATÍSTICAS (Laterais, Tiros de Meta, etc.) ---
   const statLines = [
     {k:'shots_total',label:'Total de Chutes',line:22.5,icon:'🎯'},
     {k:'shots_on_target',label:'Chutes no Gol',line:8.5,icon:'🎯✅'},
     {k:'shots_inside_box',label:'Chutes na Área',line:14.5,icon:'📦'},
+    {k:'big_chances',label:'Grandes Chances',line:4.5,icon:'💥'},
     {k:'corners',label:'Escanteios',line:9.5,icon:'🏴'},
     {k:'cards',label:'Cartões',line:4.5,icon:'🟨'},
     {k:'fouls',label:'Faltas',line:22.5,icon:'⚠️'},
@@ -858,7 +917,6 @@ function buildAllMarkets(mc, hS, aS, hName, aName) {
     {k:'aerials_won',label:'Duelos Aéreos',line:28.5,icon:'✈️'},
     {k:'free_kicks',label:'Cobranças de Falta',line:15.5,icon:'🦶'},
     {k:'long_balls',label:'Bolas Longas',line:85.5,icon:'🚀'},
-    {k:'big_chances',label:'Grandes Chances',line:4.5,icon:'💥'},
   ];
   
   statLines.forEach(sl => {
@@ -950,6 +1008,9 @@ function genFactors(hS, aS, mc, hName, aName) {
   return factors.slice(0, 14);
 }
 
+// ============================================
+// HANDLERS DE ROTA
+// ============================================
 async function handlePredict(qs) {
   const homeId = parseInt(qs.home, 10);
   const awayId = parseInt(qs.away, 10);
@@ -978,7 +1039,6 @@ async function handlePredict(qs) {
     byCategory[cat] = byCategory[cat].sort((a,b) => b.prob - a.prob).slice(0, 6);
   });
   
-  // Top value bets
   const ticket = allMarkets.filter(m => m.val).sort((a,b) => b.prob - a.prob).slice(0, 12);
   
   return {
@@ -1102,13 +1162,17 @@ async function handleHealth() {
     version: '5.0.0',
     apiConfigured: !!key,
     cacheSize: cache.size,
+    leaguesCount: AVAILABLE_LEAGUES.length,
+    statsCount: Object.keys(STAT_NAMES).length,
     uptime: process.uptime(),
     memoryUsage: process.memoryUsage(),
     timestamp: new Date().toISOString(),
   };
 }
 
-// --- EXPORT ---
+// ============================================
+// EXPORT DO HANDLER
+// ============================================
 exports.handler = async (event) => {
   const startTime = Date.now();
   const qs = event.queryStringParameters || {};
@@ -1139,7 +1203,10 @@ exports.handler = async (event) => {
         result = await handleCompare(qs);
         break;
       case 'leagues':
-        result = { leagues: AVAILABLE_LEAGUES };
+        result = { leagues: AVAILABLE_LEAGUES, total: AVAILABLE_LEAGUES.length };
+        break;
+      case 'stats':
+        result = { stats: STAT_NAMES, total: Object.keys(STAT_NAMES).length };
         break;
       case 'health':
         result = await handleHealth();
@@ -1150,12 +1217,13 @@ exports.handler = async (event) => {
           headers,
           body: JSON.stringify({
             error: 'Ação inválida',
-            validActions: ['fixtures', 'predict', 'compare', 'leagues', 'health'],
+            validActions: ['fixtures', 'predict', 'compare', 'leagues', 'stats', 'health'],
             examples: {
               fixtures: '?action=fixtures&date=2026-07-02&scope=all&includeLeagues=1,2,13',
               predict: '?action=predict&home=121&away=130&homeName=Flamengo&awayName=Palmeiras',
               compare: '?action=compare&fixture=12345&home=121&away=130',
               leagues: '?action=leagues',
+              stats: '?action=stats',
               health: '?action=health',
             },
           }),
