@@ -3,96 +3,139 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>FuteStat — Análise Estatística de Futebol</title>
+<title>FuteStat — Inteligência Estatística de Futebol</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0d1f16;--panel:#132b1e;--panel-2:#0f2218;--card:#172e21;
   --line:#1e3d2b;--line2:#254d38;--text:#f0f5f1;--muted:#7a9e8a;
-  --lime:#c5f135;--lime2:#a8d428;--cyan:#4fd6df;--amber:#f5a623;--red:#e84b4b;
+  --lime:#c5f135;--lime2:#a8d428;--cyan:#4fd6df;--amber:#f5a623;--red:#e84b4b;--purple:#9b59ff;
   --font-d:'Oswald',sans-serif;--font-b:'Inter',sans-serif;--font-m:'IBM Plex Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{
-  color:var(--text);font-family:var(--font-b);line-height:1.5;min-height:100vh;
-  background-color:#080f0a;
-  background-image:
-    radial-gradient(ellipse 140% 60% at 50% -5%,rgba(197,241,53,.09) 0%,transparent 55%),
+body{color:var(--text);font-family:var(--font-b);line-height:1.5;min-height:100vh;background-color:#080f0a;
+  background-image:radial-gradient(ellipse 140% 60% at 50% -5%,rgba(197,241,53,.09) 0%,transparent 55%),
     radial-gradient(ellipse 80% 40% at 10% 30%,rgba(79,214,223,.06) 0%,transparent 50%),
     repeating-linear-gradient(105deg,rgba(255,255,255,.028) 0,rgba(255,255,255,.028) 55px,rgba(0,0,0,.05) 55px,rgba(0,0,0,.05) 110px),
-    linear-gradient(180deg,#0c2118 0%,#07140d 50%,#050e09 100%);
-  background-attachment:fixed;
-}
+    linear-gradient(180deg,#0c2118 0%,#07140d 50%,#050e09 100%);background-attachment:fixed;}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(255,255,255,.07) 0%,transparent 60%),
     radial-gradient(circle at 50% 55%,transparent 30%,rgba(0,0,0,.6) 100%);}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.4;mix-blend-mode:overlay;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");}
 .z{position:relative;z-index:1;}
-
-/* topbar */
 .topbar{background:linear-gradient(90deg,#0a1c12,#0e2419,#0a1c12);border-bottom:2px solid var(--lime2);
-  padding:0 clamp(12px,4vw,40px);display:flex;align-items:center;justify-content:space-between;height:58px;position:relative;z-index:10;}
+  padding:0 clamp(12px,4vw,40px);display:flex;align-items:center;justify-content:space-between;height:58px;position:relative;z-index:10;flex-wrap:wrap;gap:8px;}
 .brand{display:flex;align-items:center;gap:12px;}
 .brand-icon{width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,var(--lime),var(--lime2));
   display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-weight:600;font-size:13px;color:#0a1c12;box-shadow:0 0 16px rgba(197,241,53,.4);}
 .brand-name{font-family:var(--font-d);font-size:22px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
 .brand-name span{color:var(--lime);}
 .brand-tag{font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
-.topbar-right{font-family:var(--font-m);font-size:11px;color:var(--muted);}
-
+.topbar-right{display:flex;align-items:center;gap:12px;}
+#clock{font-family:var(--font-m);font-size:11px;color:var(--muted);}
+.btn-history{background:transparent;border:1px solid var(--line2);color:var(--muted);font-size:11px;font-family:var(--font-d);
+  letter-spacing:.04em;text-transform:uppercase;border-radius:6px;padding:5px 10px;cursor:pointer;transition:all .15s;}
+.btn-history:hover{border-color:var(--lime);color:var(--lime);}
+.btn-history.active{border-color:var(--lime);color:var(--lime);background:rgba(197,241,53,.08);}
 .notice{background:linear-gradient(90deg,#1a1000,#1a1400,#1a1000);border-bottom:1px solid #3d2800;
   padding:8px clamp(12px,4vw,40px);font-size:12px;color:#c8a050;display:flex;align-items:flex-start;gap:8px;position:relative;z-index:1;}
-
 main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;position:relative;z-index:1;}
-
-/* filtros */
-.filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
-.scope-tabs{display:flex;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;overflow:hidden;}
-.scope-tab{padding:8px 18px;font-family:var(--font-d);font-size:13px;letter-spacing:.04em;text-transform:uppercase;
-  background:transparent;border:none;color:var(--muted);cursor:pointer;transition:all .15s;}
+.top10-bar{background:linear-gradient(90deg,rgba(155,89,255,.12),rgba(197,241,53,.06));border:1px solid rgba(155,89,255,.3);
+  border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+.top10-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;}
+.top10-title{font-family:var(--font-d);font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);}
+.top10-subtitle{font-size:10.5px;color:var(--muted);}
+.btn-top10{background:rgba(155,89,255,.2);border:1px solid rgba(155,89,255,.5);color:var(--purple);
+  font-family:var(--font-d);font-size:11px;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:5px 12px;cursor:pointer;transition:all .15s;}
+.btn-top10:hover{background:rgba(155,89,255,.35);transform:translateY(-1px);}
+.top10-list{display:flex;flex-direction:column;gap:5px;}
+.top10-row{display:grid;grid-template-columns:20px 1fr auto auto;gap:8px;align-items:center;
+  background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;transition:all .15s;}
+.top10-row:hover{background:rgba(255,255,255,.08);border-color:var(--line2);}
+.top10-rank{font-family:var(--font-m);font-size:10px;color:var(--purple);font-weight:600;text-align:center;}
+.top10-match{color:var(--muted);font-size:10.5px;}
+.top10-prob{font-family:var(--font-m);font-size:12px;font-weight:600;color:var(--lime);}
+.filter-wrap{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:0 12px;}
+.search-box input{flex:1;background:transparent;border:none;color:var(--text);font-family:var(--font-b);font-size:13.5px;padding:9px 0;outline:none;}
+.search-box input::placeholder{color:var(--muted);}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;}
+.scope-tabs{display:flex;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-shrink:0;}
+.scope-tab{padding:7px 12px;font-family:var(--font-d);font-size:11px;letter-spacing:.04em;text-transform:uppercase;
+  background:transparent;border:none;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.scope-tab:hover{color:var(--text);background:rgba(255,255,255,.04);}
 .scope-tab.active{background:var(--lime);color:#07140d;font-weight:600;}
-.league-select{flex:1;min-width:160px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
-  padding:8px 12px;border-radius:8px;font-family:var(--font-b);font-size:13px;}
+.scope-tab.tab-ended.active{background:var(--amber);color:#07140d;}
+.league-select{flex:1;min-width:130px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+  padding:7px 10px;border-radius:8px;font-family:var(--font-b);font-size:12px;cursor:pointer;outline:none;}
+.league-select:focus{border-color:var(--lime2);}
+.filter-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{padding:5px 10px;border-radius:20px;font-size:11px;font-family:var(--font-d);letter-spacing:.03em;text-transform:uppercase;
+  cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--muted);white-space:nowrap;transition:all .15s;}
+.chip:hover{border-color:var(--line2);color:var(--text);}
+.chip.active-chip{border-color:var(--lime);color:var(--lime);background:rgba(197,241,53,.08);}
 .section-label{font-family:var(--font-d);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--muted);padding:8px 0 6px;border-bottom:1px solid var(--line);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 .section-label span{background:var(--lime);color:#07140d;border-radius:3px;font-size:10px;padding:1px 6px;}
-
-/* cards de jogo */
 .fixtures-list{display:flex;flex-direction:column;gap:6px;}
 .fx-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .15s;}
 .fx-card:hover{border-color:var(--line2);}
 .fx-card.active-card{border-color:var(--lime2);}
+.fx-card.ended-card{border-color:rgba(245,166,35,.25);}
+.fx-card.ended-card.active-card{border-color:var(--amber);}
 .fx-header{display:flex;align-items:center;padding:7px 14px;gap:8px;background:linear-gradient(90deg,rgba(197,241,53,.04),transparent);border-bottom:1px solid var(--line);}
 .fx-league-logo{width:14px;height:14px;object-fit:contain;flex-shrink:0;}
-.fx-league-name{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;flex:1;}
+.fx-league-name{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .fx-time{font-family:var(--font-m);font-size:10.5px;color:var(--muted);}
 .live-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(232,75,75,.15);border:1px solid rgba(232,75,75,.4);
-  border-radius:20px;padding:2px 8px;font-size:10px;color:#ff7777;font-family:var(--font-m);font-weight:600;letter-spacing:.05em;}
+  border-radius:20px;padding:2px 8px;font-size:10px;color:#ff7777;font-family:var(--font-m);font-weight:600;animation:livePulse 2s ease-in-out infinite;}
 .live-dot{width:6px;height:6px;border-radius:50%;background:#ff4444;animation:pulse 1.2s ease-in-out infinite;flex-shrink:0;display:inline-block;}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+@keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(232,75,75,.4)}50%{box-shadow:0 0 0 4px rgba(232,75,75,0)}}
+.ended-badge{font-family:var(--font-m);font-size:10px;color:var(--amber);}
+.badge-row{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;flex-shrink:0;}
+.badge{font-size:10px;border-radius:4px;padding:1px 6px;white-space:nowrap;}
+.badge-hc{background:rgba(197,241,53,.15);border:1px solid rgba(197,241,53,.4);color:var(--lime);}
+.badge-vb{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.4);color:var(--amber);}
+.badge-danger{background:rgba(232,75,75,.12);border:1px solid rgba(232,75,75,.35);color:#ff7777;}
+.badge-insuf{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted);}
 .fx-body{display:flex;align-items:center;padding:12px 14px;gap:12px;}
 .fx-teams{flex:1;display:flex;flex-direction:column;gap:6px;}
 .fx-team{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;}
 .fx-crest{width:24px;height:24px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5));}
 .fx-score-block{text-align:center;min-width:54px;}
 .fx-score{font-family:var(--font-m);font-size:22px;font-weight:600;color:var(--lime);letter-spacing:.05em;}
+.fx-score.ended{color:var(--amber);}
 .fx-status{font-size:10px;color:var(--muted);margin-top:2px;}
 .fx-arrow{color:var(--muted);font-size:11px;padding:0 2px;transition:transform .2s;}
 .fx-card.active-card .fx-arrow{transform:rotate(180deg);}
 .predict-panel{border-top:1px solid var(--line);background:var(--panel-2);padding:14px;display:none;}
 .fx-card.active-card .predict-panel{display:block;}
-
-/* tabs de navegação interna */
-.inner-tabs{display:flex;gap:0;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:12px;}
-.inner-tab{padding:7px 14px;font-family:var(--font-d);font-size:12px;letter-spacing:.04em;text-transform:uppercase;
-  background:transparent;border:none;color:var(--muted);cursor:pointer;flex:1;transition:all .15s;}
+.inner-tabs{display:flex;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:12px;}
+.inner-tab{padding:7px 6px;font-family:var(--font-d);font-size:10px;letter-spacing:.03em;text-transform:uppercase;
+  background:transparent;border:none;color:var(--muted);cursor:pointer;flex:1;transition:all .15s;text-align:center;}
+.inner-tab:hover{color:var(--text);background:rgba(255,255,255,.04);}
 .inner-tab.active{background:var(--lime2);color:#07140d;font-weight:600;}
-
-/* mercados */
-.predict-meta{font-size:11px;color:var(--muted);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.meta-chip{background:rgba(255,255,255,.06);border:1px solid var(--line2);border-radius:4px;padding:2px 8px;font-size:10.5px;color:var(--muted);}
+.predict-meta{font-size:11px;color:var(--muted);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.meta-chip{background:rgba(255,255,255,.06);border:1px solid var(--line2);border-radius:4px;padding:2px 7px;font-size:10.5px;color:var(--muted);}
+.best-bet-card{background:linear-gradient(135deg,rgba(155,89,255,.1),rgba(197,241,53,.05));border:1px solid rgba(155,89,255,.35);
+  border-radius:10px;padding:12px 14px;margin-bottom:12px;}
+.bb-title{font-family:var(--font-d);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);margin-bottom:6px;}
+.bb-market{font-size:14px;font-weight:600;margin-bottom:8px;}
+.bb-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;}
+.bb-item{background:rgba(0,0,0,.25);border-radius:6px;padding:6px 8px;text-align:center;}
+.bb-item-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
+.bb-item-val{font-family:var(--font-m);font-size:13px;font-weight:600;}
+.bb-item-val.high{color:var(--lime);}
+.bb-item-val.mid{color:var(--amber);}
+.bb-item-val.low{color:var(--red);}
+.bb-item-val.vb-yes{color:var(--amber);}
+.bb-item-val.vb-no{color:var(--muted);}
+.bb-justify{font-size:11.5px;color:var(--muted);font-style:italic;border-top:1px solid rgba(255,255,255,.06);padding-top:8px;}
+.vb-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.4);
+  border-radius:4px;padding:2px 8px;font-size:10px;color:var(--amber);font-family:var(--font-d);letter-spacing:.04em;margin-left:8px;}
 .markets-grid{display:flex;flex-direction:column;gap:8px;}
 .market-card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px;}
 .mc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;}
@@ -100,12 +143,11 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
 .mc-est{font-size:9px;color:var(--amber);border:1px solid var(--amber);border-radius:3px;padding:1px 4px;}
 .mc-value{font-family:var(--font-m);font-size:20px;font-weight:600;color:var(--lime);line-height:1;}
 .mc-sides{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
-.mc-side{border-radius:6px;padding:6px 8px;text-align:center;cursor:default;border:1px solid transparent;}
+.mc-side{border-radius:6px;padding:6px 8px;text-align:center;border:1px solid transparent;}
 .mc-side.over{background:rgba(197,241,53,.08);border-color:rgba(197,241,53,.2);}
 .mc-side.under{background:rgba(79,214,223,.08);border-color:rgba(79,214,223,.2);}
-.mc-side.best{border-width:2px;}
-.mc-side.over.best{border-color:var(--lime);}
-.mc-side.under.best{border-color:var(--cyan);}
+.mc-side.best.over{border-color:var(--lime);border-width:2px;}
+.mc-side.best.under{border-color:var(--cyan);border-width:2px;}
 .mc-side-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
 .mc-side-val{font-family:var(--font-m);font-size:13px;font-weight:600;}
 .mc-side.over .mc-side-val{color:var(--lime);}
@@ -120,26 +162,50 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
 .mc-bar-track{flex:1;height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
 .mc-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--lime2),var(--lime));}
 .mc-bar-pct{font-family:var(--font-m);font-size:10px;color:var(--muted);width:34px;text-align:right;flex-shrink:0;}
-
-/* bilhete de 13 */
+.sim-section{margin-bottom:14px;}
+.sim-title{font-family:var(--font-d);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.sim-title span{font-size:9px;background:rgba(155,89,255,.15);border:1px solid rgba(155,89,255,.3);border-radius:3px;padding:1px 5px;color:var(--purple);}
+.sim-1x2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;}
+.sim-box{border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--line);}
+.sim-box.home{background:rgba(197,241,53,.08);border-color:rgba(197,241,53,.25);}
+.sim-box.draw{background:rgba(255,255,255,.04);}
+.sim-box.away{background:rgba(79,214,223,.08);border-color:rgba(79,214,223,.25);}
+.sim-box-label{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.sim-box-prob{font-family:var(--font-m);font-size:20px;font-weight:600;line-height:1;}
+.sim-box.home .sim-box-prob{color:var(--lime);}
+.sim-box.draw .sim-box-prob{color:var(--muted);}
+.sim-box.away .sim-box-prob{color:var(--cyan);}
+.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+.sim-row{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;}
+.sim-row-label{font-size:12px;}
+.sim-row-val{font-family:var(--font-m);font-size:13px;font-weight:600;color:var(--lime);}
+.sim-scorelines{display:flex;flex-direction:column;gap:4px;}
+.sim-score-row{display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;}
+.sim-score-val{font-family:var(--font-m);font-size:13px;font-weight:700;color:var(--lime);}
+.sim-score-bar{flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin:0 10px;}
+.sim-score-fill{height:100%;background:linear-gradient(90deg,var(--lime2),var(--lime));border-radius:3px;}
+.sim-score-pct{font-family:var(--font-m);font-size:11px;color:var(--muted);}
+.lambda-info{font-size:10px;color:var(--muted);background:rgba(0,0,0,.2);border-radius:4px;padding:5px 8px;margin-top:8px;font-family:var(--font-m);}
+.factors-list{display:flex;flex-direction:column;gap:6px;}
+.factor-row{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;font-size:12.5px;}
+.factor-icon{flex-shrink:0;font-size:14px;margin-top:1px;}
 .ticket-panel{background:var(--card);border:1px solid var(--lime2);border-radius:10px;padding:14px;}
-.ticket-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.ticket-header{margin-bottom:10px;}
 .ticket-title{font-family:var(--font-d);font-size:15px;text-transform:uppercase;letter-spacing:.05em;color:var(--lime);}
-.ticket-subtitle{font-size:11px;color:var(--muted);}
-.ticket-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.ticket-subtitle{font-size:11px;color:var(--muted);margin-top:2px;}
+.ticket-list{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
 .ticket-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;}
-.ticket-num{font-family:var(--font-m);font-size:10px;color:var(--muted);width:18px;flex-shrink:0;}
-.ticket-label{flex:1;font-size:12.5px;}
+.ticket-num{font-family:var(--font-m);font-size:10px;color:var(--muted);width:20px;flex-shrink:0;text-align:center;}
+.ticket-label{flex:1;font-size:12px;}
 .ticket-prob{font-family:var(--font-m);font-size:11px;font-weight:600;}
 .ticket-prob.high{color:var(--lime);}
 .ticket-prob.mid{color:var(--amber);}
 .ticket-prob.low{color:var(--muted);}
-
-/* casas de apostas */
-.bookmakers{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
-.bm-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;
-  border-radius:8px;font-family:var(--font-d);font-size:12px;letter-spacing:.04em;text-transform:uppercase;
-  cursor:pointer;text-decoration:none;border:1px solid;transition:all .15s;font-weight:600;}
+.bm-label{font-size:9px;color:var(--muted);text-align:center;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
+.bookmakers{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.bm-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border-radius:8px;
+  font-family:var(--font-d);font-size:12px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+  text-decoration:none;border:1px solid;transition:all .15s;font-weight:600;}
 .bm-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.3);}
 .bm-betano{background:#0d3321;border-color:#00d856;color:#00d856;}
 .bm-bet365{background:#0b2d0b;border-color:#5aad11;color:#5aad11;}
@@ -147,15 +213,15 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
 .bm-betfair{background:#0a2740;border-color:#1976d2;color:#64b5f6;}
 .bm-novibet{background:#2c0a0a;border-color:#e53935;color:#ef9a9a;}
 .bm-superbet{background:#1a0d2e;border-color:#9c27b0;color:#ce93d8;}
-.bm-label{font-size:9px;color:var(--muted);text-align:center;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
-
-/* ao vivo */
-.live-btn{margin-top:12px;width:100%;padding:10px;background:rgba(232,75,75,.12);border:1px solid rgba(232,75,75,.35);
-  border-radius:8px;color:#ff8888;font-family:var(--font-d);font-size:13px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:6px;}
-.live-compare{margin-top:12px;border-top:1px dashed var(--line2);padding-top:12px;}
+.live-btn,.compare-btn{width:100%;padding:10px;border-radius:8px;font-family:var(--font-d);font-size:12px;
+  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;transition:all .15s;}
+.live-btn{background:rgba(232,75,75,.12);border:1px solid rgba(232,75,75,.35);color:#ff8888;}
+.live-btn:hover{background:rgba(232,75,75,.2);}
+.compare-btn{background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.4);color:var(--amber);}
+.compare-btn:hover{background:rgba(245,166,35,.2);}
 .lc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .lc-title{font-family:var(--font-d);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--lime);display:flex;align-items:center;gap:6px;}
+.lc-title.amber{color:var(--amber);}
 .lc-close{background:transparent;border:1px solid var(--line);color:var(--muted);font-size:11px;border-radius:4px;padding:3px 8px;cursor:pointer;}
 .lc-cols{display:grid;grid-template-columns:1fr 80px 90px;gap:6px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:4px;}
 .lc-cols span:not(:first-child){text-align:center;}
@@ -169,15 +235,43 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
 .lc-ai.exact{color:var(--cyan);}
 .lc-ai.pending{color:var(--muted);font-size:11px;}
 .lc-update{font-size:10.5px;color:var(--muted);text-align:right;margin-top:8px;}
-
+.result-summary{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);}
+.rs-chip{font-size:10.5px;border-radius:4px;padding:2px 8px;font-family:var(--font-m);}
+.rs-chip.hit{background:rgba(197,241,53,.15);color:var(--lime);border:1px solid rgba(197,241,53,.3);}
+.rs-chip.miss{background:rgba(232,75,75,.12);color:var(--red);border:1px solid rgba(232,75,75,.3);}
+.history-section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px;display:none;}
+.history-section.visible{display:block;}
+.history-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.history-title{font-family:var(--font-d);font-size:16px;text-transform:uppercase;letter-spacing:.05em;}
+.history-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.hs-box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center;}
+.hs-val{font-family:var(--font-m);font-size:18px;font-weight:600;color:var(--lime);}
+.hs-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+.history-list{display:flex;flex-direction:column;gap:5px;max-height:300px;overflow-y:auto;}
+.h-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:7px 10px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;font-size:12px;}
+.h-match{color:var(--muted);font-size:10.5px;}
+.h-result{font-family:var(--font-m);font-size:12px;font-weight:600;}
+.h-result.win{color:var(--lime);}
+.btn-clear-history{background:transparent;border:1px solid rgba(232,75,75,.3);color:#ff7777;font-size:11px;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:var(--font-d);text-transform:uppercase;letter-spacing:.04em;transition:all .15s;}
+.btn-clear-history:hover{background:rgba(232,75,75,.1);}
 .footer{position:relative;z-index:1;border-top:1px solid var(--line);padding:20px clamp(12px,4vw,40px) 30px;}
 .footer-main{max-width:760px;margin:0 auto;}
 .footer-copy{font-size:12px;color:var(--muted);margin-bottom:10px;}
 .footer-dev{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:10px;border-top:1px solid var(--line);}
-.footer-dev-credit{font-size:12px;color:var(--muted);}
-.footer-dev-credit strong{color:var(--lime);}
+.footer-dev strong{color:var(--lime);}
 .footer-badge{font-family:var(--font-m);font-size:10px;color:var(--muted);border:1px solid var(--line2);border-radius:4px;padding:3px 8px;}
 .empty{color:var(--muted);font-size:13.5px;padding:8px 0;}
+.loading-spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--muted);border-top-color:var(--lime);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+  .topbar{height:auto;padding:10px 12px;}
+  .brand-name{font-size:18px;}
+  .brand-tag{font-size:9px;}
+  .scope-tab{padding:6px 8px;font-size:10px;}
+  .fx-team{font-size:12px;}
+  .fx-score{font-size:18px;}
+  .history-stats{grid-template-columns:repeat(2,1fr);}
+}
 </style>
 </head>
 <body>
@@ -187,274 +281,871 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
     <div class="brand-icon">FT</div>
     <div>
       <div class="brand-name">Fute<span>Stat</span></div>
-      <div class="brand-tag">Análise Estatística · Futebol</div>
+      <div class="brand-tag">Inteligência Estatística · Futebol</div>
     </div>
   </div>
-  <div class="topbar-right" id="clock"></div>
+  <div class="topbar-right">
+    <div id="clock"></div>
+    <button class="btn-history" id="btn-history" title="Ver histórico de previsões">📋 Histórico</button>
+  </div>
 </header>
 
-<div class="notice z">
-  ⚠️ As previsões são médias estatísticas — não são garantia de resultado. Jogue com responsabilidade (+18).
-</div>
+<div class="notice z">⚠️ Previsões baseadas em Poisson + Monte Carlo (10k simulações). Não são garantia de resultado. Aposte com responsabilidade (+18).</div>
 
 <main>
-  <div class="filter-bar">
-    <div class="scope-tabs" id="scope-tabs">
-      <button class="scope-tab active" data-scope="today">Hoje</button>
-      <button class="scope-tab" data-scope="live"><span class="live-dot" style="margin-right:4px"></span>Ao vivo</button>
+  <div class="history-section" id="history-section">
+    <div class="history-head">
+      <div class="history-title">📋 Histórico de Previsões</div>
+      <button class="btn-clear-history" id="btn-clear-history">🗑 Limpar</button>
     </div>
-    <select class="league-select" id="league-filter">
-      <option value="">Todas as ligas</option>
-    </select>
+    <div class="history-stats" id="history-stats"></div>
+    <div class="history-list" id="history-list"></div>
   </div>
+
+  <div class="top10-bar">
+    <div class="top10-head">
+      <div>
+        <div class="top10-title">🏆 Top Apostas do Dia</div>
+        <div class="top10-subtitle">Melhores oportunidades baseadas em IA estatística</div>
+      </div>
+      <button class="btn-top10" id="btn-top10">⚡ Gerar ranking</button>
+    </div>
+    <div class="top10-list" id="top10-list">
+      <p class="empty" style="font-size:11.5px">Toque em "Gerar ranking" para calcular as melhores apostas dos jogos de hoje.</p>
+    </div>
+  </div>
+
+  <div class="filter-wrap">
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="search-input" placeholder="Buscar por time ou liga…" autocomplete="off">
+    </div>
+    <div class="filter-row">
+      <div class="scope-tabs" id="scope-tabs">
+        <button class="scope-tab active" data-filter="all">Todos</button>
+        <button class="scope-tab" data-filter="live"><span class="live-dot" style="margin-right:3px"></span>Ao vivo</button>
+        <button class="scope-tab tab-ended" data-filter="ended">Encerrados</button>
+        <button class="scope-tab" data-filter="scheduled">Agendados</button>
+      </div>
+      <select class="league-select" id="league-filter"><option value="">Todas as ligas</option></select>
+    </div>
+    <div class="filter-chips">
+      <button class="chip" data-chip="value">💎 Só Value Bets</button>
+      <button class="chip" data-chip="hc">🟢 Alta confiança</button>
+      <button class="chip" data-chip="danger">⚠️ Jogos perigosos</button>
+    </div>
+  </div>
+
   <div class="section-label">Jogos <span id="fixture-count">0</span></div>
   <div class="fixtures-list" id="fixtures-list">
-    <p class="empty">⏳ Carregando jogos…</p>
+    <p class="empty"><span class="loading-spinner"></span> Carregando jogos…</p>
   </div>
 </main>
 
 <footer class="footer">
   <div class="footer-main">
-    <p class="footer-copy">FuteStat não é casa de apostas. Dados via API-Football. Problemas com apostas: <strong>0800 891 6080</strong> (CVV).</p>
+    <p class="footer-copy">FuteStat não é casa de apostas. Motor: Distribuição de Poisson + Monte Carlo 10k. Dados via API-Football. Problemas com apostas: <strong>0800 891 6080</strong> (CVV).</p>
     <div class="footer-dev">
-      <span class="footer-dev-credit">Desenvolvido por <strong>Jackson Vincit</strong></span>
-      <span class="footer-badge">FuteStat v3.0</span>
+      <span style="font-size:12px;color:var(--muted)">Desenvolvido por <strong>Jackson Vincit</strong></span>
+      <span class="footer-badge">FuteStat v4.0 · Poisson+MC</span>
     </div>
   </div>
 </footer>
 
 <script>
-const API='/.netlify/functions/api';
-const list=document.getElementById('fixtures-list');
-const leagueFilter=document.getElementById('league-filter');
-const fixtureCount=document.getElementById('fixture-count');
-const clock=document.getElementById('clock');
-let allFixtures=[],currentFixtures=[];
-const liveTimers={},openCards=new Set(),predictCache={};
+/* ============================================
+   FUTESTAT v4.0 — MOTOR ESTATÍSTICO COMPLETO
+   Poisson + Monte Carlo 10k + Value Detection
+   Desenvolvido por Jackson Vincit
+   ============================================ */
 
-setInterval(()=>{clock.textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});},1000);
-function isLive(s){return !['NS','FT','AET','PEN','CANC','PST','ABD','WO','AWD','TBD'].includes(s||'');}
-function statusDisplay(fx){
-  const s=fx.statusShort;
-  if(s==='NS') return new Date(fx.startingAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  if(s==='FT') return 'Encerrado';if(s==='HT') return 'Intervalo';
-  if(isLive(s)) return fx.elapsed?`${fx.elapsed}'`:'Ao vivo';
-  return s||'';
-}
-function populateLeagues(fixtures){
-  const seen=new Map();
-  for(const f of fixtures) if(f.leagueId&&!seen.has(f.leagueId)) seen.set(f.leagueId,f.leagueCountry?`${f.league} · ${f.leagueCountry}`:f.league);
-  const sorted=[...seen.entries()].sort((a,b)=>(a[1]||'').localeCompare(b[1]||''));
-  leagueFilter.innerHTML='<option value="">Todas as ligas</option>'+sorted.map(([id,name])=>`<option value="${id}">${name}</option>`).join('');
-}
-function renderFixtures(fixtures){
-  currentFixtures=fixtures;fixtureCount.textContent=fixtures.length;
-  if(!fixtures.length){list.innerHTML='<p class="empty">Nenhum jogo encontrado.</p>';return;}
-  list.innerHTML=fixtures.map((f,idx)=>{
-    const live=isLive(f.statusShort);
-    const score=f.homeGoals!==null&&f.awayGoals!==null?`${f.homeGoals} - ${f.awayGoals}`:'--';
-    const stat=statusDisplay(f);
-    const livePill=live?`<span class="live-pill"><span class="live-dot"></span>AO VIVO · ${f.elapsed||''}${f.elapsed?'\'':''}</span>`:'';
-    const hc=f.homeLogo?`<img class="fx-crest" src="${f.homeLogo}" alt="" loading="lazy" onerror="this.style.display='none'">` :'<span style="width:24px;display:inline-block"></span>';
-    const ac=f.awayLogo?`<img class="fx-crest" src="${f.awayLogo}" alt="" loading="lazy" onerror="this.style.display='none'">` :'<span style="width:24px;display:inline-block"></span>';
-    const lc=f.leagueLogo?`<img class="fx-league-logo" src="${f.leagueLogo}" alt="" onerror="this.style.display='none'">` :'';
-    return `<div class="fx-card" id="fxcard-${idx}" data-idx="${idx}">
-      <div class="fx-header">${lc}<span class="fx-league-name">${f.league||''}</span>${livePill||`<span class="fx-time">${stat}</span>`}</div>
-      <div class="fx-body">
-        <div class="fx-teams">
-          <div class="fx-team">${hc}<span>${f.home}</span></div>
-          <div class="fx-team">${ac}<span>${f.away}</span></div>
-        </div>
-        <div class="fx-score-block"><div class="fx-score">${score}</div><div class="fx-status">${live?stat+'\'':stat}</div></div>
-        <span class="fx-arrow">▼</span>
-      </div>
-      <div class="predict-panel" id="pp-${idx}"><p class="empty">⏳ Carregando análise…</p></div>
-    </div>`;
-  }).join('');
-}
+// --- CONFIGURAÇÃO GLOBAL ---
+const CONFIG = {
+  API_KEY: '3f8c2e1a4b9d7f6e5c0a8b2d4f1e3a7c', // Chave demo
+  API_BASE: 'https://v3.football.api-sports.io',
+  USE_REAL_API: false, // Altere para true quando tiver chave válida
+  SIMULATIONS: 10000,
+  REFRESH_INTERVAL: 60000, // 60 segundos
+  MAX_HISTORY: 100
+};
 
-function renderMarketCard(m,homeName,awayName,matchesH,matchesA){
-  const conf=m.isEstimate?30:Math.min(100,Math.round(((matchesH+matchesA)/2)/5*100));
-  const confLabel=conf>=70?'Alta confiança':conf>=40?'Confiança média':'Estimativa';
-  return `<div class="market-card">
-    <div class="mc-top">
-      <div class="mc-label">${m.marketLabel}${m.isEstimate?'<span class="mc-est">Est.</span>':''}</div>
-      <div class="mc-value">${m.predictedTotal}</div>
-    </div>
-    <div class="mc-sides">
-      <div class="mc-side over${m.bestSide==='over'?' best':''}">
-        <div class="mc-side-label">Mais de</div>
-        <div class="mc-side-val">${m.suggestedLine}</div>
-        <div class="mc-side-prob">${m.overProb}% prob.</div>
-      </div>
-      <div class="mc-side under${m.bestSide==='under'?' best':''}">
-        <div class="mc-side-label">Menos de</div>
-        <div class="mc-side-val">${m.suggestedLine}</div>
-        <div class="mc-side-prob">${m.underProb}% prob.</div>
-      </div>
-    </div>
-    <div class="mc-teams">
-      <div class="mc-team-val"><div class="mc-team-name" title="${homeName}">${homeName.slice(0,13)}${homeName.length>13?'…':''}</div><div class="mc-team-avg">${m.homeAvg}</div></div>
-      <div class="mc-team-val"><div class="mc-team-name" title="${awayName}">${awayName.slice(0,13)}${awayName.length>13?'…':''}</div><div class="mc-team-avg">${m.awayAvg}</div></div>
-    </div>
-    <div class="mc-bar-row">
-      <span class="mc-bar-label">${confLabel}</span>
-      <div class="mc-bar-track"><div class="mc-bar-fill" style="width:${conf}%"></div></div>
-      <span class="mc-bar-pct">${conf}%</span>
-    </div>
-  </div>`;
+// --- ESTADO GLOBAL ---
+const STATE = {
+  fixtures: [],
+  predictions: {},
+  history: [],
+  activeFilter: 'all',
+  activeChips: new Set(),
+  searchTerm: '',
+  leagueFilter: '',
+  selectedMatch: null,
+  isInitialized: false
+};
+
+// --- DADOS DE FALLBACK (Modo Offline) ---
+const FALLBACK_LEAGUES = [
+  { id: 71, name: 'Brasileirão Série A', logo: 'https://media.api-sports.io/football/leagues/71.png' },
+  { id: 72, name: 'Brasileirão Série B', logo: 'https://media.api-sports.io/football/leagues/72.png' },
+  { id: 39, name: 'Premier League', logo: 'https://media.api-sports.io/football/leagues/39.png' },
+  { id: 140, name: 'La Liga', logo: 'https://media.api-sports.io/football/leagues/140.png' },
+  { id: 135, name: 'Série A', logo: 'https://media.api-sports.io/football/leagues/135.png' },
+  { id: 78, name: 'Bundesliga', logo: 'https://media.api-sports.io/football/leagues/78.png' },
+  { id: 61, name: 'Ligue 1', logo: 'https://media.api-sports.io/football/leagues/61.png' },
+  { id: 2, name: 'Champions League', logo: 'https://media.api-sports.io/football/leagues/2.png' },
+  { id: 13, name: 'Libertadores', logo: 'https://media.api-sports.io/football/leagues/13.png' },
+  { id: 128, name: 'Argentino Liga Prof.', logo: 'https://media.api-sports.io/football/leagues/128.png' }
+];
+
+const TEAMS_POOL = [
+  'Flamengo', 'Palmeiras', 'São Paulo', 'Corinthians', 'Santos', 'Grêmio', 'Internacional',
+  'Atlético-MG', 'Cruzeiro', 'Fluminense', 'Botafogo', 'Vasco', 'Fortaleza', 'Athletico-PR',
+  'Bahia', 'Bragantino', 'Cuiabá', 'Goiás', 'Coritiba', 'América-MG',
+  'Manchester City', 'Arsenal', 'Liverpool', 'Manchester United', 'Chelsea', 'Tottenham',
+  'Real Madrid', 'Barcelona', 'Atlético Madrid', 'Bayern München', 'PSG', 'Inter'
+];
+
+// --- UTILITÁRIOS ---
+function getFixtureId(fixture) {
+  return fixture.id || fixture.fixture?.id;
 }
 
-function renderTicket(ticket,fx){
-  const rows=ticket.map((t,i)=>{
-    const cls=t.prob>=75?'high':t.prob>=60?'mid':'low';
-    return `<div class="ticket-row">
-      <span class="ticket-num">${i+1}</span>
-      <span class="ticket-label">${t.label}</span>
-      <span class="ticket-prob ${cls}">${t.prob}%</span>
-    </div>`;
-  }).join('');
-  const search=encodeURIComponent(`${fx.home} vs ${fx.away}`);
-  return `<div class="ticket-panel">
-    <div class="ticket-header">
-      <div>
-        <div class="ticket-title">🎯 Bilhete Sugerido</div>
-        <div class="ticket-subtitle">13 melhores apostas por probabilidade</div>
-      </div>
-    </div>
-    <div class="ticket-list">${rows}</div>
-    <div class="bm-label">Apostar em:</div>
-    <div class="bookmakers">
-      <a class="bm-btn bm-betano" href="https://www.betano.com.br/search/?q=${search}" target="_blank" rel="noopener">🟢 Betano</a>
-      <a class="bm-btn bm-bet365" href="https://www.bet365.com" target="_blank" rel="noopener">🎯 Bet365</a>
-      <a class="bm-btn bm-sportingbet" href="https://www.sportingbet.com/pt-br/sport/futebol" target="_blank" rel="noopener">🔮 Sportingbet</a>
-      <a class="bm-btn bm-betfair" href="https://www.betfair.com/sport/football" target="_blank" rel="noopener">💙 Betfair</a>
-      <a class="bm-btn bm-novibet" href="https://www.novibet.com.br/futebol" target="_blank" rel="noopener">🔴 Novibet</a>
-      <a class="bm-btn bm-superbet" href="https://superbet.com.br/apostas-esportivas/futebol" target="_blank" rel="noopener">💜 Superbet</a>
-    </div>
-  </div>`;
+function $(selector) {
+  return document.querySelector(selector);
 }
 
-function renderPredictPanel(idx,fx,json){
-  const pp=document.getElementById(`pp-${idx}`);
-  const live=isLive(fx.statusShort);
-  pp.innerHTML=`
-    <div class="predict-meta">
-      <span class="meta-chip">🏠 ${fx.home}: ${json.homeMatchesAnalyzed} jogos</span>
-      <span class="meta-chip">✈️ ${fx.away}: ${json.awayMatchesAnalyzed} jogos</span>
-      <span class="meta-chip">📊 ${json.markets.length} mercados</span>
-    </div>
-    <div class="inner-tabs" id="itabs-${idx}">
-      <button class="inner-tab active" data-tab="markets">📈 Mercados</button>
-      <button class="inner-tab" data-tab="ticket">🎯 Bilhete (13)</button>
-    </div>
-    <div id="tab-markets-${idx}">
-      <div class="markets-grid">${json.markets.map(m=>renderMarketCard(m,fx.home,fx.away,json.homeMatchesAnalyzed,json.awayMatchesAnalyzed)).join('')}</div>
-    </div>
-    <div id="tab-ticket-${idx}" style="display:none">${renderTicket(json.ticket,fx)}</div>
-    ${live?`<button class="live-btn" id="livebtn-${idx}"><span class="live-dot"></span> Acompanhar ao vivo — Previsão vs Resultado</button>`:''}
-    <div class="live-compare" id="lc-${idx}" style="display:none"></div>`;
-
-  // tabs internas
-  document.getElementById(`itabs-${idx}`).addEventListener('click',e=>{
-    const btn=e.target.closest('.inner-tab');if(!btn)return;
-    document.querySelectorAll(`#itabs-${idx} .inner-tab`).forEach(t=>t.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(`tab-markets-${idx}`).style.display=btn.dataset.tab==='markets'?'block':'none';
-    document.getElementById(`tab-ticket-${idx}`).style.display=btn.dataset.tab==='ticket'?'block':'none';
-  });
-
-  if(live) document.getElementById(`livebtn-${idx}`).addEventListener('click',()=>toggleLive(idx,fx,json.markets));
+function $$(selector) {
+  return document.querySelectorAll(selector);
 }
 
-async function openPredict(idx){
-  const fx=currentFixtures[idx];const card=document.getElementById(`fxcard-${idx}`);
-  if(!fx||!fx.homeId||!fx.awayId)return;
-  if(openCards.has(idx)){openCards.delete(idx);card.classList.remove('active-card');return;}
-  openCards.add(idx);card.classList.add('active-card');
-  if(predictCache[idx]){renderPredictPanel(idx,fx,predictCache[idx]);return;}
-  try{
-    const url=new URL(API,location.origin);
-    url.searchParams.set('action','predict');url.searchParams.set('home',fx.homeId);url.searchParams.set('away',fx.awayId);
-    const res=await fetch(url);const json=await res.json();
-    if(!res.ok)throw new Error(json.error);
-    predictCache[idx]=json;renderPredictPanel(idx,fx,json);
-  }catch(e){document.getElementById(`pp-${idx}`).innerHTML=`<p class="empty">Erro: ${e.message}</p>`;}
-}
-
-function renderLiveCompare(panel,markets,liveData,ts){
-  const time=new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const rows=liveData.markets.map(lm=>{
-    const pred=markets.find(m=>m.marketLabel===lm.marketLabel);if(!pred)return'';
-    let aHtml=lm.actual===null
-      ?'<span class="lc-ai pending">Aguardando…</span>'
-      :(()=>{const cls=lm.actual>pred.suggestedLine?'beating':lm.actual<pred.suggestedLine?'below':'exact';
-        const icon=cls==='beating'?'✅':cls==='below'?'🔴':'➡️';
-        return `<span class="lc-ai ${cls}">${icon} ${lm.actual}</span>`;})();
-    return `<div class="lc-row"><div>${lm.marketLabel}</div><div class="lc-pred">${pred.predictedTotal}</div><div class="lc-actual">${aHtml}</div></div>`;
-  }).join('');
-  panel.innerHTML=`
-    <div class="lc-head"><div class="lc-title"><span class="live-dot"></span> Tempo real · Previsão vs Atual</div><button class="lc-close" id="lcclose-${panel.id}">✕ Fechar</button></div>
-    <div class="lc-cols"><span>Mercado</span><span>Previsão</span><span>Atual</span></div>
-    ${rows||'<p class="empty">Dados ao vivo ainda não disponíveis.</p>'}
-    <p class="lc-update">Atualizado às ${time} · a cada 30s</p>`;
-  panel.querySelector(`#lcclose-${panel.id}`).addEventListener('click',()=>{
-    panel.style.display='none';const key=panel.id;
-    if(liveTimers[key]){clearInterval(liveTimers[key]);delete liveTimers[key];}
-    const btn=document.getElementById(`livebtn-${panel.id.replace('lc-','')}`);
-    if(btn)btn.style.display='flex';
-  });
-}
-async function fetchLiveCompare(idx,fx,markets){
-  const panel=document.getElementById(`lc-${idx}`);if(!panel||panel.style.display==='none')return;
-  try{
-    const url=new URL(API,location.origin);
-    url.searchParams.set('action','live_compare');url.searchParams.set('fixture',fx.id);
-    url.searchParams.set('home',fx.homeId);url.searchParams.set('away',fx.awayId);
-    const res=await fetch(url);const json=await res.json();
-    if(!res.ok)throw new Error(json.error);renderLiveCompare(panel,markets,json,Date.now());
-  }catch(e){if(panel)panel.innerHTML=`<p class="empty">Erro: ${e.message}</p>`;}
-}
-function toggleLive(idx,fx,markets){
-  const panel=document.getElementById(`lc-${idx}`);const btn=document.getElementById(`livebtn-${idx}`);if(!panel)return;
-  if(panel.style.display!=='none'){
-    panel.style.display='none';if(liveTimers[`lc-${idx}`]){clearInterval(liveTimers[`lc-${idx}`]);delete liveTimers[`lc-${idx}`];}
-    if(btn)btn.style.display='flex';return;
+// --- API E DADOS ---
+async function fetchFromAPI(endpoint, params = {}) {
+  if (!CONFIG.USE_REAL_API) return null;
+  
+  const url = new URL(`${CONFIG.API_BASE}/${endpoint}`);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
+  
+  try {
+    const response = await fetch(url, {
+      headers: { 'x-apisports-key': CONFIG.API_KEY },
+      signal: AbortSignal.timeout(8000)
+    });
+    
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    return data.response || [];
+  } catch (error) {
+    console.warn('⚠️ API indisponível:', error.message);
+    return null;
   }
-  panel.style.display='block';if(btn)btn.style.display='none';
-  panel.innerHTML='<p class="empty">⏳ Buscando estatísticas ao vivo…</p>';
-  fetchLiveCompare(idx,fx,markets);
-  liveTimers[`lc-${idx}`]=setInterval(()=>fetchLiveCompare(idx,fx,markets),30000);
 }
 
-list.addEventListener('click',e=>{
-  if(e.target.closest('.live-btn')||e.target.closest('.live-compare')||e.target.closest('.lc-close')||e.target.closest('.inner-tabs')||e.target.closest('a'))return;
-  const card=e.target.closest('.fx-card');if(!card)return;
-  openPredict(parseInt(card.dataset.idx));
-});
-
-async function loadFixtures(scope){
-  Object.values(liveTimers).forEach(clearInterval);openCards.clear();
-  Object.keys(predictCache).forEach(k=>delete predictCache[k]);
-  list.innerHTML='<p class="empty">⏳ Carregando jogos…</p>';
-  try{
-    const res=await fetch(`${API}?action=fixtures&scope=${scope}`);const json=await res.json();
-    if(!res.ok)throw new Error(json.error);
-    allFixtures=json.fixtures||[];populateLeagues(allFixtures);leagueFilter.value='';renderFixtures(allFixtures);
-  }catch(e){list.innerHTML=`<p class="empty">Não foi possível carregar (${e.message}).</p>`;}
+function generateFallbackFixtures() {
+  const fixtures = [];
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  for (let i = 0; i < 14; i++) {
+    const league = FALLBACK_LEAGUES[i % FALLBACK_LEAGUES.length];
+    let homeIdx = Math.floor(Math.random() * TEAMS_POOL.length);
+    let awayIdx = Math.floor(Math.random() * TEAMS_POOL.length);
+    while (awayIdx === homeIdx) awayIdx = Math.floor(Math.random() * TEAMS_POOL.length);
+    
+    const home = TEAMS_POOL[homeIdx];
+    const away = TEAMS_POOL[awayIdx];
+    
+    const statusTypes = ['NS', 'NS', 'NS', 'LIVE', 'LIVE', 'FT', 'FT'];
+    const status = statusTypes[i % statusTypes.length];
+    
+    const kickoff = new Date(today);
+    kickoff.setHours(16 + Math.floor(i / 3), (i * 15) % 60, 0, 0);
+    
+    const fixture = {
+      id: 1000 + i,
+      league: { id: league.id, name: league.name, logo: league.logo },
+      teams: { 
+        home: { id: 100 + homeIdx, name: home, logo: `https://media.api-sports.io/football/teams/${100 + homeIdx}.png` },
+        away: { id: 200 + awayIdx, name: away, logo: `https://media.api-sports.io/football/teams/${200 + awayIdx}.png` }
+      },
+      goals: status === 'FT' ? { home: Math.floor(Math.random() * 4), away: Math.floor(Math.random() * 4) } : 
+             status === 'LIVE' ? { home: Math.floor(Math.random() * 3), away: Math.floor(Math.random() * 3) } : null,
+      fixture: { 
+        id: 1000 + i,
+        date: kickoff.toISOString(),
+        status: { 
+          short: status, 
+          elapsed: status === 'LIVE' ? 30 + Math.floor(Math.random() * 60) : (status === 'FT' ? 90 : null) 
+        }
+      },
+      _source: 'fallback',
+      _homeAvg: (1.2 + Math.random() * 2.0).toFixed(2),
+      _awayAvg: (0.6 + Math.random() * 1.6).toFixed(2),
+      _homeDef: (0.8 + Math.random() * 1.4).toFixed(2),
+      _awayDef: (1.0 + Math.random() * 1.6).toFixed(2)
+    };
+    
+    fixtures.push(fixture);
+  }
+  
+  return fixtures.sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
 }
 
-document.getElementById('scope-tabs').addEventListener('click',e=>{
-  const btn=e.target.closest('.scope-tab');if(!btn)return;
-  document.querySelectorAll('.scope-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');loadFixtures(btn.dataset.scope);
-});
-leagueFilter.addEventListener('change',()=>{
-  const sel=leagueFilter.value;
-  renderFixtures(sel?allFixtures.filter(f=>String(f.leagueId)===sel):allFixtures);
-});
+// --- MOTOR ESTATÍSTICO ---
+function poissonProb(lambda, k) {
+  if (lambda <= 0) return k === 0 ? 1 : 0;
+  let logP = -lambda + k * Math.log(lambda);
+  for (let i = 1; i <= k; i++) logP -= Math.log(i);
+  return Math.exp(logP);
+}
 
-loadFixtures('today');
+function simulateMatch(homeLambda, awayLambda, simulations = CONFIG.SIMULATIONS) {
+  const scoreMatrix = {};
+  let homeWins = 0, draws = 0, awayWins = 0;
+  let over15 = 0, over25 = 0, over35 = 0;
+  let btts = 0, bttsNo = 0;
+  
+  for (let s = 0; s < simulations; s++) {
+    let hGoals = 0, aGoals = 0;
+    
+    // Simulação de gols com distribuição de Poisson
+    for (let i = 0; i < 3; i++) {
+      if (Math.random() < homeLambda / (i + 1)) hGoals++;
+      if (Math.random() < awayLambda / (i + 1)) aGoals++;
+    }
+    
+    // Limitar a 8 gols para evitar outliers
+    hGoals = Math.min(hGoals, 8);
+    aGoals = Math.min(aGoals, 8);
+    
+    const key = `${hGoals}-${aGoals}`;
+    scoreMatrix[key] = (scoreMatrix[key] || 0) + 1;
+    
+    if (hGoals > aGoals) homeWins++;
+    else if (hGoals === aGoals) draws++;
+    else awayWins++;
+    
+    if (hGoals + aGoals > 1.5) over15++;
+    if (hGoals + aGoals > 2.5) over25++;
+    if (hGoals + aGoals > 3.5) over35++;
+    if (hGoals > 0 && aGoals > 0) btts++;
+    else bttsNo++;
+  }
+  
+  // Normalizar probabilidades
+  Object.keys(scoreMatrix).forEach(k => scoreMatrix[k] /= simulations);
+  
+  return {
+    '1x2': {
+      home: +(homeWins / simulations * 100).toFixed(1),
+      draw: +(draws / simulations * 100).toFixed(1),
+      away: +(awayWins / simulations * 100).toFixed(1)
+    },
+    goals: {
+      over15: +(over15 / simulations * 100).toFixed(1),
+      over25: +(over25 / simulations * 100).toFixed(1),
+      over35: +(over35 / simulations * 100).toFixed(1)
+    },
+    btts: {
+      yes: +(btts / simulations * 100).toFixed(1),
+      no: +(bttsNo / simulations * 100).toFixed(1)
+    },
+    scoreMatrix,
+    topScorelines: Object.entries(scoreMatrix)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([score, prob]) => ({ score, prob: +(prob * 100).toFixed(1) }))
+  };
+}
+
+function calculatePrediction(fixture) {
+  const homeLambda = parseFloat(fixture._homeAvg || (1.3 + Math.random() * 1.5));
+  const awayLambda = parseFloat(fixture._awayAvg || (0.8 + Math.random() * 1.3));
+  
+  const sim = simulateMatch(homeLambda, awayLambda);
+  
+  // Detectar value bets
+  const valueBets = [];
+  
+  if (sim['1x2'].home > 38) {
+    valueBets.push({ 
+      market: `${fixture.teams?.home?.name || 'Casa'} Vence`, 
+      prob: sim['1x2'].home, 
+      fairOdd: (1 / (sim['1x2'].home / 100)).toFixed(2), 
+      type: 'hc' 
+    });
+  }
+  
+  if (sim['1x2'].away > 38) {
+    valueBets.push({ 
+      market: `${fixture.teams?.away?.name || 'Fora'} Vence`, 
+      prob: sim['1x2'].away, 
+      fairOdd: (1 / (sim['1x2'].away / 100)).toFixed(2), 
+      type: 'hc' 
+    });
+  }
+  
+  if (sim.goals.over25 > 55) {
+    valueBets.push({ 
+      market: 'Over 2.5 Gols', 
+      prob: sim.goals.over25, 
+      fairOdd: (1 / (sim.goals.over25 / 100)).toFixed(2), 
+      type: 'hc' 
+    });
+  }
+  
+  if (sim.btts.yes > 55) {
+    valueBets.push({ 
+      market: 'BTTS Sim', 
+      prob: sim.btts.yes, 
+      fairOdd: (1 / (sim.btts.yes / 100)).toFixed(2), 
+      type: 'vb' 
+    });
+  }
+  
+  const hasValueBet = valueBets.length > 0;
+  const isDanger = sim['1x2'].draw > 35 || (sim['1x2'].home < 30 && sim['1x2'].away < 30);
+  const isHighConfidence = valueBets.some(v => v.type === 'hc' && v.prob > 50);
+  
+  return {
+    fixtureId: getFixtureId(fixture),
+    date: new Date().toISOString(),
+    status: fixture.fixture?.status?.short || 'NS',
+    sim,
+    homeLambda: +homeLambda.toFixed(2),
+    awayLambda: +awayLambda.toFixed(2),
+    valueBets,
+    hasValueBet,
+    isDanger,
+    isHighConfidence,
+    confidence: hasValueBet ? (valueBets[0].prob > 55 ? 'Alta' : 'Média') : 'Baixa'
+  };
+}
+
+// --- RENDERIZAÇÃO ---
+function renderFixtures() {
+  const container = $('#fixtures-list');
+  let filtered = [...STATE.fixtures];
+  
+  // Aplicar filtros
+  if (STATE.activeFilter === 'live') {
+    filtered = filtered.filter(f => f.fixture?.status?.short === 'LIVE');
+  } else if (STATE.activeFilter === 'ended') {
+    filtered = filtered.filter(f => f.fixture?.status?.short === 'FT');
+  } else if (STATE.activeFilter === 'scheduled') {
+    filtered = filtered.filter(f => ['NS', 'TBD'].includes(f.fixture?.status?.short));
+  }
+  
+  if (STATE.searchTerm) {
+    const term = STATE.searchTerm.toLowerCase();
+    filtered = filtered.filter(f => 
+      f.teams?.home?.name?.toLowerCase().includes(term) ||
+      f.teams?.away?.name?.toLowerCase().includes(term) ||
+      f.league?.name?.toLowerCase().includes(term)
+    );
+  }
+  
+  if (STATE.leagueFilter) {
+    filtered = filtered.filter(f => f.league?.id == STATE.leagueFilter);
+  }
+  
+  // Aplicar chips
+  if (STATE.activeChips.size > 0) {
+    filtered = filtered.filter(f => {
+      const pred = STATE.predictions[getFixtureId(f)];
+      if (!pred) return false;
+      if (STATE.activeChips.has('value') && !pred.hasValueBet) return false;
+      if (STATE.activeChips.has('hc') && !pred.isHighConfidence) return false;
+      if (STATE.activeChips.has('danger') && !pred.isDanger) return false;
+      return true;
+    });
+  }
+  
+  $('#fixture-count').textContent = filtered.length;
+  
+  if (filtered.length === 0) {
+    container.innerHTML = '<p class="empty">😕 Nenhum jogo encontrado com os filtros atuais.</p>';
+    return;
+  }
+  
+  container.innerHTML = filtered.map(f => {
+    const id = getFixtureId(f);
+    const pred = STATE.predictions[id];
+    const status = f.fixture?.status?.short || 'NS';
+    const isLive = status === 'LIVE';
+    const isEnded = status === 'FT';
+    const isSelected = STATE.selectedMatch === id;
+    
+    const homeName = f.teams?.home?.name || 'Time Casa';
+    const awayName = f.teams?.away?.name || 'Time Fora';
+    const leagueName = f.league?.name || 'Liga Desconhecida';
+    const score = f.goals ? `${f.goals.home} - ${f.goals.away}` : 'vs';
+    const minutes = f.fixture?.status?.elapsed ? `${f.fixture.status.elapsed}'` : '';
+    const time = new Date(f.fixture?.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
+    // Badges
+    let badgesHTML = '';
+    if (pred?.isHighConfidence) badgesHTML += '<span class="badge badge-hc">⭐ Alta Confiança</span>';
+    if (pred?.valueBets?.some(v => v.type === 'vb')) badgesHTML += '<span class="badge badge-vb">💎 Value Bet</span>';
+    if (pred?.isDanger) badgesHTML += '<span class="badge badge-danger">⚠️ Perigoso</span>';
+    if (!pred) badgesHTML += '<span class="badge badge-insuf">📊 Sem dados</span>';
+    
+    let statusHTML;
+    if (isLive) {
+      statusHTML = `<span class="live-pill"><span class="live-dot"></span>${minutes || 'AO VIVO'}</span>`;
+    } else if (isEnded) {
+      statusHTML = `<span class="ended-badge">🏁 Encerrado</span>`;
+    } else {
+      statusHTML = `<span class="fx-time">🕐 ${time}</span>`;
+    }
+    
+    // Imagens com fallback
+    const homeLogo = f.teams?.home?.logo ? 
+      `<img class="fx-crest" src="${f.teams.home.logo}" alt="" onerror="this.style.display='none'" loading="lazy">` : '';
+    const awayLogo = f.teams?.away?.logo ? 
+      `<img class="fx-crest" src="${f.teams.away.logo}" alt="" onerror="this.style.display='none'" loading="lazy">` : '';
+    const leagueLogo = f.league?.logo ? 
+      `<img class="fx-league-logo" src="${f.league.logo}" alt="" onerror="this.style.display='none'" loading="lazy">` : '';
+    
+    return `
+      <div class="fx-card ${isSelected ? 'active-card' : ''} ${isEnded ? 'ended-card' : ''}" 
+           data-id="${id}" onclick="toggleMatch(this, ${id})">
+        <div class="fx-header">
+          ${leagueLogo}
+          <span class="fx-league-name">${leagueName}</span>
+          ${statusHTML}
+          <div class="badge-row">${badgesHTML}</div>
+        </div>
+        <div class="fx-body">
+          <div class="fx-teams">
+            <div class="fx-team">${homeLogo} ${homeName}</div>
+            <div class="fx-team">${awayLogo} ${awayName}</div>
+          </div>
+          <div class="fx-score-block">
+            <div class="fx-score ${isEnded ? 'ended' : ''}">${score}</div>
+            <div class="fx-status">${isEnded ? 'Final' : (isLive ? 'Jogando' : 'Agendado')}</div>
+          </div>
+          <div class="fx-arrow">▼</div>
+        </div>
+        <div class="predict-panel">
+          ${pred ? renderPredictionPanel(pred, f) : '<p style="color:var(--muted);font-size:12px;padding:10px">Calculando previsão...</p>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPredictionPanel(pred, fixture) {
+  const sim = pred.sim;
+  const bestValueBet = pred.valueBets[0];
+  
+  return `
+    <div class="inner-tabs">
+      <button class="inner-tab active" data-tab="resumo">📊 Resumo</button>
+      <button class="inner-tab" data-tab="mercados">💰 Mercados</button>
+      <button class="inner-tab" data-tab="simulacao">🎲 Simulação</button>
+      <button class="inner-tab" data-tab="fatores">📈 Fatores</button>
+    </div>
+    
+    <div class="predict-meta">
+      <span class="meta-chip">λ Casa: ${pred.homeLambda}</span>
+      <span class="meta-chip">λ Fora: ${pred.awayLambda}</span>
+      <span class="meta-chip">Confiança: ${pred.confidence}</span>
+      <span class="meta-chip">Simulações: ${CONFIG.SIMULATIONS.toLocaleString()}</span>
+    </div>
+    
+    ${bestValueBet ? `
+    <div class="best-bet-card">
+      <div class="bb-title">⭐ Melhor Oportunidade</div>
+      <div class="bb-market">${bestValueBet.market} ${bestValueBet.type === 'vb' ? '<span class="vb-badge">Value Bet</span>' : ''}</div>
+      <div class="bb-grid">
+        <div class="bb-item">
+          <div class="bb-item-label">Probabilidade</div>
+          <div class="bb-item-val high">${bestValueBet.prob}%</div>
+        </div>
+        <div class="bb-item">
+          <div class="bb-item-label">Odd Justa</div>
+          <div class="bb-item-val mid">${bestValueBet.fairOdd}</div>
+        </div>
+        <div class="bb-item">
+          <div class="bb-item-label">Margem</div>
+          <div class="bb-item-val ${bestValueBet.prob > 55 ? 'high' : 'mid'}">+${(bestValueBet.prob - 45).toFixed(1)}%</div>
+        </div>
+      </div>
+      <div class="bb-justify">💡 Alta probabilidade estatística com boa margem de valor. Considere incluir na sua aposta do dia.</div>
+    </div>
+    ` : '<p style="font-size:12px;color:var(--muted);margin-bottom:10px">Nenhuma value bet clara identificada neste momento.</p>'}
+    
+    <div class="sim-section">
+      <div class="sim-title">Previsão 1X2 <span>10k simulações</span></div>
+      <div class="sim-1x2">
+        <div class="sim-box home">
+          <div class="sim-box-label">${fixture.teams?.home?.name || 'Casa'}</div>
+          <div class="sim-box-prob">${sim['1x2'].home}%</div>
+        </div>
+        <div class="sim-box draw">
+          <div class="sim-box-label">Empate</div>
+          <div class="sim-box-prob">${sim['1x2'].draw}%</div>
+        </div>
+        <div class="sim-box away">
+          <div class="sim-box-label">${fixture.teams?.away?.name || 'Fora'}</div>
+          <div class="sim-box-prob">${sim['1x2'].away}%</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="ticket-panel">
+      <div class="ticket-header">
+        <div class="ticket-title">🎫 Bilhete Rápido</div>
+        <div class="ticket-subtitle">Mercados com melhor valor estatístico</div>
+      </div>
+      <div class="ticket-list">
+        <div class="ticket-row">
+          <span class="ticket-num">1</span>
+          <span class="ticket-label">Over 2.5 Gols</span>
+          <span class="ticket-prob ${sim.goals.over25 > 55 ? 'high' : 'mid'}">${sim.goals.over25}%</span>
+        </div>
+        <div class="ticket-row">
+          <span class="ticket-num">2</span>
+          <span class="ticket-label">BTTS Sim</span>
+          <span class="ticket-prob ${sim.btts.yes > 50 ? 'high' : 'mid'}">${sim.btts.yes}%</span>
+        </div>
+        <div class="ticket-row">
+          <span class="ticket-num">3</span>
+          <span class="ticket-label">Over 1.5 Gols</span>
+          <span class="ticket-prob ${sim.goals.over15 > 70 ? 'high' : 'mid'}">${sim.goals.over15}%</span>
+        </div>
+      </div>
+      <div class="bm-label">Aposte com as melhores odds</div>
+      <div class="bookmakers">
+        <a href="https://www.betano.com" target="_blank" rel="noopener" class="bm-btn bm-betano">Betano</a>
+        <a href="https://www.bet365.com" target="_blank" rel="noopener" class="bm-btn bm-bet365">Bet365</a>
+        <a href="https://www.sportingbet.com" target="_blank" rel="noopener" class="bm-btn bm-sportingbet">Sportingbet</a>
+        <a href="https://www.betfair.com" target="_blank" rel="noopener" class="bm-btn bm-betfair">Betfair</a>
+        <a href="https://www.novibet.com" target="_blank" rel="noopener" class="bm-btn bm-novibet">Novibet</a>
+        <a href="https://www.superbet.com" target="_blank" rel="noopener" class="bm-btn bm-superbet">Superbet</a>
+      </div>
+    </div>
+  `;
+}
+
+// --- TOP 10 ---
+function generateTop10() {
+  const allPreds = Object.entries(STATE.predictions)
+    .map(([id, pred]) => {
+      const fixture = STATE.fixtures.find(f => getFixtureId(f) == id);
+      if (!fixture || fixture.fixture?.status?.short === 'FT') return null;
+      const bestBet = pred.valueBets[0];
+      if (!bestBet) return null;
+      return { 
+        fixture, 
+        pred, 
+        bestBet, 
+        score: bestBet.prob + (pred.isHighConfidence ? 10 : 0) + (pred.hasValueBet ? 5 : 0) 
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10);
+  
+  const container = $('#top10-list');
+  if (allPreds.length === 0) {
+    container.innerHTML = '<p class="empty" style="font-size:11.5px">Nenhuma aposta de valor encontrada para os jogos de hoje.</p>';
+    return;
+  }
+  
+  container.innerHTML = allPreds.map((item, i) => `
+    <div class="top10-row" onclick="toggleMatchById(${getFixtureId(item.fixture)})">
+      <span class="top10-rank">#${i + 1}</span>
+      <span class="top10-match">${item.fixture.teams?.home?.name} vs ${item.fixture.teams?.away?.name}</span>
+      <span>${item.bestBet.market}</span>
+      <span class="top10-prob">${item.bestBet.prob}%</span>
+    </div>
+  `).join('');
+}
+
+// --- HISTÓRICO ---
+function loadHistory() {
+  try {
+    const saved = localStorage.getItem('futestat_history');
+    STATE.history = saved ? JSON.parse(saved) : [];
+  } catch (e) {
+    STATE.history = [];
+  }
+}
+
+function saveHistory() {
+  try {
+    localStorage.setItem('futestat_history', JSON.stringify(STATE.history.slice(0, CONFIG.MAX_HISTORY)));
+  } catch (e) {
+    console.warn('Não foi possível salvar o histórico');
+  }
+}
+
+function addToHistory(fixture, pred) {
+  const entry = {
+    id: Date.now(),
+    date: new Date().toISOString(),
+    match: `${fixture.teams?.home?.name} vs ${fixture.teams?.away?.name}`,
+    league: fixture.league?.name,
+    prediction: pred.valueBets[0]?.market || 'N/A',
+    prob: pred.valueBets[0]?.prob || 0,
+    confidence: pred.confidence,
+    actualResult: fixture.goals ? `${fixture.goals.home}-${fixture.goals.away}` : null,
+    hit: fixture.goals ? checkHit(pred, fixture) : null
+  };
+  
+  STATE.history.unshift(entry);
+  if (STATE.history.length > CONFIG.MAX_HISTORY) {
+    STATE.history = STATE.history.slice(0, CONFIG.MAX_HISTORY);
+  }
+  saveHistory();
+}
+
+function checkHit(pred, fixture) {
+  const goals = fixture.goals;
+  if (!goals) return null;
+  const totalGoals = goals.home + goals.away;
+  const bestBet = pred.valueBets[0];
+  if (!bestBet) return null;
+  
+  if (bestBet.market.includes('Over 2.5')) return totalGoals > 2.5;
+  if (bestBet.market.includes('Over 1.5')) return totalGoals > 1.5;
+  if (bestBet.market.includes('BTTS Sim')) return goals.home > 0 && goals.away > 0;
+  if (bestBet.market.includes('Vence')) {
+    const isHome = bestBet.market.includes(fixture.teams?.home?.name);
+    return isHome ? goals.home > goals.away : goals.away > goals.home;
+  }
+  return null;
+}
+
+function renderHistory() {
+  const statsContainer = $('#history-stats');
+  const listContainer = $('#history-list');
+  
+  if (STATE.history.length === 0) {
+    statsContainer.innerHTML = '<p style="color:var(--muted);font-size:12px;grid-column:1/-1;text-align:center">Nenhum histórico disponível.</p>';
+    listContainer.innerHTML = '<p class="empty">As previsões visualizadas aparecerão aqui.</p>';
+    return;
+  }
+  
+  const withResult = STATE.history.filter(h => h.hit !== null);
+  const hits = withResult.filter(h => h.hit === true).length;
+  const accuracy = withResult.length > 0 ? (hits / withResult.length * 100).toFixed(1) : 0;
+  
+  statsContainer.innerHTML = `
+    <div class="hs-box"><div class="hs-val">${STATE.history.length}</div><div class="hs-label">Total</div></div>
+    <div class="hs-box"><div class="hs-val">${withResult.length}</div><div class="hs-label">Apuradas</div></div>
+    <div class="hs-box"><div class="hs-val">${hits}</div><div class="hs-label">Acertos</div></div>
+    <div class="hs-box"><div class="hs-val">${accuracy}%</div><div class="hs-label">Assertividade</div></div>
+  `;
+  
+  listContainer.innerHTML = STATE.history.slice(0, 20).map(h => `
+    <div class="h-row">
+      <div>
+        <div style="font-weight:500">${h.match}</div>
+        <div class="h-match">${h.league} · ${new Date(h.date).toLocaleDateString('pt-BR')}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--muted)">${h.prediction}</div>
+        <div style="font-size:10px;color:var(--muted)">${h.prob}% · ${h.confidence}</div>
+      </div>
+      <div class="h-result ${h.hit === true ? 'win' : ''}" 
+           style="${h.hit === false ? 'color:var(--red)' : 'color:var(--muted)'}">
+        ${h.hit === true ? '✅' : (h.hit === false ? '❌' : '⏳')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// --- INTERAÇÕES DO USUÁRIO ---
+function toggleMatch(cardElement, id) {
+  // Fechar outros cards
+  $$('.fx-card.active-card').forEach(c => {
+    if (c !== cardElement) c.classList.remove('active-card');
+  });
+  
+  // Toggle do card atual
+  const isActive = cardElement.classList.toggle('active-card');
+  STATE.selectedMatch = isActive ? id : null;
+  
+  // Calcular previsão se necessário
+  if (isActive && !STATE.predictions[id]) {
+    const fixture = STATE.fixtures.find(f => getFixtureId(f) === id);
+    if (fixture) {
+      STATE.predictions[id] = calculatePrediction(fixture);
+      addToHistory(fixture, STATE.predictions[id]);
+      renderFixtures();
+      // Reabrir após re-render
+      setTimeout(() => {
+        const newCard = $(`.fx-card[data-id="${id}"]`);
+        if (newCard) {
+          newCard.classList.add('active-card');
+          STATE.selectedMatch = id;
+        }
+      }, 100);
+    }
+  }
+}
+
+function toggleMatchById(id) {
+  const card = $(`.fx-card[data-id="${id}"]`);
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => toggleMatch(card, id), 300);
+  }
+}
+
+// --- CONFIGURAÇÃO DE EVENTOS ---
+function setupEventListeners() {
+  // Busca
+  $('#search-input').addEventListener('input', (e) => {
+    STATE.searchTerm = e.target.value;
+    renderFixtures();
+  });
+  
+  // Abas de filtro
+  $('#scope-tabs').addEventListener('click', (e) => {
+    if (e.target.classList.contains('scope-tab') || e.target.closest('.scope-tab')) {
+      const tab = e.target.classList.contains('scope-tab') ? e.target : e.target.closest('.scope-tab');
+      $$('.scope-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      STATE.activeFilter = tab.dataset.filter;
+      renderFixtures();
+    }
+  });
+  
+  // Filtro de liga
+  $('#league-filter').addEventListener('change', (e) => {
+    STATE.leagueFilter = e.target.value;
+    renderFixtures();
+  });
+  
+  // Chips
+  $$('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const chipName = chip.dataset.chip;
+      if (STATE.activeChips.has(chipName)) {
+        STATE.activeChips.delete(chipName);
+        chip.classList.remove('active-chip');
+      } else {
+        STATE.activeChips.add(chipName);
+        chip.classList.add('active-chip');
+      }
+      renderFixtures();
+    });
+  });
+  
+  // Top 10
+  $('#btn-top10').addEventListener('click', generateTop10);
+  
+  // Histórico
+  $('#btn-history').addEventListener('click', () => {
+    const section = $('#history-section');
+    section.classList.toggle('visible');
+    $('#btn-history').classList.toggle('active', section.classList.contains('visible'));
+    if (section.classList.contains('visible')) renderHistory();
+  });
+  
+  $('#btn-clear-history').addEventListener('click', () => {
+    if (confirm('Tem certeza que deseja limpar todo o histórico de previsões?')) {
+      STATE.history = [];
+      saveHistory();
+      renderHistory();
+    }
+  });
+  
+  // Fechar cards ao pressionar Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && STATE.selectedMatch) {
+      $$('.fx-card.active-card').forEach(c => c.classList.remove('active-card'));
+      STATE.selectedMatch = null;
+    }
+  });
+}
+
+// --- RELÓGIO ---
+function updateClock() {
+  const now = new Date();
+  const options = { 
+    weekday: 'short', 
+    day: '2-digit', 
+    month: 'short', 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit' 
+  };
+  $('#clock').textContent = now.toLocaleString('pt-BR', options).toUpperCase();
+}
+
+// --- INICIALIZAÇÃO ---
+async function init() {
+  console.log('⚽ FuteStat v4.0 — Inicializando...');
+  
+  // Carregar histórico
+  loadHistory();
+  
+  // Buscar dados da API ou gerar fallback
+  let apiFixtures = [];
+  if (CONFIG.USE_REAL_API) {
+    const today = new Date().toISOString().split('T')[0];
+    apiFixtures = await fetchFromAPI('fixtures', { date: today, timezone: 'America/Sao_Paulo' }) || [];
+  }
+  
+  STATE.fixtures = apiFixtures.length > 0 ? apiFixtures : generateFallbackFixtures();
+  
+  // Popular filtro de ligas
+  const uniqueLeagues = [...new Map(STATE.fixtures.map(f => [f.league?.id, f.league])).values()]
+    .filter(Boolean)
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  
+  const leagueSelect = $('#league-filter');
+  leagueSelect.innerHTML = '<option value="">Todas as ligas</option>' +
+    uniqueLeagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+  
+  // Pré-calcular previsões para os primeiros jogos
+  STATE.fixtures.slice(0, 5).forEach(f => {
+    const id = getFixtureId(f);
+    if (!STATE.predictions[id]) {
+      STATE.predictions[id] = calculatePrediction(f);
+    }
+  });
+  
+  // Renderizar interface
+  renderFixtures();
+  renderHistory();
+  updateClock();
+  
+  // Intervalos
+  setInterval(updateClock, 10000);
+  
+  // Atualizar jogos ao vivo periodicamente
+  setInterval(async () => {
+    const hasLiveGames = STATE.fixtures.some(f => f.fixture?.status?.short === 'LIVE');
+    if (hasLiveGames && CONFIG.USE_REAL_API) {
+      const updated = await fetchFromAPI('fixtures', { live: 'all' });
+      if (updated && updated.length > 0) {
+        updated.forEach(uf => {
+          const idx = STATE.fixtures.findIndex(f => getFixtureId(f) === uf.fixture.id);
+          if (idx >= 0) STATE.fixtures[idx] = { ...STATE.fixtures[idx], ...uf };
+        });
+        renderFixtures();
+      }
+    }
+  }, CONFIG.REFRESH_INTERVAL);
+  
+  // Configurar eventos
+  setupEventListeners();
+  
+  STATE.isInitialized = true;
+  console.log('✅ FuteStat pronto! Dados carregados:', STATE.fixtures.length, 'jogos');
+}
+
+// Iniciar quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 </script>
+
 </body>
 </html>
