@@ -18,7 +18,6 @@
 body{color:var(--text);font-family:var(--font-b);line-height:1.5;min-height:100vh;background:var(--bg);overflow-x:hidden}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 100% 50% at 50% 0%,rgba(0,216,86,.04) 0%,transparent 60%),radial-gradient(circle at 50% 60%,transparent 30%,rgba(0,0,0,.8) 100%)}
 
-/* Partículas */
 .particles{position:fixed;inset:0;pointer-events:none;z-index:0}
 .particle{position:absolute;border-radius:50%;animation:floatUp 8s linear infinite;opacity:0}
 .particle:nth-child(odd){background:var(--accent);box-shadow:0 0 6px var(--accent)}
@@ -41,9 +40,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;back
 main{max-width:860px;margin:0 auto;padding:18px clamp(12px,3vw,28px) 70px;position:relative;z-index:1}
 
 /* Cards de Ligas */
-.league-strip{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:none;-ms-overflow-style:none}
+.league-strip{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:none;-ms-overflow-style:none;flex-wrap:wrap}
 .league-strip::-webkit-scrollbar{display:none}
-.league-chip{flex-shrink:0;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:20px;padding:6px 14px;cursor:pointer;transition:all .2s;font-size:11.5px;white-space:nowrap}
+.league-chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:20px;padding:6px 14px;cursor:pointer;transition:all .2s;font-size:11.5px;white-space:nowrap}
 .league-chip:hover{border-color:var(--accent);background:rgba(0,216,86,.06)}
 .league-chip.active{border-color:var(--accent);background:rgba(0,216,86,.1);color:var(--accent)}
 .league-chip img{width:18px;height:18px;object-fit:contain;border-radius:50%}
@@ -193,6 +192,16 @@ main{max-width:860px;margin:0 auto;padding:18px clamp(12px,3vw,28px) 70px;positi
 .field-stat-val{font-family:var(--font-m);font-size:16px;font-weight:600;color:var(--accent)}
 .field-stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
 
+/* Top 10 */
+.top10-bar{background:linear-gradient(135deg,rgba(155,89,255,.08),rgba(0,216,86,.04));border:1px solid rgba(155,89,255,.25);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
+.top10-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.top10-title{font-family:var(--font-d);font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);display:flex;align-items:center;gap:6px}
+.top10-list{display:flex;flex-direction:column;gap:5px}
+.top10-item{display:grid;grid-template-columns:24px 1fr auto auto;gap:8px;align-items:center;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;cursor:pointer;transition:all .15s}
+.top10-item:hover{background:rgba(255,255,255,.06);border-color:var(--purple)}
+.top10-rank{font-family:var(--font-m);font-size:10px;color:var(--purple);font-weight:600;text-align:center}
+.top10-prob{font-family:var(--font-m);font-size:13px;font-weight:600;color:var(--accent)}
+
 /* Histórico */
 .history-panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px;margin-bottom:16px;display:none}
 .history-panel.visible{display:block;animation:cardIn .3s ease}
@@ -208,16 +217,6 @@ main{max-width:860px;margin:0 auto;padding:18px clamp(12px,3vw,28px) 70px;positi
 .btn-danger{background:transparent;border:1px solid rgba(255,68,68,.3);color:var(--red);font-size:10.5px;border-radius:var(--radius-sm);padding:6px 14px;cursor:pointer;font-family:var(--font-d);text-transform:uppercase;letter-spacing:.04em;transition:all .15s}
 .btn-danger:hover{background:rgba(255,68,68,.1)}
 
-/* Top 10 */
-.top10-bar{background:linear-gradient(135deg,rgba(155,89,255,.08),rgba(0,216,86,.04));border:1px solid rgba(155,89,255,.25);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
-.top10-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
-.top10-title{font-family:var(--font-d);font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);display:flex;align-items:center;gap:6px}
-.top10-list{display:flex;flex-direction:column;gap:5px}
-.top10-item{display:grid;grid-template-columns:24px 1fr auto auto;gap:8px;align-items:center;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;cursor:pointer;transition:all .15s}
-.top10-item:hover{background:rgba(255,255,255,.06);border-color:var(--purple)}
-.top10-rank{font-family:var(--font-m);font-size:10px;color:var(--purple);font-weight:600;text-align:center}
-.top10-prob{font-family:var(--font-m);font-size:13px;font-weight:600;color:var(--accent)}
-
 /* Footer */
 .footer{position:relative;z-index:1;border-top:1px solid var(--line);padding:20px clamp(14px,4vw,44px) 30px;text-align:center}
 .footer-text{font-size:11.5px;color:var(--muted)}
@@ -228,7 +227,6 @@ main{max-width:860px;margin:0 auto;padding:18px clamp(12px,3vw,28px) 70px;positi
 .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--muted);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* Responsivo */
 @media(max-width:680px){
   .topbar{height:auto;padding:10px 14px}
   .brand-name{font-size:19px}
@@ -247,7 +245,6 @@ main{max-width:860px;margin:0 auto;padding:18px clamp(12px,3vw,28px) 70px;positi
 
 <div class="particles" id="particles"></div>
 
-<!-- Overlay Campo 3D -->
 <div class="field-overlay" id="fieldOverlay">
   <button class="field-close" onclick="closeField3D()">✕ Fechar</button>
   <div class="field-scoreboard" id="fieldScoreboard"></div>
@@ -279,7 +276,6 @@ main{max-width:860px;margin:0 auto;padding:18px clamp(12px,3vw,28px) 70px;positi
 <div class="notice z">⚡ Previsões baseadas em Poisson + Monte Carlo (10.000 simulações). Não há garantia de resultados. Aposte com responsabilidade (+18).</div>
 
 <main>
-  <!-- Histórico -->
   <div class="history-panel" id="historyPanel">
     <div class="history-header">
       <div class="history-title">📋 Histórico de Previsões</div>
@@ -289,7 +285,6 @@ main{max-width:860px;margin:0 auto;padding:18px clamp(12px,3vw,28px) 70px;positi
     <div class="history-list" id="historyList"></div>
   </div>
 
-  <!-- Top 10 -->
   <div class="top10-bar">
     <div class="top10-header">
       <div class="top10-title">🏆 Melhores Oportunidades</div>
@@ -300,10 +295,8 @@ main{max-width:860px;margin:0 auto;padding:18px clamp(12px,3vw,28px) 70px;positi
     </div>
   </div>
 
-  <!-- Ligas Rápidas -->
   <div class="league-strip" id="leagueStrip"></div>
 
-  <!-- Filtros -->
   <div class="filter-bar">
     <div class="search-box">
       <span>🔍</span>
@@ -337,14 +330,10 @@ main{max-width:860px;margin:0 auto;padding:18px clamp(12px,3vw,28px) 70px;positi
 
 <script>
 // ============================================
-// FUTESTAT v5.0 - COMPLETO E OTIMIZADO
+// FUTESTAT v5.0 - CORRIGIDO
 // ============================================
 
-const C = {
-  SIM: 10000,
-  MAX_HISTORY_H: 12,
-  CLEANUP_MS: 300000,
-};
+const C = { SIM: 10000, MAX_HISTORY_H: 12, CLEANUP_MS: 300000 };
 
 const S = {
   fixtures: [],
@@ -353,33 +342,39 @@ const S = {
   activeFilter: 'all',
   activeChips: new Set(),
   searchTerm: '',
-  leagueFilter: '',
+  leagueFilter: null,
   selectedMatch: null,
   selectedMarkets: new Map(),
   liveInterval: null,
 };
 
-// Ligas incluindo Copa do Mundo 2026
-const LEAGUES = [
-  { id: 1, name: 'Copa do Mundo 2026', country: 'Mundial', logo: 'https://media.api-sports.io/football/leagues/1.png', featured: true },
-  { id: 6, name: 'Copa do Mundo 2026 - Qual.', country: 'Mundial', logo: 'https://media.api-sports.io/football/leagues/1.png' },
-  { id: 71, name: 'Brasileirão Série A', country: 'Brasil', logo: 'https://media.api-sports.io/football/leagues/71.png', featured: true },
-  { id: 72, name: 'Brasileirão Série B', country: 'Brasil', logo: 'https://media.api-sports.io/football/leagues/72.png' },
-  { id: 13, name: 'Copa Libertadores', country: 'América do Sul', logo: 'https://media.api-sports.io/football/leagues/13.png', featured: true },
-  { id: 15, name: 'Copa América', country: 'América do Sul', logo: 'https://media.api-sports.io/football/leagues/15.png' },
-  { id: 2, name: 'Liga dos Campeões', country: 'Europa', logo: 'https://media.api-sports.io/football/leagues/2.png', featured: true },
-  { id: 4, name: 'Eurocopa', country: 'Europa', logo: 'https://media.api-sports.io/football/leagues/4.png' },
-  { id: 39, name: 'Premier League', country: 'Inglaterra', logo: 'https://media.api-sports.io/football/leagues/39.png', featured: true },
-  { id: 140, name: 'La Liga', country: 'Espanha', logo: 'https://media.api-sports.io/football/leagues/140.png', featured: true },
-  { id: 135, name: 'Série A TIM', country: 'Itália', logo: 'https://media.api-sports.io/football/leagues/135.png' },
-  { id: 78, name: 'Bundesliga', country: 'Alemanha', logo: 'https://media.api-sports.io/football/leagues/78.png' },
-  { id: 61, name: 'Ligue 1', country: 'França', logo: 'https://media.api-sports.io/football/leagues/61.png' },
-  { id: 128, name: 'Liga Argentina', country: 'Argentina', logo: 'https://media.api-sports.io/football/leagues/128.png' },
-  { id: 94, name: 'Primeira Liga', country: 'Portugal', logo: 'https://media.api-sports.io/football/leagues/94.png' },
-  { id: 88, name: 'Eredivisie', country: 'Holanda', logo: 'https://media.api-sports.io/football/leagues/88.png' },
-  { id: 253, name: 'MLS', country: 'EUA', logo: 'https://media.api-sports.io/football/leagues/253.png' },
-  { id: 11, name: 'Copa do Brasil', country: 'Brasil', logo: 'https://media.api-sports.io/football/leagues/71.png' },
-  { id: 10, name: 'Amistosos Internacionais', country: 'Mundial', logo: 'https://media.api-sports.io/football/leagues/10.png' },
+// TODAS AS LIGAS - incluindo Copa do Mundo 2026
+const ALL_LEAGUES = [
+  { id: 1, name: '🏆 Copa do Mundo 2026', country: 'Mundial', logo: 'https://media.api-sports.io/football/leagues/1.png', featured: true },
+  { id: 71, name: '🇧🇷 Brasileirão Série A', country: 'Brasil', logo: 'https://media.api-sports.io/football/leagues/71.png', featured: true },
+  { id: 72, name: '🇧🇷 Brasileirão Série B', country: 'Brasil', logo: 'https://media.api-sports.io/football/leagues/72.png' },
+  { id: 13, name: '🌎 Copa Libertadores', country: 'América do Sul', logo: 'https://media.api-sports.io/football/leagues/13.png', featured: true },
+  { id: 15, name: '🌎 Copa América', country: 'América do Sul', logo: 'https://media.api-sports.io/football/leagues/15.png' },
+  { id: 12, name: '🌎 Copa Sul-Americana', country: 'América do Sul', logo: 'https://media.api-sports.io/football/leagues/12.png' },
+  { id: 11, name: '🇧🇷 Copa do Brasil', country: 'Brasil', logo: 'https://media.api-sports.io/football/leagues/71.png' },
+  { id: 2, name: '⭐ Liga dos Campeões', country: 'Europa', logo: 'https://media.api-sports.io/football/leagues/2.png', featured: true },
+  { id: 3, name: '⭐ Liga Europa', country: 'Europa', logo: 'https://media.api-sports.io/football/leagues/3.png' },
+  { id: 4, name: '🏆 Eurocopa', country: 'Europa', logo: 'https://media.api-sports.io/football/leagues/4.png' },
+  { id: 5, name: '🏆 Liga das Nações UEFA', country: 'Europa', logo: 'https://media.api-sports.io/football/leagues/5.png' },
+  { id: 39, name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', country: 'Inglaterra', logo: 'https://media.api-sports.io/football/leagues/39.png', featured: true },
+  { id: 140, name: '🇪🇸 La Liga', country: 'Espanha', logo: 'https://media.api-sports.io/football/leagues/140.png', featured: true },
+  { id: 135, name: '🇮🇹 Série A TIM', country: 'Itália', logo: 'https://media.api-sports.io/football/leagues/135.png' },
+  { id: 78, name: '🇩🇪 Bundesliga', country: 'Alemanha', logo: 'https://media.api-sports.io/football/leagues/78.png' },
+  { id: 61, name: '🇫🇷 Ligue 1', country: 'França', logo: 'https://media.api-sports.io/football/leagues/61.png' },
+  { id: 128, name: '🇦🇷 Liga Argentina', country: 'Argentina', logo: 'https://media.api-sports.io/football/leagues/128.png' },
+  { id: 94, name: '🇵🇹 Primeira Liga', country: 'Portugal', logo: 'https://media.api-sports.io/football/leagues/94.png' },
+  { id: 88, name: '🇳🇱 Eredivisie', country: 'Holanda', logo: 'https://media.api-sports.io/football/leagues/88.png' },
+  { id: 253, name: '🇺🇸 MLS', country: 'EUA', logo: 'https://media.api-sports.io/football/leagues/253.png' },
+  { id: 262, name: '🇲🇽 Liga MX', country: 'México', logo: 'https://media.api-sports.io/football/leagues/262.png' },
+  { id: 10, name: '🌍 Amistosos Internacionais', country: 'Mundial', logo: 'https://media.api-sports.io/football/leagues/10.png' },
+  { id: 18, name: '🌍 Mundial de Clubes', country: 'Mundial', logo: 'https://media.api-sports.io/football/leagues/18.png' },
+  { id: 45, name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Copa da Inglaterra', country: 'Inglaterra', logo: 'https://media.api-sports.io/football/leagues/45.png' },
+  { id: 143, name: '🇪🇸 Copa do Rei', country: 'Espanha', logo: 'https://media.api-sports.io/football/leagues/143.png' },
 ];
 
 const TEAMS = [
@@ -413,27 +408,66 @@ function createParticles(){
   }
 }
 
-// --- GERAÇÃO DE JOGOS ---
+// --- GERAÇÃO DE JOGOS COM TODAS AS LIGAS ---
 function genFixtures(){
   const fixs=[],now=new Date();
-  for(let i=0;i<20;i++){
-    const league=LEAGUES[Math.floor(Math.random()*LEAGUES.length)];
+  
+  // Garantir que cada liga tenha pelo menos 1 jogo
+  ALL_LEAGUES.forEach((league, idx) => {
     let hi=Math.floor(Math.random()*TEAMS.length),ai=Math.floor(Math.random()*TEAMS.length);
     while(ai===hi)ai=Math.floor(Math.random()*TEAMS.length);
+    
     const home=TEAMS[hi],away=TEAMS[ai];
     let st,el,goals;const r=Math.random();
-    if(r<.25){st='LIVE';el=15+Math.floor(Math.random()*75);goals={home:Math.floor(Math.random()*3),away:Math.floor(Math.random()*2)}}
-    else if(r<.5){st='FT';el=90;goals={home:Math.floor(Math.random()*5),away:Math.floor(Math.random()*4)}}
+    if(r<.2){st='LIVE';el=15+Math.floor(Math.random()*75);goals={home:Math.floor(Math.random()*3),away:Math.floor(Math.random()*2)}}
+    else if(r<.45){st='FT';el=90;goals={home:Math.floor(Math.random()*5),away:Math.floor(Math.random()*4)}}
     else{st='NS';el=null;goals=null}
-    const ko=new Date(now);ko.setHours(13+Math.floor(i/2),(i*30)%60,0,0);
+    
+    const ko=new Date(now);
+    ko.setHours(13+Math.floor(idx/3),(idx*20)%60,0,0);
     if(st==='FT')ko.setHours(ko.getHours()-2);
+    
     fixs.push({
-      id:4000+i,league:{id:league.id,name:league.name,logo:league.logo,country:league.country},
-      teams:{home:{id:700+hi,name:home,logo:`https://media.api-sports.io/football/teams/${700+hi}.png`},away:{id:800+ai,name:away,logo:`https://media.api-sports.io/football/teams/${800+ai}.png`}},
-      goals,fixture:{id:4000+i,date:ko.toISOString(),status:{short:st,elapsed:el}},_stats:genStats(),_addedAt:Date.now()
+      id:5000+idx,
+      league:{id:league.id,name:league.name,logo:league.logo,country:league.country,featured:league.featured},
+      teams:{
+        home:{id:900+hi,name:home,logo:`https://media.api-sports.io/football/teams/${900+hi}.png`},
+        away:{id:1000+ai,name:away,logo:`https://media.api-sports.io/football/teams/${1000+ai}.png`}
+      },
+      goals,fixture:{id:5000+idx,date:ko.toISOString(),status:{short:st,elapsed:el}},
+      _stats:genStats(),_addedAt:Date.now()
+    });
+  });
+  
+  // Adicionar mais alguns jogos aleatórios
+  for(let i=0;i<10;i++){
+    const league=ALL_LEAGUES[Math.floor(Math.random()*ALL_LEAGUES.length)];
+    let hi=Math.floor(Math.random()*TEAMS.length),ai=Math.floor(Math.random()*TEAMS.length);
+    while(ai===hi)ai=Math.floor(Math.random()*TEAMS.length);
+    
+    const home=TEAMS[hi],away=TEAMS[ai];
+    const st='NS';
+    
+    const ko=new Date(now);
+    ko.setHours(15+Math.floor(i/2),(i*30)%60,0,0);
+    
+    fixs.push({
+      id:6000+i,
+      league:{id:league.id,name:league.name,logo:league.logo,country:league.country},
+      teams:{
+        home:{id:900+hi,name:home,logo:`https://media.api-sports.io/football/teams/${900+hi}.png`},
+        away:{id:1000+ai,name:away,logo:`https://media.api-sports.io/football/teams/${1000+ai}.png`}
+      },
+      goals:null,fixture:{id:6000+i,date:ko.toISOString(),status:{short:st,elapsed:null}},
+      _stats:genStats(),_addedAt:Date.now()
     });
   }
-  return fixs.sort((a,b)=>{if(a.fixture.status.short==='LIVE'&&b.fixture.status.short!=='LIVE')return -1;if(b.fixture.status.short==='LIVE'&&a.fixture.status.short!=='LIVE')return 1;return new Date(a.fixture.date)-new Date(b.fixture.date)});
+  
+  return fixs.sort((a,b)=>{
+    if(a.fixture.status.short==='LIVE'&&b.fixture.status.short!=='LIVE')return -1;
+    if(b.fixture.status.short==='LIVE'&&a.fixture.status.short!=='LIVE')return 1;
+    return new Date(a.fixture.date)-new Date(b.fixture.date);
+  });
 }
 
 function genStats(){
@@ -477,6 +511,7 @@ function buildMarkets(sim,stats,fixture){
   m.push({k:'fh15',cat:'1º Tempo',label:'Over 1.5 1ºT',icon:'⚽⚽ 1T',prob:sim.fh15,val:sim.fh15>35});
   m.push({k:'cs_home',cat:'Defesa',label:`${hn} sem sofrer`,icon:'🏠🔒',prob:sim.csHome,val:sim.csHome>35});
   m.push({k:'cs_away',cat:'Defesa',label:`${an} sem sofrer`,icon:'✈️🔒',prob:sim.csAway,val:sim.csAway>30});
+  
   const statLines=[
     {k:'shots_total',label:'Total de Chutes',line:22.5,icon:'🎯'},
     {k:'shots_on_target',label:'Chutes no Gol',line:8.5,icon:'🎯✅'},
@@ -490,6 +525,7 @@ function buildMarkets(sim,stats,fixture){
     {k:'throw_ins',label:'Laterais',line:28.5,icon:'📥'},
     {k:'goal_kicks',label:'Tiros de Meta',line:14.5,icon:'🥅'},
   ];
+  
   statLines.forEach(sl=>{
     const h=stats.home[sl.k]||0,a=stats.away[sl.k]||0,total=h+a;
     const op=Math.min(95,Math.max(25,Math.round(50+((total-sl.line)/Math.max(1,sl.line))*60)));
@@ -504,44 +540,56 @@ function findBest(mkts,sim){const s=[...mkts].sort((a,b)=>b.prob-a.prob),b=s[0];
 // --- LIMPEZA ---
 function cleanupEnded(){const now=Date.now(),maxAge=C.MAX_HISTORY_H*3600000;S.fixtures=S.fixtures.filter(f=>{if(f.fixture?.status?.short==='FT'){return (now-(f._addedAt||now))<maxAge}return true});const ids=new Set(S.fixtures.map(f=>fid(f)));Object.keys(S.predictions).forEach(id=>{if(!ids.has(Number(id)))delete S.predictions[id]})}
 
-// --- RENDER ---
+// --- RENDER DAS LIGAS ---
 function renderLeagueStrip(){
   const strip=$('#leagueStrip');
-  const featured=LEAGUES.filter(l=>l.featured).slice(0,6);
-  strip.innerHTML=featured.map(l=>`
-    <div class="league-chip ${S.leagueFilter==l.id?'active':''}" onclick="filterByLeague(${l.id})">
-      <img src="${l.logo}" alt="" onerror="this.style.display='none'" loading="lazy"> ${l.name}
+  // Mostrar TODAS as ligas
+  strip.innerHTML=ALL_LEAGUES.map(l=>`
+    <div class="league-chip ${S.leagueFilter===l.id?'active':''}" onclick="filterByLeague(${l.id})" title="${l.country}">
+      ${l.name}
     </div>
   `).join('');
+  
+  console.log('✅ Ligas renderizadas:', ALL_LEAGUES.length);
 }
 
+// --- RENDER DOS JOGOS ---
 function renderFixtures(){
-  const cont=$('#fixturesList');let filt=[...S.fixtures];
+  const cont=$('#fixturesList');
+  let filt=[...S.fixtures];
+  
   if(S.activeFilter==='live')filt=filt.filter(f=>f.fixture?.status?.short==='LIVE');
   else if(S.activeFilter==='ended')filt=filt.filter(f=>f.fixture?.status?.short==='FT');
   else if(S.activeFilter==='scheduled')filt=filt.filter(f=>['NS','TBD'].includes(f.fixture?.status?.short));
+  
   if(S.searchTerm){const t=S.searchTerm.toLowerCase();filt=filt.filter(f=>f.teams?.home?.name?.toLowerCase().includes(t)||f.teams?.away?.name?.toLowerCase().includes(t)||f.league?.name?.toLowerCase().includes(t))}
-  if(S.leagueFilter)filt=filt.filter(f=>f.league?.id==S.leagueFilter);
+  
+  if(S.leagueFilter){filt=filt.filter(f=>f.league?.id===S.leagueFilter)}
+  
   if(S.activeChips.size>0){filt=filt.filter(f=>{const p=S.predictions[fid(f)];if(!p)return false;if(S.activeChips.has('value')&&!p.hasValue)return false;if(S.activeChips.has('hc')&&!p.isHigh)return false;if(S.activeChips.has('danger')&&!p.isDanger)return false;return true})}
+  
   $('#fixtureCount').textContent=filt.length;
-  if(!filt.length){cont.innerHTML='<p class="empty-state">😕 Nenhum jogo encontrado.</p>';return}
+  
+  if(!filt.length){cont.innerHTML='<p class="empty-state">😕 Nenhum jogo encontrado com os filtros atuais.</p>';return}
+  
   cont.innerHTML=filt.map(f=>{
     const id=fid(f),pred=S.predictions[id],st=f.fixture?.status?.short||'NS',isLive=st==='LIVE',isEnded=st==='FT',exp=S.selectedMatch===id;
     const hn=f.teams?.home?.name||'Casa',an=f.teams?.away?.name||'Fora',sc=f.goals?`${f.goals.home} - ${f.goals.away}`:'vs';
     const time=new Date(f.fixture?.date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     let badges='';if(pred?.isHigh)badges+='<span class="fx-badge hc">⭐ Alta</span>';if(pred?.hasValue)badges+='<span class="fx-badge vb">💎 Value</span>';
     let stHTML;if(isLive)stHTML=`<span class="fx-status-badge live"><span class="live-dot"></span>${f.fixture?.status?.elapsed||'?'}'</span>`;else if(isEnded)stHTML=`<span class="fx-status-badge ended">🏁 Encerrado</span>`;else stHTML=`<span class="fx-status-badge scheduled">🕐 ${time}</span>`;
+    
     return `<div class="fx-card ${exp?'expanded':''} ${isEnded?'ended':''}" data-id="${id}">
       <div class="fx-card-main" onclick="toggleCard(this.parentElement,${id})">
         <div class="fx-teams">
-          <div class="fx-team-row" onclick="event.stopPropagation();openField3D(${id},'home')"><span>${hn}</span></div>
-          <div class="fx-team-row" onclick="event.stopPropagation();openField3D(${id},'away')"><span>${an}</span></div>
+          <div class="fx-team-row" onclick="event.stopPropagation();openField3D(${id})"><span>${hn}</span></div>
+          <div class="fx-team-row" onclick="event.stopPropagation();openField3D(${id})"><span>${an}</span></div>
           ${badges?`<div class="fx-badges">${badges}</div>`:''}
         </div>
         <div class="fx-score-area"><div class="fx-score-val ${isEnded?'ended':''}">${sc}</div><div class="fx-score-sub">${f.league?.name||''}</div></div>
         ${stHTML}<span class="fx-arrow">▼</span>
       </div>
-      <div class="fx-detail"><div class="fx-detail-inner">${pred?renderDetail(pred,f):'<p style="color:var(--muted);font-size:12px">Clique para calcular previsão...</p>'}</div></div>
+      <div class="fx-detail"><div class="fx-detail-inner">${pred?renderDetail(pred,f):'<p style="color:var(--muted);font-size:12px;padding:10px">Clique para calcular a previsão...</p>'}</div></div>
     </div>`;
   }).join('');
 }
@@ -562,7 +610,7 @@ function renderDetail(pred,fixture){
       <div class="best-stat-item"><div class="best-stat-label">Confiança</div><div class="best-stat-val ${best.confidence==='Alta'?'high':'mid'}">${best.confidence}</div></div></div>
       <div class="best-reason">${best.justification}</div>
     </div>`:''}
-    <div class="markets-section"><div class="markets-section-title">🔥 Melhores Mercados (clique para selecionar)</div>
+    <div class="markets-section"><div class="markets-section-title">🔥 Melhores Mercados</div>
     <div class="markets-grid">${top.map(m=>`
       <div class="market-item ${S.selectedMarkets.has(m.k)?'selected':''}" onclick="event.stopPropagation();toggleMkt('${m.k}')">
         <div class="market-item-top"><span class="market-item-icon">${m.icon}</span><span class="market-item-name">${m.label}</span><span class="market-item-prob">${m.prob}%</span></div>
@@ -580,43 +628,28 @@ function renderBetSlip(pred){
   const items=[...S.selectedMarkets].map(k=>pred.markets.find(m=>m.k===k)).filter(Boolean);
   const combined=items.length?calcComb(items.map(m=>m.prob)):'0.00';
   return `<div class="bet-slip">
-    <div class="bet-slip-header"><div class="bet-slip-icon">🎫</div><div><div class="bet-slip-title">Bilhete de Apostas</div><div class="bet-slip-sub">${items.length} mercado(s) selecionado(s)</div></div></div>
+    <div class="bet-slip-header"><div class="bet-slip-icon">🎫</div><div><div class="bet-slip-title">Bilhete de Apostas</div><div class="bet-slip-sub">${items.length} mercado(s)</div></div></div>
     ${items.length?`<div class="bet-slip-items">${items.map(m=>`
       <div class="bet-slip-item"><span>${m.icon} ${m.label}</span><span style="display:flex;align-items:center;gap:8px"><span style="color:var(--accent);font-weight:600;font-family:var(--font-m)">${m.prob}%</span><button class="bet-slip-item-remove" onclick="event.stopPropagation();toggleMkt('${m.k}')">✕</button></span></div>
     `).join('')}</div>
-    <div class="bet-slip-total"><div class="bet-slip-total-label">Odd Combinada Estimada</div><div class="bet-slip-total-odd">${combined}</div></div>`:'<p style="font-size:11px;color:var(--muted);text-align:center;padding:12px">Selecione mercados acima para montar seu bilhete</p>'}
-    <div class="bet-slip-actions">
-      <a href="#" class="bet-btn primary" onclick="event.stopPropagation()">Apostar</a>
-      <a href="#" class="bet-btn secondary" onclick="event.stopPropagation()">Comparar</a>
-      <a href="#" class="bet-btn outline" onclick="event.stopPropagation()">Compartilhar</a>
-    </div>
+    <div class="bet-slip-total"><div class="bet-slip-total-label">Odd Combinada Estimada</div><div class="bet-slip-total-odd">${combined}</div></div>`:'<p style="font-size:11px;color:var(--muted);text-align:center;padding:12px">Selecione mercados acima</p>'}
+    <div class="bet-slip-actions"><a href="#" class="bet-btn primary" onclick="event.stopPropagation()">Apostar</a><a href="#" class="bet-btn secondary" onclick="event.stopPropagation()">Comparar</a><a href="#" class="bet-btn outline" onclick="event.stopPropagation()">Salvar</a></div>
   </div>`;
 }
 
 function calcComb(probs){if(!probs.length)return'0.00';return(1/probs.reduce((a,p)=>a*(p/100),1)).toFixed(2)}
 
 // --- CAMPO 3D ---
-function openField3D(fixId,side){
+function openField3D(fixId){
   const f=S.fixtures.find(x=>fid(x)===fixId);if(!f)return;
   const ov=$('#fieldOverlay'),sb=$('#fieldScoreboard'),fp=$('#fieldPlayers'),fb=$('#fieldBall'),fs=$('#fieldStats');
-  ov.classList.add('active');sb.innerHTML=`
-    <div class="field-team"><span>${f.teams.home.name}</span></div>
-    <div class="field-score">${f.goals?f.goals.home:0} - ${f.goals?f.goals.away:0}</div>
-    <div class="field-team"><span>${f.teams.away.name}</span></div>
-  `;
+  ov.classList.add('active');
+  sb.innerHTML=`<div class="field-team"><span>${f.teams.home.name}</span></div><div class="field-score">${f.goals?f.goals.home:0} - ${f.goals?f.goals.away:0}</div><div class="field-team"><span>${f.teams.away.name}</span></div>`;
   fp.innerHTML='';
-  const hPlayers=PLAYER_NAMES_HOME.slice(0,11),aPlayers=PLAYER_NAMES_AWAY.slice(0,11);
-  hPlayers.forEach((name,i)=>{const el=document.createElement('div');el.className='field-player home';el.style.left=(8+Math.random()*38)+'%';el.style.top=(12+Math.random()*72)+'%';el.title=name;el.innerHTML=`${i+1}<span class="player-name">${name}</span>`;fp.appendChild(el)});
-  aPlayers.forEach((name,i)=>{const el=document.createElement('div');el.className='field-player away';el.style.left=(55+Math.random()*38)+'%';el.style.top=(12+Math.random()*72)+'%';el.title=name;el.innerHTML=`${i+1}<span class="player-name">${name}</span>`;fp.appendChild(el)});
+  PLAYER_NAMES_HOME.forEach((name,i)=>{const el=document.createElement('div');el.className='field-player home';el.style.left=(8+Math.random()*38)+'%';el.style.top=(12+Math.random()*72)+'%';el.title=name;el.innerHTML=`${i+1}<span class="player-name">${name}</span>`;fp.appendChild(el)});
+  PLAYER_NAMES_AWAY.forEach((name,i)=>{const el=document.createElement('div');el.className='field-player away';el.style.left=(55+Math.random()*38)+'%';el.style.top=(12+Math.random()*72)+'%';el.title=name;el.innerHTML=`${i+1}<span class="player-name">${name}</span>`;fp.appendChild(el)});
   fb.style.left=(40+Math.random()*20)+'%';fb.style.top=(35+Math.random()*30)+'%';
-  fs.innerHTML=`
-    <div class="field-stat"><div class="field-stat-val">${Math.floor(Math.random()*18)}</div><div class="field-stat-label">Chutes</div></div>
-    <div class="field-stat"><div class="field-stat-val">${Math.floor(Math.random()*8)}</div><div class="field-stat-label">No Gol</div></div>
-    <div class="field-stat"><div class="field-stat-val">${Math.floor(Math.random()*10)}</div><div class="field-stat-label">Escanteios</div></div>
-    <div class="field-stat"><div class="field-stat-val">${Math.floor(Math.random()*5)}</div><div class="field-stat-label">Cartões</div></div>
-    <div class="field-stat"><div class="field-stat-val">${45+Math.floor(Math.random()*15)}%</div><div class="field-stat-label">Posse</div></div>
-    <div class="field-stat"><div class="field-stat-val">${Math.floor(Math.random()*18)}</div><div class="field-stat-label">Faltas</div></div>
-  `;
+  fs.innerHTML=`<div class="field-stat"><div class="field-stat-val">${Math.floor(Math.random()*18)}</div><div class="field-stat-label">Chutes</div></div><div class="field-stat"><div class="field-stat-val">${Math.floor(Math.random()*8)}</div><div class="field-stat-label">No Gol</div></div><div class="field-stat"><div class="field-stat-val">${Math.floor(Math.random()*10)}</div><div class="field-stat-label">Escanteios</div></div><div class="field-stat"><div class="field-stat-val">${Math.floor(Math.random()*5)}</div><div class="field-stat-label">Cartões</div></div><div class="field-stat"><div class="field-stat-val">${45+Math.floor(Math.random()*15)}%</div><div class="field-stat-label">Posse</div></div><div class="field-stat"><div class="field-stat-val">${Math.floor(Math.random()*18)}</div><div class="field-stat-label">Faltas</div></div>`;
   if(S.liveInterval)clearInterval(S.liveInterval);
   S.liveInterval=setInterval(()=>{const ps=fp.querySelectorAll('.field-player');ps.forEach(p=>{p.style.left=(parseFloat(p.style.left)+(Math.random()-.5)*8)+'%';p.style.top=(parseFloat(p.style.top)+(Math.random()-.5)*6)+'%'});fb.style.left=(parseFloat(fb.style.left)+(Math.random()-.5)*12)+'%';fb.style.top=(parseFloat(fb.style.top)+(Math.random()-.5)*8)+'%'},1800);
 }
@@ -625,14 +658,16 @@ function closeField3D(){$('#fieldOverlay').classList.remove('active');if(S.liveI
 
 // --- INTERAÇÕES ---
 function toggleCard(card,id){
-  const was=card.classList.contains('expanded');$$('.fx-card.expanded').forEach(c=>{if(c!==card)c.classList.remove('expanded')});
-  if(was){card.classList.remove('expanded');S.selectedMatch=null;S.selectedMarkets.clear()}else{card.classList.add('expanded');S.selectedMatch=id;S.selectedMarkets.clear();
+  const was=card.classList.contains('expanded');
+  $$('.fx-card.expanded').forEach(c=>{if(c!==card)c.classList.remove('expanded')});
+  if(was){card.classList.remove('expanded');S.selectedMatch=null;S.selectedMarkets.clear()}
+  else{card.classList.add('expanded');S.selectedMatch=id;S.selectedMarkets.clear();
     if(!S.predictions[id]){const f=S.fixtures.find(x=>fid(x)===id);if(f){S.predictions[id]=predict(f);addHistory(f,S.predictions[id]);renderFixtures();setTimeout(()=>{const nc=$(`.fx-card[data-id="${id}"]`);if(nc){nc.classList.add('expanded');S.selectedMatch=id}},80)}}}
 }
 
 function toggleMkt(key){S.selectedMarkets.has(key)?S.selectedMarkets.delete(key):S.selectedMarkets.set(key,true);renderFixtures();if(S.selectedMatch){setTimeout(()=>{const c=$(`.fx-card[data-id="${S.selectedMatch}"]`);if(c)c.classList.add('expanded')},80)}}
 
-function filterByLeague(id){S.leagueFilter=S.leagueFilter===id?'':id;renderLeagueStrip();renderFixtures()}
+function filterByLeague(id){S.leagueFilter=S.leagueFilter===id?null:id;renderLeagueStrip();renderFixtures()}
 
 // --- TOP 10 ---
 function genTop10(){
@@ -669,12 +704,24 @@ function updateClock(){$('#clock').textContent=new Date().toLocaleString('pt-BR'
 
 // --- INIT ---
 function init(){
-  console.log('⚽ FuteStat v5.0');
-  createParticles();loadHistory();S.fixtures=genFixtures();
-  renderLeagueStrip();renderFixtures();renderHistory();updateClock();
-  setInterval(updateClock,10000);setInterval(cleanupEnded,C.CLEANUP_MS);setupEvents();
-  console.log('✅',S.fixtures.length,'jogos');
+  console.log('⚽ FuteStat v5.0 - Inicializando...');
+  createParticles();
+  loadHistory();
+  S.fixtures=genFixtures();
+  
+  console.log(`✅ ${S.fixtures.length} jogos gerados`);
+  console.log(`✅ ${ALL_LEAGUES.length} ligas disponíveis`);
+  
+  renderLeagueStrip();
+  renderFixtures();
+  renderHistory();
+  updateClock();
+  setInterval(updateClock,10000);
+  setInterval(cleanupEnded,C.CLEANUP_MS);
+  setupEvents();
+  console.log('✅ FuteStat pronto!');
 }
+
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 </script>
 </body>
