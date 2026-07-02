@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>FuteStat — Inteligência Estatística de Futebol</title>
+<title>FuteStat — Inteligência Estatística de Futebol | Betano Markets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -11,6 +11,7 @@
   --bg:#0d1f16;--panel:#132b1e;--panel-2:#0f2218;--card:#172e21;
   --line:#1e3d2b;--line2:#254d38;--text:#f0f5f1;--muted:#7a9e8a;
   --lime:#c5f135;--lime2:#a8d428;--cyan:#4fd6df;--amber:#f5a623;--red:#e84b4b;--purple:#9b59ff;
+  --betano-orange:#FF6600;--betano-dark:#1a1a2e;
   --font-d:'Oswald',sans-serif;--font-b:'Inter',sans-serif;--font-m:'IBM Plex Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -18,45 +19,68 @@ body{color:var(--text);font-family:var(--font-b);line-height:1.5;min-height:100v
   background-image:radial-gradient(ellipse 140% 60% at 50% -5%,rgba(197,241,53,.09) 0%,transparent 55%),
     radial-gradient(ellipse 80% 40% at 10% 30%,rgba(79,214,223,.06) 0%,transparent 50%),
     repeating-linear-gradient(105deg,rgba(255,255,255,.028) 0,rgba(255,255,255,.028) 55px,rgba(0,0,0,.05) 55px,rgba(0,0,0,.05) 110px),
-    linear-gradient(180deg,#0c2118 0%,#07140d 50%,#050e09 100%);background-attachment:fixed;}
+    linear-gradient(180deg,#0c2118 0%,#07140d 50%,#050e09 100%);background-attachment:fixed;
+  position:relative;overflow-x:hidden;}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(255,255,255,.07) 0%,transparent 60%),
-    radial-gradient(circle at 50% 55%,transparent 30%,rgba(0,0,0,.6) 100%);}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.4;mix-blend-mode:overlay;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");}
+    radial-gradient(circle at 50% 55%,transparent 30%,rgba(0,0,0,.6) 100%);
+  animation:bgPulse 8s ease-in-out infinite alternate;}
+@keyframes bgPulse{0%{opacity:1}100%{opacity:.8}}
+
+/* Background de jogadores animados */
+.players-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.player-silhouette{position:absolute;opacity:.04;animation:floatPlayer 20s linear infinite;
+  filter:drop-shadow(0 0 20px rgba(197,241,53,.1));}
+.player-silhouette:nth-child(1){top:10%;left:5%;animation-delay:0s;width:200px;height:300px;}
+.player-silhouette:nth-child(2){top:40%;right:3%;animation-delay:-7s;width:180px;height:280px;}
+.player-silhouette:nth-child(3){bottom:20%;left:10%;animation-delay:-14s;width:220px;height:320px;}
+.player-silhouette:nth-child(4){top:25%;right:15%;animation-delay:-3s;width:160px;height:260px;}
+.player-silhouette:nth-child(5){bottom:35%;right:8%;animation-delay:-10s;width:190px;height:290px;}
+@keyframes floatPlayer{
+  0%{transform:translateY(0) rotate(0deg) scale(1);opacity:.03}
+  25%{transform:translateY(-20px) rotate(2deg) scale(1.02);opacity:.05}
+  50%{transform:translateY(10px) rotate(-2deg) scale(.98);opacity:.04}
+  75%{transform:translateY(-15px) rotate(1deg) scale(1.01);opacity:.06}
+  100%{transform:translateY(0) rotate(0deg) scale(1);opacity:.03}
+}
+
 .z{position:relative;z-index:1;}
-.topbar{background:linear-gradient(90deg,#0a1c12,#0e2419,#0a1c12);border-bottom:2px solid var(--lime2);
+.topbar{background:linear-gradient(90deg,#0a1c12,#0e2419,#0a1c12);border-bottom:2px solid var(--betano-orange);
   padding:0 clamp(12px,4vw,40px);display:flex;align-items:center;justify-content:space-between;height:58px;position:relative;z-index:10;flex-wrap:wrap;gap:8px;}
 .brand{display:flex;align-items:center;gap:12px;}
-.brand-icon{width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,var(--lime),var(--lime2));
-  display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-weight:600;font-size:13px;color:#0a1c12;box-shadow:0 0 16px rgba(197,241,53,.4);}
+.brand-icon{width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,var(--betano-orange),#FF8533);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-weight:600;font-size:13px;color:#fff;box-shadow:0 0 16px rgba(255,102,0,.4);}
 .brand-name{font-family:var(--font-d);font-size:22px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
-.brand-name span{color:var(--lime);}
+.brand-name span{color:var(--betano-orange);}
 .brand-tag{font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
 .topbar-right{display:flex;align-items:center;gap:12px;}
 #clock{font-family:var(--font-m);font-size:11px;color:var(--muted);}
 .btn-history{background:transparent;border:1px solid var(--line2);color:var(--muted);font-size:11px;font-family:var(--font-d);
   letter-spacing:.04em;text-transform:uppercase;border-radius:6px;padding:5px 10px;cursor:pointer;transition:all .15s;}
-.btn-history:hover{border-color:var(--lime);color:var(--lime);}
-.btn-history.active{border-color:var(--lime);color:var(--lime);background:rgba(197,241,53,.08);}
+.btn-history:hover{border-color:var(--betano-orange);color:var(--betano-orange);}
+.btn-history.active{border-color:var(--betano-orange);color:var(--betano-orange);background:rgba(255,102,0,.08);}
 .notice{background:linear-gradient(90deg,#1a1000,#1a1400,#1a1000);border-bottom:1px solid #3d2800;
   padding:8px clamp(12px,4vw,40px);font-size:12px;color:#c8a050;display:flex;align-items:flex-start;gap:8px;position:relative;z-index:1;}
-main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;position:relative;z-index:1;}
-.top10-bar{background:linear-gradient(90deg,rgba(155,89,255,.12),rgba(197,241,53,.06));border:1px solid rgba(155,89,255,.3);
+main{max-width:800px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;position:relative;z-index:1;}
+
+/* Top 10 Section */
+.top10-bar{background:linear-gradient(90deg,rgba(255,102,0,.1),rgba(197,241,53,.06));border:1px solid rgba(255,102,0,.3);
   border-radius:10px;padding:12px 14px;margin-bottom:14px;}
 .top10-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;}
-.top10-title{font-family:var(--font-d);font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);}
+.top10-title{font-family:var(--font-d);font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--betano-orange);}
 .top10-subtitle{font-size:10.5px;color:var(--muted);}
-.btn-top10{background:rgba(155,89,255,.2);border:1px solid rgba(155,89,255,.5);color:var(--purple);
+.btn-top10{background:rgba(255,102,0,.2);border:1px solid rgba(255,102,0,.5);color:var(--betano-orange);
   font-family:var(--font-d);font-size:11px;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:5px 12px;cursor:pointer;transition:all .15s;}
-.btn-top10:hover{background:rgba(155,89,255,.35);transform:translateY(-1px);}
+.btn-top10:hover{background:rgba(255,102,0,.35);transform:translateY(-1px);}
 .top10-list{display:flex;flex-direction:column;gap:5px;}
 .top10-row{display:grid;grid-template-columns:20px 1fr auto auto;gap:8px;align-items:center;
   background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;transition:all .15s;}
-.top10-row:hover{background:rgba(255,255,255,.08);border-color:var(--line2);}
-.top10-rank{font-family:var(--font-m);font-size:10px;color:var(--purple);font-weight:600;text-align:center;}
+.top10-row:hover{background:rgba(255,255,255,.08);border-color:var(--betano-orange);}
+.top10-rank{font-family:var(--font-m);font-size:10px;color:var(--betano-orange);font-weight:600;text-align:center;}
 .top10-match{color:var(--muted);font-size:10.5px;}
 .top10-prob{font-family:var(--font-m);font-size:12px;font-weight:600;color:var(--lime);}
+
+/* Filters */
 .filter-wrap{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
 .search-box{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:0 12px;}
 .search-box input{flex:1;background:transparent;border:none;color:var(--text);font-family:var(--font-b);font-size:13.5px;padding:9px 0;outline:none;}
@@ -66,26 +90,29 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
 .scope-tab{padding:7px 12px;font-family:var(--font-d);font-size:11px;letter-spacing:.04em;text-transform:uppercase;
   background:transparent;border:none;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
 .scope-tab:hover{color:var(--text);background:rgba(255,255,255,.04);}
-.scope-tab.active{background:var(--lime);color:#07140d;font-weight:600;}
+.scope-tab.active{background:var(--betano-orange);color:#fff;font-weight:600;}
 .scope-tab.tab-ended.active{background:var(--amber);color:#07140d;}
 .league-select{flex:1;min-width:130px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
   padding:7px 10px;border-radius:8px;font-family:var(--font-b);font-size:12px;cursor:pointer;outline:none;}
-.league-select:focus{border-color:var(--lime2);}
+.league-select:focus{border-color:var(--betano-orange);}
 .filter-chips{display:flex;gap:6px;flex-wrap:wrap;}
 .chip{padding:5px 10px;border-radius:20px;font-size:11px;font-family:var(--font-d);letter-spacing:.03em;text-transform:uppercase;
   cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--muted);white-space:nowrap;transition:all .15s;}
 .chip:hover{border-color:var(--line2);color:var(--text);}
-.chip.active-chip{border-color:var(--lime);color:var(--lime);background:rgba(197,241,53,.08);}
+.chip.active-chip{border-color:var(--betano-orange);color:var(--betano-orange);background:rgba(255,102,0,.08);}
+
 .section-label{font-family:var(--font-d);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--muted);padding:8px 0 6px;border-bottom:1px solid var(--line);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-.section-label span{background:var(--lime);color:#07140d;border-radius:3px;font-size:10px;padding:1px 6px;}
+.section-label span{background:var(--betano-orange);color:#fff;border-radius:3px;font-size:10px;padding:1px 6px;}
+
+/* Fixture Cards */
 .fixtures-list{display:flex;flex-direction:column;gap:6px;}
-.fx-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .15s;}
-.fx-card:hover{border-color:var(--line2);}
-.fx-card.active-card{border-color:var(--lime2);}
+.fx-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .2s;}
+.fx-card:hover{border-color:var(--line2);transform:translateX(2px);}
+.fx-card.active-card{border-color:var(--betano-orange);box-shadow:0 4px 20px rgba(255,102,0,.15);}
 .fx-card.ended-card{border-color:rgba(245,166,35,.25);}
 .fx-card.ended-card.active-card{border-color:var(--amber);}
-.fx-header{display:flex;align-items:center;padding:7px 14px;gap:8px;background:linear-gradient(90deg,rgba(197,241,53,.04),transparent);border-bottom:1px solid var(--line);}
+.fx-header{display:flex;align-items:center;padding:7px 14px;gap:8px;background:linear-gradient(90deg,rgba(255,102,0,.06),transparent);border-bottom:1px solid var(--line);}
 .fx-league-logo{width:14px;height:14px;object-fit:contain;flex-shrink:0;}
 .fx-league-name{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .fx-time{font-family:var(--font-m);font-size:10.5px;color:var(--muted);}
@@ -98,7 +125,7 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
 .badge-row{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;flex-shrink:0;}
 .badge{font-size:10px;border-radius:4px;padding:1px 6px;white-space:nowrap;}
 .badge-hc{background:rgba(197,241,53,.15);border:1px solid rgba(197,241,53,.4);color:var(--lime);}
-.badge-vb{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.4);color:var(--amber);}
+.badge-vb{background:rgba(255,102,0,.15);border:1px solid rgba(255,102,0,.4);color:var(--betano-orange);}
 .badge-danger{background:rgba(232,75,75,.12);border:1px solid rgba(232,75,75,.35);color:#ff7777;}
 .badge-insuf{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted);}
 .fx-body{display:flex;align-items:center;padding:12px 14px;gap:12px;}
@@ -111,18 +138,23 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
 .fx-status{font-size:10px;color:var(--muted);margin-top:2px;}
 .fx-arrow{color:var(--muted);font-size:11px;padding:0 2px;transition:transform .2s;}
 .fx-card.active-card .fx-arrow{transform:rotate(180deg);}
-.predict-panel{border-top:1px solid var(--line);background:var(--panel-2);padding:14px;display:none;}
+
+/* Prediction Panel */
+.predict-panel{border-top:1px solid var(--line);background:var(--panel-2);padding:14px;display:none;animation:slideDown .3s ease;}
+@keyframes slideDown{from{opacity:0;max-height:0}to{opacity:1;max-height:2000px}}
 .fx-card.active-card .predict-panel{display:block;}
 .inner-tabs{display:flex;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:12px;}
 .inner-tab{padding:7px 6px;font-family:var(--font-d);font-size:10px;letter-spacing:.03em;text-transform:uppercase;
   background:transparent;border:none;color:var(--muted);cursor:pointer;flex:1;transition:all .15s;text-align:center;}
 .inner-tab:hover{color:var(--text);background:rgba(255,255,255,.04);}
-.inner-tab.active{background:var(--lime2);color:#07140d;font-weight:600;}
+.inner-tab.active{background:var(--betano-orange);color:#fff;font-weight:600;}
 .predict-meta{font-size:11px;color:var(--muted);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .meta-chip{background:rgba(255,255,255,.06);border:1px solid var(--line2);border-radius:4px;padding:2px 7px;font-size:10.5px;color:var(--muted);}
-.best-bet-card{background:linear-gradient(135deg,rgba(155,89,255,.1),rgba(197,241,53,.05));border:1px solid rgba(155,89,255,.35);
+
+/* Best Bet Card */
+.best-bet-card{background:linear-gradient(135deg,rgba(255,102,0,.15),rgba(197,241,53,.05));border:1px solid rgba(255,102,0,.4);
   border-radius:10px;padding:12px 14px;margin-bottom:12px;}
-.bb-title{font-family:var(--font-d);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);margin-bottom:6px;}
+.bb-title{font-family:var(--font-d);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--betano-orange);margin-bottom:6px;}
 .bb-market{font-size:14px;font-weight:600;margin-bottom:8px;}
 .bb-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;}
 .bb-item{background:rgba(0,0,0,.25);border-radius:6px;padding:6px 8px;text-align:center;}
@@ -131,40 +163,62 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
 .bb-item-val.high{color:var(--lime);}
 .bb-item-val.mid{color:var(--amber);}
 .bb-item-val.low{color:var(--red);}
-.bb-item-val.vb-yes{color:var(--amber);}
-.bb-item-val.vb-no{color:var(--muted);}
 .bb-justify{font-size:11.5px;color:var(--muted);font-style:italic;border-top:1px solid rgba(255,255,255,.06);padding-top:8px;}
-.vb-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.4);
-  border-radius:4px;padding:2px 8px;font-size:10px;color:var(--amber);font-family:var(--font-d);letter-spacing:.04em;margin-left:8px;}
-.markets-grid{display:flex;flex-direction:column;gap:8px;}
-.market-card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px;}
-.mc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;}
-.mc-label{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.mc-est{font-size:9px;color:var(--amber);border:1px solid var(--amber);border-radius:3px;padding:1px 4px;}
-.mc-value{font-family:var(--font-m);font-size:20px;font-weight:600;color:var(--lime);line-height:1;}
-.mc-sides{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
-.mc-side{border-radius:6px;padding:6px 8px;text-align:center;border:1px solid transparent;}
-.mc-side.over{background:rgba(197,241,53,.08);border-color:rgba(197,241,53,.2);}
-.mc-side.under{background:rgba(79,214,223,.08);border-color:rgba(79,214,223,.2);}
-.mc-side.best.over{border-color:var(--lime);border-width:2px;}
-.mc-side.best.under{border-color:var(--cyan);border-width:2px;}
-.mc-side-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
-.mc-side-val{font-family:var(--font-m);font-size:13px;font-weight:600;}
-.mc-side.over .mc-side-val{color:var(--lime);}
-.mc-side.under .mc-side-val{color:var(--cyan);}
-.mc-side-prob{font-size:10px;color:var(--muted);margin-top:1px;}
-.mc-teams{display:flex;gap:8px;margin-bottom:8px;}
-.mc-team-val{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;padding:5px 8px;text-align:center;}
-.mc-team-name{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.mc-team-avg{font-family:var(--font-m);font-size:14px;font-weight:600;}
-.mc-bar-row{display:flex;align-items:center;gap:8px;}
-.mc-bar-label{font-size:10px;color:var(--muted);width:90px;flex-shrink:0;}
-.mc-bar-track{flex:1;height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
-.mc-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--lime2),var(--lime));}
-.mc-bar-pct{font-family:var(--font-m);font-size:10px;color:var(--muted);width:34px;text-align:right;flex-shrink:0;}
+
+/* Betano Ticket */
+.ticket-panel{background:linear-gradient(135deg,rgba(26,26,46,.8),rgba(20,20,35,.8));border:1px solid var(--betano-orange);border-radius:10px;padding:14px;margin-top:12px;}
+.ticket-header{margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.ticket-logo{width:32px;height:32px;background:var(--betano-orange);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;}
+.ticket-title{font-family:var(--font-d);font-size:15px;text-transform:uppercase;letter-spacing:.05em;color:#fff;}
+.ticket-subtitle{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* Mercados Grid */
+.markets-grid-betano{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;}
+.market-mini-card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;transition:all .15s;}
+.market-mini-card:hover{border-color:var(--betano-orange);background:rgba(255,102,0,.05);}
+.market-mini-card.selected{border-color:var(--betano-orange);background:rgba(255,102,0,.1);}
+.mmc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.mmc-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;}
+.mmc-icon{font-size:14px;}
+.mmc-value{font-family:var(--font-m);font-size:16px;font-weight:600;color:var(--lime);}
+.mmc-sub{font-size:9px;color:var(--muted);margin-top:2px;}
+
+/* Estatísticas Betano */
+.stats-betano{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.stat-row-betano{display:grid;grid-template-columns:1fr 100px 60px 80px;gap:8px;align-items:center;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:6px;font-size:12px;}
+.stat-name-betano{font-weight:500;display:flex;align-items:center;gap:6px;}
+.stat-icon-betano{font-size:16px;}
+.stat-pred-betano{font-family:var(--font-m);color:var(--lime);font-weight:600;}
+.stat-line-betano{color:var(--muted);font-size:10px;}
+.stat-prob-betano{text-align:right;}
+.prob-bar-mini{height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;margin-top:2px;}
+.prob-fill-mini{height:100%;border-radius:2px;background:var(--betano-orange);}
+
+/* Odds Comparison */
+.odds-comparison{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;}
+.odd-card{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center;}
+.odd-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.odd-value{font-family:var(--font-m);font-size:14px;font-weight:600;color:var(--lime);}
+.odd-book{font-size:9px;color:var(--muted);margin-top:2px;}
+
+/* Bookmaker Links */
+.bm-label{font-size:9px;color:var(--muted);text-align:center;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.06em;}
+.bookmakers{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.bm-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border-radius:8px;
+  font-family:var(--font-d);font-size:11px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+  text-decoration:none;border:1px solid;transition:all .15s;font-weight:600;}
+.bm-btn:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.3);}
+.bm-betano{background:#1a1a2e;border-color:var(--betano-orange);color:var(--betano-orange);}
+.bm-bet365{background:#0b2d0b;border-color:#5aad11;color:#5aad11;}
+.bm-sportingbet{background:#12103a;border-color:#5f4ff5;color:#a99fff;}
+.bm-betfair{background:#0a2740;border-color:#1976d2;color:#64b5f6;}
+.bm-novibet{background:#2c0a0a;border-color:#e53935;color:#ef9a9a;}
+.bm-superbet{background:#1a0d2e;border-color:#9c27b0;color:#ce93d8;}
+
+/* Seção de Simulação */
 .sim-section{margin-bottom:14px;}
 .sim-title{font-family:var(--font-d);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
-.sim-title span{font-size:9px;background:rgba(155,89,255,.15);border:1px solid rgba(155,89,255,.3);border-radius:3px;padding:1px 5px;color:var(--purple);}
+.sim-title span{font-size:9px;background:rgba(255,102,0,.15);border:1px solid rgba(255,102,0,.3);border-radius:3px;padding:1px 5px;color:var(--betano-orange);}
 .sim-1x2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;}
 .sim-box{border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--line);}
 .sim-box.home{background:rgba(197,241,53,.08);border-color:rgba(197,241,53,.25);}
@@ -175,77 +229,15 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
 .sim-box.home .sim-box-prob{color:var(--lime);}
 .sim-box.draw .sim-box-prob{color:var(--muted);}
 .sim-box.away .sim-box-prob{color:var(--cyan);}
-.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
-.sim-row{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;}
-.sim-row-label{font-size:12px;}
-.sim-row-val{font-family:var(--font-m);font-size:13px;font-weight:600;color:var(--lime);}
-.sim-scorelines{display:flex;flex-direction:column;gap:4px;}
-.sim-score-row{display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;}
-.sim-score-val{font-family:var(--font-m);font-size:13px;font-weight:700;color:var(--lime);}
-.sim-score-bar{flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin:0 10px;}
-.sim-score-fill{height:100%;background:linear-gradient(90deg,var(--lime2),var(--lime));border-radius:3px;}
-.sim-score-pct{font-family:var(--font-m);font-size:11px;color:var(--muted);}
-.lambda-info{font-size:10px;color:var(--muted);background:rgba(0,0,0,.2);border-radius:4px;padding:5px 8px;margin-top:8px;font-family:var(--font-m);}
-.factors-list{display:flex;flex-direction:column;gap:6px;}
-.factor-row{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;font-size:12.5px;}
-.factor-icon{flex-shrink:0;font-size:14px;margin-top:1px;}
-.ticket-panel{background:var(--card);border:1px solid var(--lime2);border-radius:10px;padding:14px;}
-.ticket-header{margin-bottom:10px;}
-.ticket-title{font-family:var(--font-d);font-size:15px;text-transform:uppercase;letter-spacing:.05em;color:var(--lime);}
-.ticket-subtitle{font-size:11px;color:var(--muted);margin-top:2px;}
-.ticket-list{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
-.ticket-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;}
-.ticket-num{font-family:var(--font-m);font-size:10px;color:var(--muted);width:20px;flex-shrink:0;text-align:center;}
-.ticket-label{flex:1;font-size:12px;}
-.ticket-prob{font-family:var(--font-m);font-size:11px;font-weight:600;}
-.ticket-prob.high{color:var(--lime);}
-.ticket-prob.mid{color:var(--amber);}
-.ticket-prob.low{color:var(--muted);}
-.bm-label{font-size:9px;color:var(--muted);text-align:center;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
-.bookmakers{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.bm-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border-radius:8px;
-  font-family:var(--font-d);font-size:12px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
-  text-decoration:none;border:1px solid;transition:all .15s;font-weight:600;}
-.bm-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.3);}
-.bm-betano{background:#0d3321;border-color:#00d856;color:#00d856;}
-.bm-bet365{background:#0b2d0b;border-color:#5aad11;color:#5aad11;}
-.bm-sportingbet{background:#12103a;border-color:#5f4ff5;color:#a99fff;}
-.bm-betfair{background:#0a2740;border-color:#1976d2;color:#64b5f6;}
-.bm-novibet{background:#2c0a0a;border-color:#e53935;color:#ef9a9a;}
-.bm-superbet{background:#1a0d2e;border-color:#9c27b0;color:#ce93d8;}
-.live-btn,.compare-btn{width:100%;padding:10px;border-radius:8px;font-family:var(--font-d);font-size:12px;
-  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;transition:all .15s;}
-.live-btn{background:rgba(232,75,75,.12);border:1px solid rgba(232,75,75,.35);color:#ff8888;}
-.live-btn:hover{background:rgba(232,75,75,.2);}
-.compare-btn{background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.4);color:var(--amber);}
-.compare-btn:hover{background:rgba(245,166,35,.2);}
-.lc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-.lc-title{font-family:var(--font-d);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--lime);display:flex;align-items:center;gap:6px;}
-.lc-title.amber{color:var(--amber);}
-.lc-close{background:transparent;border:1px solid var(--line);color:var(--muted);font-size:11px;border-radius:4px;padding:3px 8px;cursor:pointer;}
-.lc-cols{display:grid;grid-template-columns:1fr 80px 90px;gap:6px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:4px;}
-.lc-cols span:not(:first-child){text-align:center;}
-.lc-row{display:grid;grid-template-columns:1fr 80px 90px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:12.5px;}
-.lc-row:last-of-type{border-bottom:none;}
-.lc-pred{font-family:var(--font-m);color:var(--muted);text-align:center;font-size:12px;}
-.lc-actual{text-align:center;}
-.lc-ai{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-m);font-weight:600;font-size:13px;}
-.lc-ai.beating{color:var(--lime);}
-.lc-ai.below{color:var(--red);}
-.lc-ai.exact{color:var(--cyan);}
-.lc-ai.pending{color:var(--muted);font-size:11px;}
-.lc-update{font-size:10.5px;color:var(--muted);text-align:right;margin-top:8px;}
-.result-summary{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);}
-.rs-chip{font-size:10.5px;border-radius:4px;padding:2px 8px;font-family:var(--font-m);}
-.rs-chip.hit{background:rgba(197,241,53,.15);color:var(--lime);border:1px solid rgba(197,241,53,.3);}
-.rs-chip.miss{background:rgba(232,75,75,.12);color:var(--red);border:1px solid rgba(232,75,75,.3);}
+
+/* Histórico */
 .history-section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px;display:none;}
-.history-section.visible{display:block;}
+.history-section.visible{display:block;animation:slideDown .3s ease;}
 .history-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
 .history-title{font-family:var(--font-d);font-size:16px;text-transform:uppercase;letter-spacing:.05em;}
 .history-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
 .hs-box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center;}
-.hs-val{font-family:var(--font-m);font-size:18px;font-weight:600;color:var(--lime);}
+.hs-val{font-family:var(--font-m);font-size:18px;font-weight:600;color:var(--betano-orange);}
 .hs-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
 .history-list{display:flex;flex-direction:column;gap:5px;max-height:300px;overflow-y:auto;}
 .h-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:7px 10px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;font-size:12px;}
@@ -254,43 +246,89 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
 .h-result.win{color:var(--lime);}
 .btn-clear-history{background:transparent;border:1px solid rgba(232,75,75,.3);color:#ff7777;font-size:11px;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:var(--font-d);text-transform:uppercase;letter-spacing:.04em;transition:all .15s;}
 .btn-clear-history:hover{background:rgba(232,75,75,.1);}
+
+/* Footer */
 .footer{position:relative;z-index:1;border-top:1px solid var(--line);padding:20px clamp(12px,4vw,40px) 30px;}
-.footer-main{max-width:760px;margin:0 auto;}
+.footer-main{max-width:800px;margin:0 auto;}
 .footer-copy{font-size:12px;color:var(--muted);margin-bottom:10px;}
 .footer-dev{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:10px;border-top:1px solid var(--line);}
-.footer-dev strong{color:var(--lime);}
+.footer-dev strong{color:var(--betano-orange);}
 .footer-badge{font-family:var(--font-m);font-size:10px;color:var(--muted);border:1px solid var(--line2);border-radius:4px;padding:3px 8px;}
+
+/* Loading & Empty States */
 .empty{color:var(--muted);font-size:13.5px;padding:8px 0;}
-.loading-spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--muted);border-top-color:var(--lime);border-radius:50%;animation:spin .8s linear infinite;}
+.loading-spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--muted);border-top-color:var(--betano-orange);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Responsivo */
 @media(max-width:600px){
   .topbar{height:auto;padding:10px 12px;}
   .brand-name{font-size:18px;}
-  .brand-tag{font-size:9px;}
-  .scope-tab{padding:6px 8px;font-size:10px;}
-  .fx-team{font-size:12px;}
-  .fx-score{font-size:18px;}
+  .markets-grid-betano{grid-template-columns:1fr;}
+  .stat-row-betano{grid-template-columns:1fr 80px 50px 60px;font-size:10px;}
+  .odds-comparison{grid-template-columns:1fr;}
   .history-stats{grid-template-columns:repeat(2,1fr);}
+  .player-silhouette{display:none;}
 }
 </style>
 </head>
 <body>
 
+<!-- Background de jogadores -->
+<div class="players-bg">
+  <svg class="player-silhouette" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="30" r="18" fill="white"/><rect x="35" y="50" width="30" height="40" rx="5" fill="white"/>
+    <line x1="35" y1="55" x2="15" y2="40" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <line x1="65" y1="55" x2="85" y2="40" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <line x1="40" y1="88" x2="30" y2="130" stroke="white" stroke-width="7" stroke-linecap="round"/>
+    <line x1="60" y1="88" x2="70" y2="130" stroke="white" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="50" cy="75" r="8" fill="white" opacity=".5"/>
+  </svg>
+  <svg class="player-silhouette" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="30" r="18" fill="white"/><rect x="35" y="50" width="30" height="40" rx="5" fill="white"/>
+    <line x1="35" y1="55" x2="20" y2="80" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <line x1="65" y1="55" x2="80" y2="80" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <line x1="40" y1="88" x2="25" y2="125" stroke="white" stroke-width="7" stroke-linecap="round"/>
+    <line x1="60" y1="88" x2="75" y2="125" stroke="white" stroke-width="7" stroke-linecap="round"/>
+  </svg>
+  <svg class="player-silhouette" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="30" r="18" fill="white"/><rect x="35" y="50" width="30" height="40" rx="5" fill="white"/>
+    <line x1="35" y1="55" x2="10" y2="35" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <line x1="65" y1="55" x2="90" y2="70" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <line x1="40" y1="88" x2="35" y2="135" stroke="white" stroke-width="7" stroke-linecap="round"/>
+    <line x1="60" y1="88" x2="55" y2="135" stroke="white" stroke-width="7" stroke-linecap="round"/>
+  </svg>
+  <svg class="player-silhouette" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="30" r="18" fill="white"/><rect x="35" y="50" width="30" height="40" rx="5" fill="white"/>
+    <line x1="35" y1="55" x2="25" y2="45" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <line x1="65" y1="55" x2="90" y2="45" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <line x1="38" y1="88" x2="20" y2="120" stroke="white" stroke-width="7" stroke-linecap="round"/>
+    <line x1="62" y1="88" x2="80" y2="120" stroke="white" stroke-width="7" stroke-linecap="round"/>
+  </svg>
+  <svg class="player-silhouette" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="30" r="18" fill="white"/><rect x="35" y="50" width="30" height="40" rx="5" fill="white"/>
+    <line x1="35" y1="55" x2="15" y2="60" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <line x1="65" y1="55" x2="85" y2="35" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <line x1="40" y1="88" x2="30" y2="130" stroke="white" stroke-width="7" stroke-linecap="round"/>
+    <line x1="60" y1="88" x2="70" y2="115" stroke="white" stroke-width="7" stroke-linecap="round"/>
+  </svg>
+</div>
+
 <header class="topbar z">
   <div class="brand">
-    <div class="brand-icon">FT</div>
+    <div class="brand-icon">FS</div>
     <div>
       <div class="brand-name">Fute<span>Stat</span></div>
-      <div class="brand-tag">Inteligência Estatística · Futebol</div>
+      <div class="brand-tag">Inteligência Estatística · Betano Markets</div>
     </div>
   </div>
   <div class="topbar-right">
     <div id="clock"></div>
-    <button class="btn-history" id="btn-history" title="Ver histórico de previsões">📋 Histórico</button>
+    <button class="btn-history" id="btn-history" title="Ver histórico">📋 Histórico</button>
   </div>
 </header>
 
-<div class="notice z">⚠️ Previsões baseadas em Poisson + Monte Carlo (10k simulações). Não são garantia de resultado. Aposte com responsabilidade (+18).</div>
+<div class="notice z">⚠️ Previsões baseadas em Poisson + Monte Carlo (10k simulações). Mercados alinhados com Betano. Aposte com responsabilidade (+18).</div>
 
 <main>
   <div class="history-section" id="history-section">
@@ -306,12 +344,12 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
     <div class="top10-head">
       <div>
         <div class="top10-title">🏆 Top Apostas do Dia</div>
-        <div class="top10-subtitle">Melhores oportunidades baseadas em IA estatística</div>
+        <div class="top10-subtitle">Melhores oportunidades nos mercados Betano</div>
       </div>
       <button class="btn-top10" id="btn-top10">⚡ Gerar ranking</button>
     </div>
     <div class="top10-list" id="top10-list">
-      <p class="empty" style="font-size:11.5px">Toque em "Gerar ranking" para calcular as melhores apostas dos jogos de hoje.</p>
+      <p class="empty" style="font-size:11.5px">Toque em "Gerar ranking" para calcular as melhores apostas.</p>
     </div>
   </div>
 
@@ -323,16 +361,16 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
     <div class="filter-row">
       <div class="scope-tabs" id="scope-tabs">
         <button class="scope-tab active" data-filter="all">Todos</button>
-        <button class="scope-tab" data-filter="live"><span class="live-dot" style="margin-right:3px"></span>Ao vivo</button>
+        <button class="scope-tab" data-filter="live"><span class="live-dot"></span>Ao vivo</button>
         <button class="scope-tab tab-ended" data-filter="ended">Encerrados</button>
         <button class="scope-tab" data-filter="scheduled">Agendados</button>
       </div>
       <select class="league-select" id="league-filter"><option value="">Todas as ligas</option></select>
     </div>
     <div class="filter-chips">
-      <button class="chip" data-chip="value">💎 Só Value Bets</button>
-      <button class="chip" data-chip="hc">🟢 Alta confiança</button>
-      <button class="chip" data-chip="danger">⚠️ Jogos perigosos</button>
+      <button class="chip" data-chip="value">💎 Value Bets</button>
+      <button class="chip" data-chip="hc">⭐ Alta confiança</button>
+      <button class="chip" data-chip="danger">⚠️ Perigosos</button>
     </div>
   </div>
 
@@ -344,32 +382,83 @@ main{max-width:760px;margin:0 auto;padding:16px clamp(10px,3vw,24px) 60px;positi
 
 <footer class="footer">
   <div class="footer-main">
-    <p class="footer-copy">FuteStat não é casa de apostas. Motor: Distribuição de Poisson + Monte Carlo 10k. Dados via API-Football. Problemas com apostas: <strong>0800 891 6080</strong> (CVV).</p>
+    <p class="footer-copy">FuteStat não é casa de apostas. Motor: Distribuição de Poisson + Monte Carlo 10k. Mercados baseados na Betano. Problemas com apostas: <strong>0800 891 6080</strong> (CVV).</p>
     <div class="footer-dev">
       <span style="font-size:12px;color:var(--muted)">Desenvolvido por <strong>Jackson Vincit</strong></span>
-      <span class="footer-badge">FuteStat v4.0 · Poisson+MC</span>
+      <span class="footer-badge">FuteStat v5.0 · Betano Markets</span>
     </div>
   </div>
 </footer>
 
 <script>
 /* ============================================
-   FUTESTAT v4.0 — MOTOR ESTATÍSTICO COMPLETO
-   Poisson + Monte Carlo 10k + Value Detection
-   Desenvolvido por Jackson Vincit
+   FUTESTAT v5.0 — BETANO MARKETS EDITION
+   +40 Mercados Estatísticos | Poisson + MC 10k
    ============================================ */
 
-// --- CONFIGURAÇÃO GLOBAL ---
 const CONFIG = {
-  API_KEY: '3f8c2e1a4b9d7f6e5c0a8b2d4f1e3a7c', // Chave demo
-  API_BASE: 'https://v3.football.api-sports.io',
-  USE_REAL_API: false, // Altere para true quando tiver chave válida
   SIMULATIONS: 10000,
-  REFRESH_INTERVAL: 60000, // 60 segundos
-  MAX_HISTORY: 100
+  MAX_MATCHES: 8,
+  CACHE_TTL: 300000,
 };
 
-// --- ESTADO GLOBAL ---
+// Mercados Betano completos
+const BETANO_MARKETS = {
+  // Gols
+  goals_over05: { label: 'Over 0.5 Gols', icon: '⚽', category: 'Gols', line: 0.5 },
+  goals_over15: { label: 'Over 1.5 Gols', icon: '⚽', category: 'Gols', line: 1.5 },
+  goals_over25: { label: 'Over 2.5 Gols', icon: '⚽⚽', category: 'Gols', line: 2.5 },
+  goals_over35: { label: 'Over 3.5 Gols', icon: '⚽⚽⚽', category: 'Gols', line: 3.5 },
+  goals_over45: { label: 'Over 4.5 Gols', icon: '🔥', category: 'Gols', line: 4.5 },
+  goals_under25: { label: 'Under 2.5 Gols', icon: '🛡️', category: 'Gols', line: 2.5 },
+  goals_under35: { label: 'Under 3.5 Gols', icon: '🛡️', category: 'Gols', line: 3.5 },
+  
+  // Resultados
+  match_result_home: { label: 'Vitória Mandante', icon: '🏠', category: 'Resultado' },
+  match_result_draw: { label: 'Empate', icon: '🤝', category: 'Resultado' },
+  match_result_away: { label: 'Vitória Visitante', icon: '✈️', category: 'Resultado' },
+  double_chance_1x: { label: 'Dupla Chance 1X', icon: '🏠🤝', category: 'Resultado' },
+  double_chance_12: { label: 'Dupla Chance 12', icon: '🏠✈️', category: 'Resultado' },
+  double_chance_x2: { label: 'Dupla Chance X2', icon: '🤝✈️', category: 'Resultado' },
+  
+  // BTTS
+  btts_yes: { label: 'Ambas Marcam Sim', icon: '⚽↔️⚽', category: 'BTTS' },
+  btts_no: { label: 'Ambas Marcam Não', icon: '🚫', category: 'BTTS' },
+  
+  // Handicap Asiático
+  handicap_home_minus1: { label: 'Handicap Mandante -1', icon: '🏠-1', category: 'Handicap' },
+  handicap_away_plus1: { label: 'Handicap Visitante +1', icon: '✈️+1', category: 'Handicap' },
+  
+  // Estatísticas Betano
+  stats_shots_total_over: { label: 'Total Chutes Over', icon: '🎯', category: 'Estatísticas', stat: 'shots_total' },
+  stats_shots_on_target_over: { label: 'Chutes no Gol Over', icon: '🎯✅', category: 'Estatísticas', stat: 'shots_on_target' },
+  stats_corners_over: { label: 'Escanteios Over', icon: '🏴', category: 'Estatísticas', stat: 'corners' },
+  stats_corners_under: { label: 'Escanteios Under', icon: '🏴', category: 'Estatísticas', stat: 'corners' },
+  stats_cards_over: { label: 'Cartões Over', icon: '🟨', category: 'Estatísticas', stat: 'cards' },
+  stats_cards_under: { label: 'Cartões Under', icon: '🟨', category: 'Estatísticas', stat: 'cards' },
+  stats_fouls_over: { label: 'Faltas Over', icon: '⚠️', category: 'Estatísticas', stat: 'fouls' },
+  stats_offsides_over: { label: 'Impedimentos Over', icon: '🏃', category: 'Estatísticas', stat: 'offsides' },
+  stats_passes_over: { label: 'Passes Over', icon: '🔄', category: 'Estatísticas', stat: 'passes' },
+  stats_tackles_over: { label: 'Desarmes Over', icon: '💪', category: 'Estatísticas', stat: 'tackles' },
+  stats_saves_over: { label: 'Defesas Over', icon: '🧤', category: 'Estatísticas', stat: 'goalkeeper_saves' },
+  
+  // Primeiro/Último
+  first_goal_home: { label: '1º Gol Mandante', icon: '🏠⚽', category: 'Cronologia' },
+  first_goal_away: { label: '1º Gol Visitante', icon: '✈️⚽', category: 'Cronologia' },
+  last_goal_home: { label: 'Último Gol Mandante', icon: '🏠⏱️', category: 'Cronologia' },
+  last_goal_away: { label: 'Último Gol Visitante', icon: '✈️⏱️', category: 'Cronologia' },
+  
+  // Intervalo
+  ht_ft_home_home: { label: 'HT/FT Mandante/Mandante', icon: '🏠/🏠', category: 'Intervalo' },
+  ht_ft_draw_home: { label: 'HT/FT Empate/Mandante', icon: '🤝/🏠', category: 'Intervalo' },
+  over15_first_half: { label: 'Over 1.5 1º Tempo', icon: '⚽⚽ 1T', category: 'Intervalo' },
+  over05_first_half: { label: 'Over 0.5 1º Tempo', icon: '⚽ 1T', category: 'Intervalo' },
+  
+  // Clean Sheet
+  clean_sheet_home: { label: 'Clean Sheet Mandante', icon: '🏠🔒', category: 'Defesa' },
+  clean_sheet_away: { label: 'Clean Sheet Visitante', icon: '✈️🔒', category: 'Defesa' },
+};
+
 const STATE = {
   fixtures: [],
   predictions: {},
@@ -379,72 +468,39 @@ const STATE = {
   searchTerm: '',
   leagueFilter: '',
   selectedMatch: null,
-  isInitialized: false
+  selectedMarkets: new Set(),
 };
 
-// --- DADOS DE FALLBACK (Modo Offline) ---
 const FALLBACK_LEAGUES = [
   { id: 71, name: 'Brasileirão Série A', logo: 'https://media.api-sports.io/football/leagues/71.png' },
-  { id: 72, name: 'Brasileirão Série B', logo: 'https://media.api-sports.io/football/leagues/72.png' },
   { id: 39, name: 'Premier League', logo: 'https://media.api-sports.io/football/leagues/39.png' },
   { id: 140, name: 'La Liga', logo: 'https://media.api-sports.io/football/leagues/140.png' },
-  { id: 135, name: 'Série A', logo: 'https://media.api-sports.io/football/leagues/135.png' },
+  { id: 135, name: 'Série A TIM', logo: 'https://media.api-sports.io/football/leagues/135.png' },
   { id: 78, name: 'Bundesliga', logo: 'https://media.api-sports.io/football/leagues/78.png' },
   { id: 61, name: 'Ligue 1', logo: 'https://media.api-sports.io/football/leagues/61.png' },
   { id: 2, name: 'Champions League', logo: 'https://media.api-sports.io/football/leagues/2.png' },
   { id: 13, name: 'Libertadores', logo: 'https://media.api-sports.io/football/leagues/13.png' },
-  { id: 128, name: 'Argentino Liga Prof.', logo: 'https://media.api-sports.io/football/leagues/128.png' }
 ];
 
 const TEAMS_POOL = [
-  'Flamengo', 'Palmeiras', 'São Paulo', 'Corinthians', 'Santos', 'Grêmio', 'Internacional',
-  'Atlético-MG', 'Cruzeiro', 'Fluminense', 'Botafogo', 'Vasco', 'Fortaleza', 'Athletico-PR',
-  'Bahia', 'Bragantino', 'Cuiabá', 'Goiás', 'Coritiba', 'América-MG',
-  'Manchester City', 'Arsenal', 'Liverpool', 'Manchester United', 'Chelsea', 'Tottenham',
-  'Real Madrid', 'Barcelona', 'Atlético Madrid', 'Bayern München', 'PSG', 'Inter'
+  'Flamengo', 'Palmeiras', 'Atlético-MG', 'Grêmio', 'Botafogo', 'Bragantino',
+  'Athletico-PR', 'Fluminense', 'Fortaleza', 'São Paulo', 'Cruzeiro', 'Internacional',
+  'Corinthians', 'Bahia', 'Vasco', 'Juventude', 'Cuiabá', 'Vitória',
+  'Manchester City', 'Arsenal', 'Liverpool', 'Real Madrid', 'Barcelona', 'Bayern München',
+  'PSG', 'Inter', 'Napoli', 'Borussia Dortmund', 'Atlético Madrid', 'Porto',
 ];
 
-// --- UTILITÁRIOS ---
-function getFixtureId(fixture) {
-  return fixture.id || fixture.fixture?.id;
-}
+function $(sel) { return document.querySelector(sel); }
+function $$(sel) { return document.querySelectorAll(sel); }
+function getFixtureId(f) { return f.id || f.fixture?.id; }
 
-function $(selector) {
-  return document.querySelector(selector);
-}
-
-function $$(selector) {
-  return document.querySelectorAll(selector);
-}
-
-// --- API E DADOS ---
-async function fetchFromAPI(endpoint, params = {}) {
-  if (!CONFIG.USE_REAL_API) return null;
-  
-  const url = new URL(`${CONFIG.API_BASE}/${endpoint}`);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
-  
-  try {
-    const response = await fetch(url, {
-      headers: { 'x-apisports-key': CONFIG.API_KEY },
-      signal: AbortSignal.timeout(8000)
-    });
-    
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    return data.response || [];
-  } catch (error) {
-    console.warn('⚠️ API indisponível:', error.message);
-    return null;
-  }
-}
-
+// --- GERAÇÃO DE DADOS ---
 function generateFallbackFixtures() {
   const fixtures = [];
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 16; i++) {
     const league = FALLBACK_LEAGUES[i % FALLBACK_LEAGUES.length];
     let homeIdx = Math.floor(Math.random() * TEAMS_POOL.length);
     let awayIdx = Math.floor(Math.random() * TEAMS_POOL.length);
@@ -452,171 +508,272 @@ function generateFallbackFixtures() {
     
     const home = TEAMS_POOL[homeIdx];
     const away = TEAMS_POOL[awayIdx];
-    
-    const statusTypes = ['NS', 'NS', 'NS', 'LIVE', 'LIVE', 'FT', 'FT'];
+    const statusTypes = ['NS', 'NS', 'NS', 'NS', 'LIVE', 'LIVE', 'FT', 'FT'];
     const status = statusTypes[i % statusTypes.length];
     
     const kickoff = new Date(today);
-    kickoff.setHours(16 + Math.floor(i / 3), (i * 15) % 60, 0, 0);
+    kickoff.setHours(14 + Math.floor(i / 2), (i * 30) % 60, 0, 0);
     
-    const fixture = {
-      id: 1000 + i,
+    fixtures.push({
+      id: 2000 + i,
       league: { id: league.id, name: league.name, logo: league.logo },
-      teams: { 
-        home: { id: 100 + homeIdx, name: home, logo: `https://media.api-sports.io/football/teams/${100 + homeIdx}.png` },
-        away: { id: 200 + awayIdx, name: away, logo: `https://media.api-sports.io/football/teams/${200 + awayIdx}.png` }
+      teams: {
+        home: { id: 300 + homeIdx, name: home, logo: `https://media.api-sports.io/football/teams/${300 + homeIdx}.png` },
+        away: { id: 400 + awayIdx, name: away, logo: `https://media.api-sports.io/football/teams/${400 + awayIdx}.png` }
       },
-      goals: status === 'FT' ? { home: Math.floor(Math.random() * 4), away: Math.floor(Math.random() * 4) } : 
-             status === 'LIVE' ? { home: Math.floor(Math.random() * 3), away: Math.floor(Math.random() * 3) } : null,
-      fixture: { 
-        id: 1000 + i,
+      goals: status === 'FT' ? { home: Math.floor(Math.random() * 4), away: Math.floor(Math.random() * 3) } :
+             status === 'LIVE' ? { home: Math.floor(Math.random() * 2), away: Math.floor(Math.random() * 2) } : null,
+      fixture: {
+        id: 2000 + i,
         date: kickoff.toISOString(),
-        status: { 
-          short: status, 
-          elapsed: status === 'LIVE' ? 30 + Math.floor(Math.random() * 60) : (status === 'FT' ? 90 : null) 
-        }
+        status: { short: status, elapsed: status === 'LIVE' ? 30 + Math.floor(Math.random() * 55) : (status === 'FT' ? 90 : null) }
       },
-      _source: 'fallback',
-      _homeAvg: (1.2 + Math.random() * 2.0).toFixed(2),
-      _awayAvg: (0.6 + Math.random() * 1.6).toFixed(2),
-      _homeDef: (0.8 + Math.random() * 1.4).toFixed(2),
-      _awayDef: (1.0 + Math.random() * 1.6).toFixed(2)
-    };
-    
-    fixtures.push(fixture);
+      _stats: generateTeamStats(),
+    });
   }
   
   return fixtures.sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
 }
 
-// --- MOTOR ESTATÍSTICO ---
-function poissonProb(lambda, k) {
-  if (lambda <= 0) return k === 0 ? 1 : 0;
-  let logP = -lambda + k * Math.log(lambda);
-  for (let i = 1; i <= k; i++) logP -= Math.log(i);
-  return Math.exp(logP);
-}
-
-function simulateMatch(homeLambda, awayLambda, simulations = CONFIG.SIMULATIONS) {
-  const scoreMatrix = {};
-  let homeWins = 0, draws = 0, awayWins = 0;
-  let over15 = 0, over25 = 0, over35 = 0;
-  let btts = 0, bttsNo = 0;
-  
-  for (let s = 0; s < simulations; s++) {
-    let hGoals = 0, aGoals = 0;
-    
-    // Simulação de gols com distribuição de Poisson
-    for (let i = 0; i < 3; i++) {
-      if (Math.random() < homeLambda / (i + 1)) hGoals++;
-      if (Math.random() < awayLambda / (i + 1)) aGoals++;
-    }
-    
-    // Limitar a 8 gols para evitar outliers
-    hGoals = Math.min(hGoals, 8);
-    aGoals = Math.min(aGoals, 8);
-    
-    const key = `${hGoals}-${aGoals}`;
-    scoreMatrix[key] = (scoreMatrix[key] || 0) + 1;
-    
-    if (hGoals > aGoals) homeWins++;
-    else if (hGoals === aGoals) draws++;
-    else awayWins++;
-    
-    if (hGoals + aGoals > 1.5) over15++;
-    if (hGoals + aGoals > 2.5) over25++;
-    if (hGoals + aGoals > 3.5) over35++;
-    if (hGoals > 0 && aGoals > 0) btts++;
-    else bttsNo++;
-  }
-  
-  // Normalizar probabilidades
-  Object.keys(scoreMatrix).forEach(k => scoreMatrix[k] /= simulations);
-  
+function generateTeamStats() {
   return {
-    '1x2': {
-      home: +(homeWins / simulations * 100).toFixed(1),
-      draw: +(draws / simulations * 100).toFixed(1),
-      away: +(awayWins / simulations * 100).toFixed(1)
+    home: {
+      shots_total: 8 + Math.floor(Math.random() * 14),
+      shots_on_target: 3 + Math.floor(Math.random() * 7),
+      corners: 3 + Math.floor(Math.random() * 8),
+      cards: Math.floor(Math.random() * 5),
+      fouls: 8 + Math.floor(Math.random() * 12),
+      offsides: Math.floor(Math.random() * 4),
+      passes: 250 + Math.floor(Math.random() * 300),
+      tackles: 10 + Math.floor(Math.random() * 15),
+      goalkeeper_saves: Math.floor(Math.random() * 5),
+      goalsScored: 0.8 + Math.random() * 2.2,
+      goalsConceded: 0.5 + Math.random() * 1.8,
     },
-    goals: {
-      over15: +(over15 / simulations * 100).toFixed(1),
-      over25: +(over25 / simulations * 100).toFixed(1),
-      over35: +(over35 / simulations * 100).toFixed(1)
-    },
-    btts: {
-      yes: +(btts / simulations * 100).toFixed(1),
-      no: +(bttsNo / simulations * 100).toFixed(1)
-    },
-    scoreMatrix,
-    topScorelines: Object.entries(scoreMatrix)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([score, prob]) => ({ score, prob: +(prob * 100).toFixed(1) }))
+    away: {
+      shots_total: 6 + Math.floor(Math.random() * 12),
+      shots_on_target: 2 + Math.floor(Math.random() * 6),
+      corners: 2 + Math.floor(Math.random() * 7),
+      cards: Math.floor(Math.random() * 5),
+      fouls: 7 + Math.floor(Math.random() * 13),
+      offsides: Math.floor(Math.random() * 4),
+      passes: 200 + Math.floor(Math.random() * 280),
+      tackles: 8 + Math.floor(Math.random() * 14),
+      goalkeeper_saves: Math.floor(Math.random() * 6),
+      goalsScored: 0.6 + Math.random() * 1.8,
+      goalsConceded: 0.7 + Math.random() * 2.0,
+    }
   };
 }
 
+// --- MOTOR POISSON + MONTE CARLO ---
+function poissonRandom(lambda) {
+  if (lambda <= 0) return 0;
+  if (lambda > 20) lambda = 20;
+  const L = Math.exp(-lambda);
+  let k = 0, p = 1;
+  do { k++; p *= Math.random(); } while (p > L);
+  return k - 1;
+}
+
+function monteCarloSimulation(lH, lA, simulations = CONFIG.SIMULATIONS) {
+  let hw = 0, dr = 0, aw = 0, btts = 0, csH = 0, csA = 0;
+  const goalDist = new Array(10).fill(0);
+  const scorelines = {};
+  let firstHalfOver05 = 0, firstHalfOver15 = 0;
+  let homeFirstGoal = 0, awayFirstGoal = 0;
+  let homeLastGoal = 0, awayLastGoal = 0;
+  
+  for (let s = 0; s < simulations; s++) {
+    const hg = poissonRandom(lH);
+    const ag = poissonRandom(lA);
+    const total = hg + ag;
+    
+    if (hg > ag) hw++;
+    else if (hg < ag) aw++;
+    else dr++;
+    
+    const bucket = Math.min(total, 9);
+    goalDist[bucket]++;
+    
+    if (hg > 0 && ag > 0) btts++;
+    if (ag === 0) csH++;
+    if (hg === 0) csA++;
+    
+    const key = `${Math.min(hg, 6)}-${Math.min(ag, 6)}`;
+    scorelines[key] = (scorelines[key] || 0) + 1;
+    
+    // Primeiro tempo (40% dos gols)
+    const hg1st = Math.floor(hg * 0.4);
+    const ag1st = Math.floor(ag * 0.4);
+    if (hg1st + ag1st > 0.5) firstHalfOver05++;
+    if (hg1st + ag1st > 1.5) firstHalfOver15++;
+    
+    if (hg > 0 && ag === 0) homeFirstGoal++;
+    if (ag > 0 && hg === 0) awayFirstGoal++;
+    if (hg > ag) homeLastGoal++;
+    if (ag > hg) awayLastGoal++;
+  }
+  
+  const p = v => Math.round(v / simulations * 1000) / 10;
+  
+  return {
+    homeWin: p(hw), draw: p(dr), awayWin: p(aw),
+    over05: p(goalDist.slice(1).reduce((a, b) => a + b, 0)),
+    over15: p(goalDist.slice(2).reduce((a, b) => a + b, 0)),
+    over25: p(goalDist.slice(3).reduce((a, b) => a + b, 0)),
+    over35: p(goalDist.slice(4).reduce((a, b) => a + b, 0)),
+    over45: p(goalDist.slice(5).reduce((a, b) => a + b, 0)),
+    under25: p(simulations - goalDist.slice(3).reduce((a, b) => a + b, 0)),
+    under35: p(simulations - goalDist.slice(4).reduce((a, b) => a + b, 0)),
+    btts: p(btts), noBtts: p(simulations - btts),
+    csHome: p(csH), csAway: p(csA),
+    firstHalfOver05: p(firstHalfOver05),
+    firstHalfOver15: p(firstHalfOver15),
+    homeFirstGoal: p(homeFirstGoal),
+    awayFirstGoal: p(awayFirstGoal),
+    homeLastGoal: p(homeLastGoal),
+    awayLastGoal: p(awayLastGoal),
+    doubleChance1X: p(hw + dr),
+    doubleChance12: p(hw + aw),
+    doubleChanceX2: p(dr + aw),
+    top5: Object.entries(scorelines)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([score, count]) => ({ score, prob: p(count) })),
+    lambdaH: Math.round(lH * 100) / 100,
+    lambdaA: Math.round(lA * 100) / 100,
+  };
+}
+
+// --- CÁLCULO DE PREVISÃO ---
 function calculatePrediction(fixture) {
-  const homeLambda = parseFloat(fixture._homeAvg || (1.3 + Math.random() * 1.5));
-  const awayLambda = parseFloat(fixture._awayAvg || (0.8 + Math.random() * 1.3));
+  const stats = fixture._stats || generateTeamStats();
+  const homeLambda = stats.home.goalsScored * (stats.away.goalsConceded / 1.35) * 1.1;
+  const awayLambda = stats.away.goalsScored * (stats.home.goalsConceded / 1.35) * 0.9;
   
-  const sim = simulateMatch(homeLambda, awayLambda);
+  const lH = Math.max(0.3, Math.min(homeLambda, 5));
+  const lA = Math.max(0.3, Math.min(awayLambda, 4));
   
-  // Detectar value bets
-  const valueBets = [];
+  const sim = monteCarloSimulation(lH, lA);
   
-  if (sim['1x2'].home > 38) {
-    valueBets.push({ 
-      market: `${fixture.teams?.home?.name || 'Casa'} Vence`, 
-      prob: sim['1x2'].home, 
-      fairOdd: (1 / (sim['1x2'].home / 100)).toFixed(2), 
-      type: 'hc' 
-    });
-  }
+  // Construir todos os mercados Betano
+  const markets = buildBetanoMarkets(sim, stats, fixture);
   
-  if (sim['1x2'].away > 38) {
-    valueBets.push({ 
-      market: `${fixture.teams?.away?.name || 'Fora'} Vence`, 
-      prob: sim['1x2'].away, 
-      fairOdd: (1 / (sim['1x2'].away / 100)).toFixed(2), 
-      type: 'hc' 
-    });
-  }
+  // Encontrar melhor aposta
+  const bestBet = findBestBetanoBet(markets, sim, fixture);
   
-  if (sim.goals.over25 > 55) {
-    valueBets.push({ 
-      market: 'Over 2.5 Gols', 
-      prob: sim.goals.over25, 
-      fairOdd: (1 / (sim.goals.over25 / 100)).toFixed(2), 
-      type: 'hc' 
-    });
-  }
-  
-  if (sim.btts.yes > 55) {
-    valueBets.push({ 
-      market: 'BTTS Sim', 
-      prob: sim.btts.yes, 
-      fairOdd: (1 / (sim.btts.yes / 100)).toFixed(2), 
-      type: 'vb' 
-    });
-  }
-  
-  const hasValueBet = valueBets.length > 0;
-  const isDanger = sim['1x2'].draw > 35 || (sim['1x2'].home < 30 && sim['1x2'].away < 30);
-  const isHighConfidence = valueBets.some(v => v.type === 'hc' && v.prob > 50);
+  // Value bets
+  const valueBets = markets.filter(m => m.isValueBet);
   
   return {
     fixtureId: getFixtureId(fixture),
     date: new Date().toISOString(),
     status: fixture.fixture?.status?.short || 'NS',
     sim,
-    homeLambda: +homeLambda.toFixed(2),
-    awayLambda: +awayLambda.toFixed(2),
+    homeLambda: lH.toFixed(2),
+    awayLambda: lA.toFixed(2),
+    markets,
+    bestBet,
     valueBets,
-    hasValueBet,
-    isDanger,
-    isHighConfidence,
-    confidence: hasValueBet ? (valueBets[0].prob > 55 ? 'Alta' : 'Média') : 'Baixa'
+    hasValueBet: valueBets.length > 0,
+    isHighConfidence: bestBet.prob >= 70,
+    isDanger: Math.abs(sim.homeWin - sim.awayWin) < 10 && sim.draw > 25,
+    confidence: bestBet.prob >= 75 ? 'Alta' : bestBet.prob >= 60 ? 'Média' : 'Baixa',
+  };
+}
+
+function buildBetanoMarkets(sim, stats, fixture) {
+  const markets = [];
+  const homeName = fixture.teams?.home?.name || 'Mandante';
+  const awayName = fixture.teams?.away?.name || 'Visitante';
+  
+  // Resultados
+  markets.push({ key: 'match_result_home', label: `Vitória ${homeName}`, prob: sim.homeWin, icon: '🏠', isValueBet: sim.homeWin > 40 });
+  markets.push({ key: 'match_result_draw', label: 'Empate', prob: sim.draw, icon: '🤝', isValueBet: sim.draw > 30 });
+  markets.push({ key: 'match_result_away', label: `Vitória ${awayName}`, prob: sim.awayWin, icon: '✈️', isValueBet: sim.awayWin > 40 });
+  
+  // Dupla chance
+  markets.push({ key: 'double_chance_1x', label: `1X (${homeName} ou Empate)`, prob: sim.doubleChance1X, icon: '🛡️', isValueBet: sim.doubleChance1X > 65 });
+  markets.push({ key: 'double_chance_x2', label: `X2 (${awayName} ou Empate)`, prob: sim.doubleChanceX2, icon: '🛡️', isValueBet: sim.doubleChanceX2 > 65 });
+  
+  // Gols
+  markets.push({ key: 'goals_over25', label: 'Over 2.5 Gols', prob: sim.over25, icon: '⚽⚽', isValueBet: sim.over25 > 55 });
+  markets.push({ key: 'goals_under25', label: 'Under 2.5 Gols', prob: sim.under25, icon: '🛡️', isValueBet: sim.under25 > 55 });
+  markets.push({ key: 'goals_over15', label: 'Over 1.5 Gols', prob: sim.over15, icon: '⚽', isValueBet: sim.over15 > 70 });
+  markets.push({ key: 'goals_over35', label: 'Over 3.5 Gols', prob: sim.over35, icon: '🔥', isValueBet: sim.over35 > 40 });
+  markets.push({ key: 'goals_under35', label: 'Under 3.5 Gols', prob: sim.under35, icon: '🛡️', isValueBet: sim.under35 > 70 });
+  
+  // BTTS
+  markets.push({ key: 'btts_yes', label: 'Ambas Marcam Sim', prob: sim.btts, icon: '⚽↔️⚽', isValueBet: sim.btts > 55 });
+  markets.push({ key: 'btts_no', label: 'Ambas Marcam Não', prob: sim.noBtts, icon: '🚫', isValueBet: sim.noBtts > 55 });
+  
+  // Intervalo
+  markets.push({ key: 'over05_first_half', label: 'Over 0.5 1º Tempo', prob: sim.firstHalfOver05, icon: '⚽ 1T', isValueBet: sim.firstHalfOver05 > 65 });
+  markets.push({ key: 'over15_first_half', label: 'Over 1.5 1º Tempo', prob: sim.firstHalfOver15, icon: '⚽⚽ 1T', isValueBet: sim.firstHalfOver15 > 35 });
+  
+  // Cronologia
+  markets.push({ key: 'first_goal_home', label: `1º Gol ${homeName}`, prob: sim.homeFirstGoal, icon: '🏠⚽', isValueBet: sim.homeFirstGoal > 40 });
+  markets.push({ key: 'first_goal_away', label: `1º Gol ${awayName}`, prob: sim.awayFirstGoal, icon: '✈️⚽', isValueBet: sim.awayFirstGoal > 35 });
+  
+  // Clean Sheet
+  markets.push({ key: 'clean_sheet_home', label: `Clean Sheet ${homeName}`, prob: sim.csHome, icon: '🏠🔒', isValueBet: sim.csHome > 35 });
+  markets.push({ key: 'clean_sheet_away', label: `Clean Sheet ${awayName}`, prob: sim.csAway, icon: '✈️🔒', isValueBet: sim.csAway > 35 });
+  
+  // Handicap
+  markets.push({ key: 'handicap_home_minus1', label: `${homeName} -1`, prob: sim.homeWin - 15, icon: '🏠-1', isValueBet: (sim.homeWin - 15) > 35 });
+  
+  // Estatísticas
+  const statMarkets = [
+    { stat: 'shots_total', label: 'Total Chutes', line: 22.5, homeVal: stats.home.shots_total, awayVal: stats.away.shots_total },
+    { stat: 'shots_on_target', label: 'Chutes no Gol', line: 8.5, homeVal: stats.home.shots_on_target, awayVal: stats.away.shots_on_target },
+    { stat: 'corners', label: 'Escanteios', line: 9.5, homeVal: stats.home.corners, awayVal: stats.away.corners },
+    { stat: 'cards', label: 'Cartões', line: 4.5, homeVal: stats.home.cards, awayVal: stats.away.cards },
+    { stat: 'fouls', label: 'Faltas', line: 22.5, homeVal: stats.home.fouls, awayVal: stats.away.fouls },
+    { stat: 'offsides', label: 'Impedimentos', line: 3.5, homeVal: stats.home.offsides, awayVal: stats.away.offsides },
+    { stat: 'passes', label: 'Passes Totais', line: 800, homeVal: stats.home.passes, awayVal: stats.away.passes },
+    { stat: 'tackles', label: 'Desarmes', line: 28.5, homeVal: stats.home.tackles, awayVal: stats.away.tackles },
+    { stat: 'goalkeeper_saves', label: 'Defesas', line: 5.5, homeVal: stats.home.goalkeeper_saves, awayVal: stats.away.goalkeeper_saves },
+  ];
+  
+  statMarkets.forEach(sm => {
+    const total = sm.homeVal + sm.awayVal;
+    const overProb = Math.min(95, Math.max(25, Math.round(50 + ((total - sm.line) / Math.max(1, sm.line)) * 60)));
+    markets.push({
+      key: `stats_${sm.stat}_over`,
+      label: `${sm.label} Over ${sm.line}`,
+      prob: overProb,
+      icon: '📊',
+      isValueBet: overProb > 55,
+      predictedTotal: Math.round(total * 10) / 10,
+    });
+    markets.push({
+      key: `stats_${sm.stat}_under`,
+      label: `${sm.label} Under ${sm.line}`,
+      prob: 100 - overProb,
+      icon: '📊',
+      isValueBet: (100 - overProb) > 55,
+      predictedTotal: Math.round(total * 10) / 10,
+    });
+  });
+  
+  return markets;
+}
+
+function findBestBetanoBet(markets, sim, fixture) {
+  const candidates = markets.filter(m => !m.key.includes('stats_') || m.prob > 55);
+  const sorted = [...candidates].sort((a, b) => b.prob - a.prob);
+  const best = sorted[0] || markets[0];
+  
+  return {
+    market: best.label,
+    prob: best.prob,
+    key: best.key,
+    confidence: best.prob >= 75 ? 'Alta' : best.prob >= 60 ? 'Média' : 'Baixa',
+    risk: best.prob >= 75 ? 'Baixo' : best.prob >= 60 ? 'Médio' : 'Alto',
+    valueBet: best.isValueBet,
+    impliedOdds: (1 / (best.prob / 100)).toFixed(2),
+    justification: `Análise de ${CONFIG.SIMULATIONS.toLocaleString()} simulações Monte Carlo. Probabilidade de ${best.prob}% no mercado "${best.label}".`,
   };
 }
 
@@ -625,29 +782,21 @@ function renderFixtures() {
   const container = $('#fixtures-list');
   let filtered = [...STATE.fixtures];
   
-  // Aplicar filtros
-  if (STATE.activeFilter === 'live') {
-    filtered = filtered.filter(f => f.fixture?.status?.short === 'LIVE');
-  } else if (STATE.activeFilter === 'ended') {
-    filtered = filtered.filter(f => f.fixture?.status?.short === 'FT');
-  } else if (STATE.activeFilter === 'scheduled') {
-    filtered = filtered.filter(f => ['NS', 'TBD'].includes(f.fixture?.status?.short));
-  }
+  if (STATE.activeFilter === 'live') filtered = filtered.filter(f => f.fixture?.status?.short === 'LIVE');
+  else if (STATE.activeFilter === 'ended') filtered = filtered.filter(f => f.fixture?.status?.short === 'FT');
+  else if (STATE.activeFilter === 'scheduled') filtered = filtered.filter(f => ['NS', 'TBD'].includes(f.fixture?.status?.short));
   
   if (STATE.searchTerm) {
     const term = STATE.searchTerm.toLowerCase();
-    filtered = filtered.filter(f => 
+    filtered = filtered.filter(f =>
       f.teams?.home?.name?.toLowerCase().includes(term) ||
       f.teams?.away?.name?.toLowerCase().includes(term) ||
       f.league?.name?.toLowerCase().includes(term)
     );
   }
   
-  if (STATE.leagueFilter) {
-    filtered = filtered.filter(f => f.league?.id == STATE.leagueFilter);
-  }
+  if (STATE.leagueFilter) filtered = filtered.filter(f => f.league?.id == STATE.leagueFilter);
   
-  // Aplicar chips
   if (STATE.activeChips.size > 0) {
     filtered = filtered.filter(f => {
       const pred = STATE.predictions[getFixtureId(f)];
@@ -662,7 +811,7 @@ function renderFixtures() {
   $('#fixture-count').textContent = filtered.length;
   
   if (filtered.length === 0) {
-    container.innerHTML = '<p class="empty">😕 Nenhum jogo encontrado com os filtros atuais.</p>';
+    container.innerHTML = '<p class="empty">😕 Nenhum jogo encontrado.</p>';
     return;
   }
   
@@ -674,50 +823,35 @@ function renderFixtures() {
     const isEnded = status === 'FT';
     const isSelected = STATE.selectedMatch === id;
     
-    const homeName = f.teams?.home?.name || 'Time Casa';
-    const awayName = f.teams?.away?.name || 'Time Fora';
-    const leagueName = f.league?.name || 'Liga Desconhecida';
+    const homeName = f.teams?.home?.name || 'Casa';
+    const awayName = f.teams?.away?.name || 'Fora';
     const score = f.goals ? `${f.goals.home} - ${f.goals.away}` : 'vs';
     const minutes = f.fixture?.status?.elapsed ? `${f.fixture.status.elapsed}'` : '';
     const time = new Date(f.fixture?.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     
-    // Badges
     let badgesHTML = '';
     if (pred?.isHighConfidence) badgesHTML += '<span class="badge badge-hc">⭐ Alta Confiança</span>';
-    if (pred?.valueBets?.some(v => v.type === 'vb')) badgesHTML += '<span class="badge badge-vb">💎 Value Bet</span>';
+    if (pred?.hasValueBet) badgesHTML += '<span class="badge badge-vb">💎 Value Bet</span>';
     if (pred?.isDanger) badgesHTML += '<span class="badge badge-danger">⚠️ Perigoso</span>';
-    if (!pred) badgesHTML += '<span class="badge badge-insuf">📊 Sem dados</span>';
+    if (!pred) badgesHTML += '<span class="badge badge-insuf">📊 Aguardando</span>';
     
     let statusHTML;
-    if (isLive) {
-      statusHTML = `<span class="live-pill"><span class="live-dot"></span>${minutes || 'AO VIVO'}</span>`;
-    } else if (isEnded) {
-      statusHTML = `<span class="ended-badge">🏁 Encerrado</span>`;
-    } else {
-      statusHTML = `<span class="fx-time">🕐 ${time}</span>`;
-    }
-    
-    // Imagens com fallback
-    const homeLogo = f.teams?.home?.logo ? 
-      `<img class="fx-crest" src="${f.teams.home.logo}" alt="" onerror="this.style.display='none'" loading="lazy">` : '';
-    const awayLogo = f.teams?.away?.logo ? 
-      `<img class="fx-crest" src="${f.teams.away.logo}" alt="" onerror="this.style.display='none'" loading="lazy">` : '';
-    const leagueLogo = f.league?.logo ? 
-      `<img class="fx-league-logo" src="${f.league.logo}" alt="" onerror="this.style.display='none'" loading="lazy">` : '';
+    if (isLive) statusHTML = `<span class="live-pill"><span class="live-dot"></span>${minutes || 'AO VIVO'}</span>`;
+    else if (isEnded) statusHTML = `<span class="ended-badge">🏁 Encerrado</span>`;
+    else statusHTML = `<span class="fx-time">🕐 ${time}</span>`;
     
     return `
-      <div class="fx-card ${isSelected ? 'active-card' : ''} ${isEnded ? 'ended-card' : ''}" 
+      <div class="fx-card ${isSelected ? 'active-card' : ''} ${isEnded ? 'ended-card' : ''}"
            data-id="${id}" onclick="toggleMatch(this, ${id})">
         <div class="fx-header">
-          ${leagueLogo}
-          <span class="fx-league-name">${leagueName}</span>
+          <span class="fx-league-name">${f.league?.name || 'Liga'}</span>
           ${statusHTML}
           <div class="badge-row">${badgesHTML}</div>
         </div>
         <div class="fx-body">
           <div class="fx-teams">
-            <div class="fx-team">${homeLogo} ${homeName}</div>
-            <div class="fx-team">${awayLogo} ${awayName}</div>
+            <div class="fx-team">${homeName}</div>
+            <div class="fx-team">${awayName}</div>
           </div>
           <div class="fx-score-block">
             <div class="fx-score ${isEnded ? 'ended' : ''}">${score}</div>
@@ -735,96 +869,193 @@ function renderFixtures() {
 
 function renderPredictionPanel(pred, fixture) {
   const sim = pred.sim;
-  const bestValueBet = pred.valueBets[0];
+  const bestBet = pred.bestBet;
+  const topMarkets = pred.markets
+    .filter(m => m.isValueBet)
+    .sort((a, b) => b.prob - a.prob)
+    .slice(0, 12);
   
   return `
     <div class="inner-tabs">
-      <button class="inner-tab active" data-tab="resumo">📊 Resumo</button>
-      <button class="inner-tab" data-tab="mercados">💰 Mercados</button>
-      <button class="inner-tab" data-tab="simulacao">🎲 Simulação</button>
-      <button class="inner-tab" data-tab="fatores">📈 Fatores</button>
+      <button class="inner-tab active">📊 Resumo</button>
+      <button class="inner-tab">💰 Mercados</button>
+      <button class="inner-tab">📈 Estatísticas</button>
+      <button class="inner-tab">🎲 Simulação</button>
     </div>
     
     <div class="predict-meta">
       <span class="meta-chip">λ Casa: ${pred.homeLambda}</span>
       <span class="meta-chip">λ Fora: ${pred.awayLambda}</span>
       <span class="meta-chip">Confiança: ${pred.confidence}</span>
-      <span class="meta-chip">Simulações: ${CONFIG.SIMULATIONS.toLocaleString()}</span>
+      <span class="meta-chip">${CONFIG.SIMULATIONS.toLocaleString()} sim.</span>
     </div>
     
-    ${bestValueBet ? `
+    ${bestBet ? `
     <div class="best-bet-card">
-      <div class="bb-title">⭐ Melhor Oportunidade</div>
-      <div class="bb-market">${bestValueBet.market} ${bestValueBet.type === 'vb' ? '<span class="vb-badge">Value Bet</span>' : ''}</div>
+      <div class="bb-title">⭐ Melhor Aposta Betano</div>
+      <div class="bb-market">${bestBet.market}</div>
       <div class="bb-grid">
         <div class="bb-item">
           <div class="bb-item-label">Probabilidade</div>
-          <div class="bb-item-val high">${bestValueBet.prob}%</div>
+          <div class="bb-item-val high">${bestBet.prob}%</div>
         </div>
         <div class="bb-item">
-          <div class="bb-item-label">Odd Justa</div>
-          <div class="bb-item-val mid">${bestValueBet.fairOdd}</div>
+          <div class="bb-item-label">Odd Sugerida</div>
+          <div class="bb-item-val mid">${bestBet.impliedOdds}</div>
         </div>
         <div class="bb-item">
-          <div class="bb-item-label">Margem</div>
-          <div class="bb-item-val ${bestValueBet.prob > 55 ? 'high' : 'mid'}">+${(bestValueBet.prob - 45).toFixed(1)}%</div>
+          <div class="bb-item-label">Confiança</div>
+          <div class="bb-item-val ${bestBet.confidence === 'Alta' ? 'high' : 'mid'}">${bestBet.confidence}</div>
         </div>
       </div>
-      <div class="bb-justify">💡 Alta probabilidade estatística com boa margem de valor. Considere incluir na sua aposta do dia.</div>
+      <div class="bb-justify">${bestBet.justification}</div>
     </div>
-    ` : '<p style="font-size:12px;color:var(--muted);margin-bottom:10px">Nenhuma value bet clara identificada neste momento.</p>'}
+    ` : ''}
     
+    <!-- Top Mercados Betano -->
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">
+      🔥 Melhores Mercados Betano
+    </div>
+    <div class="markets-grid-betano">
+      ${topMarkets.map((m, i) => `
+        <div class="market-mini-card ${STATE.selectedMarkets.has(m.key) ? 'selected' : ''}"
+             onclick="event.stopPropagation(); toggleMarket('${m.key}')">
+          <div class="mmc-header">
+            <span class="mmc-label">${m.icon} ${m.label}</span>
+          </div>
+          <div class="mmc-value">${m.prob}%</div>
+          <div class="mmc-sub">${m.isValueBet ? '💎 Value Bet' : '📊 Estatístico'}</div>
+        </div>
+      `).join('')}
+    </div>
+    
+    <!-- Simulação 1X2 -->
     <div class="sim-section">
-      <div class="sim-title">Previsão 1X2 <span>10k simulações</span></div>
+      <div class="sim-title">Previsão 1X2 <span>Monte Carlo</span></div>
       <div class="sim-1x2">
         <div class="sim-box home">
           <div class="sim-box-label">${fixture.teams?.home?.name || 'Casa'}</div>
-          <div class="sim-box-prob">${sim['1x2'].home}%</div>
+          <div class="sim-box-prob">${sim.homeWin}%</div>
         </div>
         <div class="sim-box draw">
           <div class="sim-box-label">Empate</div>
-          <div class="sim-box-prob">${sim['1x2'].draw}%</div>
+          <div class="sim-box-prob">${sim.draw}%</div>
         </div>
         <div class="sim-box away">
           <div class="sim-box-label">${fixture.teams?.away?.name || 'Fora'}</div>
-          <div class="sim-box-prob">${sim['1x2'].away}%</div>
+          <div class="sim-box-prob">${sim.awayWin}%</div>
         </div>
       </div>
     </div>
     
+    <!-- Odds Comparison -->
+    <div class="odds-comparison">
+      <div class="odd-card">
+        <div class="odd-label">Odd Justa (Casa)</div>
+        <div class="odd-value">${(1 / (sim.homeWin / 100)).toFixed(2)}</div>
+        <div class="odd-book">Valor real</div>
+      </div>
+      <div class="odd-card">
+        <div class="odd-label">Over 2.5</div>
+        <div class="odd-value">${sim.over25}%</div>
+        <div class="odd-book">Probabilidade</div>
+      </div>
+      <div class="odd-card">
+        <div class="odd-label">BTTS Sim</div>
+        <div class="odd-value">${sim.btts}%</div>
+        <div class="odd-book">Probabilidade</div>
+      </div>
+    </div>
+    
+    <!-- Bilhete Betano -->
     <div class="ticket-panel">
       <div class="ticket-header">
-        <div class="ticket-title">🎫 Bilhete Rápido</div>
-        <div class="ticket-subtitle">Mercados com melhor valor estatístico</div>
-      </div>
-      <div class="ticket-list">
-        <div class="ticket-row">
-          <span class="ticket-num">1</span>
-          <span class="ticket-label">Over 2.5 Gols</span>
-          <span class="ticket-prob ${sim.goals.over25 > 55 ? 'high' : 'mid'}">${sim.goals.over25}%</span>
-        </div>
-        <div class="ticket-row">
-          <span class="ticket-num">2</span>
-          <span class="ticket-label">BTTS Sim</span>
-          <span class="ticket-prob ${sim.btts.yes > 50 ? 'high' : 'mid'}">${sim.btts.yes}%</span>
-        </div>
-        <div class="ticket-row">
-          <span class="ticket-num">3</span>
-          <span class="ticket-label">Over 1.5 Gols</span>
-          <span class="ticket-prob ${sim.goals.over15 > 70 ? 'high' : 'mid'}">${sim.goals.over15}%</span>
+        <div class="ticket-logo">B</div>
+        <div>
+          <div class="ticket-title">Bilhete Betano</div>
+          <div class="ticket-subtitle">Mercados selecionados (${STATE.selectedMarkets.size})</div>
         </div>
       </div>
+      ${STATE.selectedMarkets.size > 0 ? `
+        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px">
+          ${[...STATE.selectedMarkets].map(key => {
+            const market = pred.markets.find(m => m.key === key);
+            return market ? `
+              <div style="display:flex;justify-content:space-between;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:4px;font-size:12px">
+                <span>${market.icon} ${market.label}</span>
+                <span style="color:var(--lime);font-weight:600">${market.prob}%</span>
+              </div>
+            ` : '';
+          }).join('')}
+        </div>
+        <div style="text-align:center;padding:10px;background:rgba(255,102,0,.1);border-radius:6px;margin-bottom:10px">
+          <span style="font-size:11px;color:var(--muted)">Odd combinada estimada: </span>
+          <span style="font-size:18px;font-weight:700;color:var(--betano-orange)">
+            ${calculateCombinedOdds([...STATE.selectedMarkets].map(key => pred.markets.find(m => m.key === key)?.prob || 50))}
+          </span>
+        </div>
+      ` : '<p style="font-size:11px;color:var(--muted);text-align:center;padding:10px">Selecione mercados acima para montar seu bilhete</p>'}
+      
       <div class="bm-label">Aposte com as melhores odds</div>
       <div class="bookmakers">
-        <a href="https://www.betano.com" target="_blank" rel="noopener" class="bm-btn bm-betano">Betano</a>
+        <a href="https://www.betano.com" target="_blank" rel="noopener" class="bm-btn bm-betano">🔥 Betano</a>
         <a href="https://www.bet365.com" target="_blank" rel="noopener" class="bm-btn bm-bet365">Bet365</a>
         <a href="https://www.sportingbet.com" target="_blank" rel="noopener" class="bm-btn bm-sportingbet">Sportingbet</a>
         <a href="https://www.betfair.com" target="_blank" rel="noopener" class="bm-btn bm-betfair">Betfair</a>
-        <a href="https://www.novibet.com" target="_blank" rel="noopener" class="bm-btn bm-novibet">Novibet</a>
-        <a href="https://www.superbet.com" target="_blank" rel="noopener" class="bm-btn bm-superbet">Superbet</a>
       </div>
     </div>
   `;
+}
+
+function calculateCombinedOdds(probs) {
+  if (probs.length === 0) return '0.00';
+  const combinedProb = probs.reduce((acc, p) => acc * (p / 100), 1);
+  const totalProb = combinedProb * 100;
+  const odds = 1 / combinedProb;
+  return odds.toFixed(2);
+}
+
+// --- INTERAÇÕES ---
+function toggleMarket(key) {
+  if (STATE.selectedMarkets.has(key)) {
+    STATE.selectedMarkets.delete(key);
+  } else {
+    STATE.selectedMarkets.add(key);
+  }
+  renderFixtures();
+  // Reabrir card ativo
+  if (STATE.selectedMatch) {
+    setTimeout(() => {
+      const card = $(`.fx-card[data-id="${STATE.selectedMatch}"]`);
+      if (card) card.classList.add('active-card');
+    }, 50);
+  }
+}
+
+function toggleMatch(cardElement, id) {
+  $$('.fx-card.active-card').forEach(c => {
+    if (c !== cardElement) c.classList.remove('active-card');
+  });
+  
+  const isActive = cardElement.classList.toggle('active-card');
+  STATE.selectedMatch = isActive ? id : null;
+  STATE.selectedMarkets.clear();
+  
+  if (isActive && !STATE.predictions[id]) {
+    const fixture = STATE.fixtures.find(f => getFixtureId(f) === id);
+    if (fixture) {
+      STATE.predictions[id] = calculatePrediction(fixture);
+      addToHistory(fixture, STATE.predictions[id]);
+      renderFixtures();
+      setTimeout(() => {
+        const newCard = $(`.fx-card[data-id="${id}"]`);
+        if (newCard) {
+          newCard.classList.add('active-card');
+          STATE.selectedMatch = id;
+        }
+      }, 100);
+    }
+  }
 }
 
 // --- TOP 10 ---
@@ -833,14 +1064,7 @@ function generateTop10() {
     .map(([id, pred]) => {
       const fixture = STATE.fixtures.find(f => getFixtureId(f) == id);
       if (!fixture || fixture.fixture?.status?.short === 'FT') return null;
-      const bestBet = pred.valueBets[0];
-      if (!bestBet) return null;
-      return { 
-        fixture, 
-        pred, 
-        bestBet, 
-        score: bestBet.prob + (pred.isHighConfidence ? 10 : 0) + (pred.hasValueBet ? 5 : 0) 
-      };
+      return { fixture, pred, score: pred.bestBet.prob + (pred.isHighConfidence ? 10 : 0) + (pred.hasValueBet ? 5 : 0) };
     })
     .filter(Boolean)
     .sort((a, b) => b.score - a.score)
@@ -848,7 +1072,7 @@ function generateTop10() {
   
   const container = $('#top10-list');
   if (allPreds.length === 0) {
-    container.innerHTML = '<p class="empty" style="font-size:11.5px">Nenhuma aposta de valor encontrada para os jogos de hoje.</p>';
+    container.innerHTML = '<p class="empty" style="font-size:11.5px">Nenhuma aposta de valor encontrada.</p>';
     return;
   }
   
@@ -856,65 +1080,44 @@ function generateTop10() {
     <div class="top10-row" onclick="toggleMatchById(${getFixtureId(item.fixture)})">
       <span class="top10-rank">#${i + 1}</span>
       <span class="top10-match">${item.fixture.teams?.home?.name} vs ${item.fixture.teams?.away?.name}</span>
-      <span>${item.bestBet.market}</span>
-      <span class="top10-prob">${item.bestBet.prob}%</span>
+      <span>${item.pred.bestBet.market}</span>
+      <span class="top10-prob">${item.pred.bestBet.prob}%</span>
     </div>
   `).join('');
+}
+
+function toggleMatchById(id) {
+  const card = $(`.fx-card[data-id="${id}"]`);
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => toggleMatch(card, id), 300);
+  }
 }
 
 // --- HISTÓRICO ---
 function loadHistory() {
   try {
-    const saved = localStorage.getItem('futestat_history');
-    STATE.history = saved ? JSON.parse(saved) : [];
-  } catch (e) {
-    STATE.history = [];
-  }
+    STATE.history = JSON.parse(localStorage.getItem('futestat_v5_history') || '[]');
+  } catch (e) { STATE.history = []; }
 }
 
 function saveHistory() {
-  try {
-    localStorage.setItem('futestat_history', JSON.stringify(STATE.history.slice(0, CONFIG.MAX_HISTORY)));
-  } catch (e) {
-    console.warn('Não foi possível salvar o histórico');
-  }
+  localStorage.setItem('futestat_v5_history', JSON.stringify(STATE.history.slice(0, 100)));
 }
 
 function addToHistory(fixture, pred) {
-  const entry = {
+  STATE.history.unshift({
     id: Date.now(),
     date: new Date().toISOString(),
     match: `${fixture.teams?.home?.name} vs ${fixture.teams?.away?.name}`,
     league: fixture.league?.name,
-    prediction: pred.valueBets[0]?.market || 'N/A',
-    prob: pred.valueBets[0]?.prob || 0,
+    prediction: pred.bestBet.market,
+    prob: pred.bestBet.prob,
     confidence: pred.confidence,
     actualResult: fixture.goals ? `${fixture.goals.home}-${fixture.goals.away}` : null,
-    hit: fixture.goals ? checkHit(pred, fixture) : null
-  };
-  
-  STATE.history.unshift(entry);
-  if (STATE.history.length > CONFIG.MAX_HISTORY) {
-    STATE.history = STATE.history.slice(0, CONFIG.MAX_HISTORY);
-  }
+  });
+  if (STATE.history.length > 100) STATE.history = STATE.history.slice(0, 100);
   saveHistory();
-}
-
-function checkHit(pred, fixture) {
-  const goals = fixture.goals;
-  if (!goals) return null;
-  const totalGoals = goals.home + goals.away;
-  const bestBet = pred.valueBets[0];
-  if (!bestBet) return null;
-  
-  if (bestBet.market.includes('Over 2.5')) return totalGoals > 2.5;
-  if (bestBet.market.includes('Over 1.5')) return totalGoals > 1.5;
-  if (bestBet.market.includes('BTTS Sim')) return goals.home > 0 && goals.away > 0;
-  if (bestBet.market.includes('Vence')) {
-    const isHome = bestBet.market.includes(fixture.teams?.home?.name);
-    return isHome ? goals.home > goals.away : goals.away > goals.home;
-  }
-  return null;
 }
 
 function renderHistory() {
@@ -922,20 +1125,16 @@ function renderHistory() {
   const listContainer = $('#history-list');
   
   if (STATE.history.length === 0) {
-    statsContainer.innerHTML = '<p style="color:var(--muted);font-size:12px;grid-column:1/-1;text-align:center">Nenhum histórico disponível.</p>';
-    listContainer.innerHTML = '<p class="empty">As previsões visualizadas aparecerão aqui.</p>';
+    statsContainer.innerHTML = '<p style="color:var(--muted);font-size:12px;grid-column:1/-1;text-align:center">Nenhum histórico</p>';
+    listContainer.innerHTML = '<p class="empty">Previsões aparecerão aqui.</p>';
     return;
   }
   
-  const withResult = STATE.history.filter(h => h.hit !== null);
-  const hits = withResult.filter(h => h.hit === true).length;
-  const accuracy = withResult.length > 0 ? (hits / withResult.length * 100).toFixed(1) : 0;
-  
   statsContainer.innerHTML = `
     <div class="hs-box"><div class="hs-val">${STATE.history.length}</div><div class="hs-label">Total</div></div>
-    <div class="hs-box"><div class="hs-val">${withResult.length}</div><div class="hs-label">Apuradas</div></div>
-    <div class="hs-box"><div class="hs-val">${hits}</div><div class="hs-label">Acertos</div></div>
-    <div class="hs-box"><div class="hs-val">${accuracy}%</div><div class="hs-label">Assertividade</div></div>
+    <div class="hs-box"><div class="hs-val">${STATE.history.filter(h => h.actualResult).length}</div><div class="hs-label">Apuradas</div></div>
+    <div class="hs-box"><div class="hs-val">${STATE.history.filter(h => h.prob >= 70).length}</div><div class="hs-label">Alta Conf.</div></div>
+    <div class="hs-box"><div class="hs-val">${STATE.history[0]?.prob || 0}%</div><div class="hs-label">Última Prob.</div></div>
   `;
   
   listContainer.innerHTML = STATE.history.slice(0, 20).map(h => `
@@ -948,96 +1147,45 @@ function renderHistory() {
         <div style="font-size:11px;color:var(--muted)">${h.prediction}</div>
         <div style="font-size:10px;color:var(--muted)">${h.prob}% · ${h.confidence}</div>
       </div>
-      <div class="h-result ${h.hit === true ? 'win' : ''}" 
-           style="${h.hit === false ? 'color:var(--red)' : 'color:var(--muted)'}">
-        ${h.hit === true ? '✅' : (h.hit === false ? '❌' : '⏳')}
+      <div class="h-result ${h.actualResult ? 'win' : ''}" style="color:${h.actualResult ? 'var(--lime)' : 'var(--muted)'}">
+        ${h.actualResult || '⏳'}
       </div>
     </div>
   `).join('');
 }
 
-// --- INTERAÇÕES DO USUÁRIO ---
-function toggleMatch(cardElement, id) {
-  // Fechar outros cards
-  $$('.fx-card.active-card').forEach(c => {
-    if (c !== cardElement) c.classList.remove('active-card');
-  });
-  
-  // Toggle do card atual
-  const isActive = cardElement.classList.toggle('active-card');
-  STATE.selectedMatch = isActive ? id : null;
-  
-  // Calcular previsão se necessário
-  if (isActive && !STATE.predictions[id]) {
-    const fixture = STATE.fixtures.find(f => getFixtureId(f) === id);
-    if (fixture) {
-      STATE.predictions[id] = calculatePrediction(fixture);
-      addToHistory(fixture, STATE.predictions[id]);
-      renderFixtures();
-      // Reabrir após re-render
-      setTimeout(() => {
-        const newCard = $(`.fx-card[data-id="${id}"]`);
-        if (newCard) {
-          newCard.classList.add('active-card');
-          STATE.selectedMatch = id;
-        }
-      }, 100);
-    }
-  }
-}
-
-function toggleMatchById(id) {
-  const card = $(`.fx-card[data-id="${id}"]`);
-  if (card) {
-    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => toggleMatch(card, id), 300);
-  }
-}
-
-// --- CONFIGURAÇÃO DE EVENTOS ---
+// --- EVENTOS ---
 function setupEventListeners() {
-  // Busca
   $('#search-input').addEventListener('input', (e) => {
     STATE.searchTerm = e.target.value;
     renderFixtures();
   });
   
-  // Abas de filtro
   $('#scope-tabs').addEventListener('click', (e) => {
-    if (e.target.classList.contains('scope-tab') || e.target.closest('.scope-tab')) {
-      const tab = e.target.classList.contains('scope-tab') ? e.target : e.target.closest('.scope-tab');
-      $$('.scope-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      STATE.activeFilter = tab.dataset.filter;
-      renderFixtures();
-    }
+    const tab = e.target.classList.contains('scope-tab') ? e.target : e.target.closest('.scope-tab');
+    if (!tab) return;
+    $$('.scope-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    STATE.activeFilter = tab.dataset.filter;
+    renderFixtures();
   });
   
-  // Filtro de liga
   $('#league-filter').addEventListener('change', (e) => {
     STATE.leagueFilter = e.target.value;
     renderFixtures();
   });
   
-  // Chips
   $$('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      const chipName = chip.dataset.chip;
-      if (STATE.activeChips.has(chipName)) {
-        STATE.activeChips.delete(chipName);
-        chip.classList.remove('active-chip');
-      } else {
-        STATE.activeChips.add(chipName);
-        chip.classList.add('active-chip');
-      }
+      const name = chip.dataset.chip;
+      STATE.activeChips.has(name) ? STATE.activeChips.delete(name) : STATE.activeChips.add(name);
+      chip.classList.toggle('active-chip');
       renderFixtures();
     });
   });
   
-  // Top 10
   $('#btn-top10').addEventListener('click', generateTop10);
   
-  // Histórico
   $('#btn-history').addEventListener('click', () => {
     const section = $('#history-section');
     section.classList.toggle('visible');
@@ -1046,14 +1194,13 @@ function setupEventListeners() {
   });
   
   $('#btn-clear-history').addEventListener('click', () => {
-    if (confirm('Tem certeza que deseja limpar todo o histórico de previsões?')) {
+    if (confirm('Limpar todo o histórico?')) {
       STATE.history = [];
       saveHistory();
       renderHistory();
     }
   });
   
-  // Fechar cards ao pressionar Escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && STATE.selectedMatch) {
       $$('.fx-card.active-card').forEach(c => c.classList.remove('active-card'));
@@ -1064,82 +1211,40 @@ function setupEventListeners() {
 
 // --- RELÓGIO ---
 function updateClock() {
-  const now = new Date();
-  const options = { 
-    weekday: 'short', 
-    day: '2-digit', 
-    month: 'short', 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    second: '2-digit' 
-  };
-  $('#clock').textContent = now.toLocaleString('pt-BR', options).toUpperCase();
+  $('#clock').textContent = new Date().toLocaleString('pt-BR', {
+    weekday: 'short', day: '2-digit', month: 'short',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  }).toUpperCase();
 }
 
-// --- INICIALIZAÇÃO ---
-async function init() {
-  console.log('⚽ FuteStat v4.0 — Inicializando...');
+// --- INIT ---
+function init() {
+  console.log('⚽ FuteStat v5.0 — Betano Markets Edition');
   
-  // Carregar histórico
   loadHistory();
+  STATE.fixtures = generateFallbackFixtures();
   
-  // Buscar dados da API ou gerar fallback
-  let apiFixtures = [];
-  if (CONFIG.USE_REAL_API) {
-    const today = new Date().toISOString().split('T')[0];
-    apiFixtures = await fetchFromAPI('fixtures', { date: today, timezone: 'America/Sao_Paulo' }) || [];
-  }
-  
-  STATE.fixtures = apiFixtures.length > 0 ? apiFixtures : generateFallbackFixtures();
-  
-  // Popular filtro de ligas
   const uniqueLeagues = [...new Map(STATE.fixtures.map(f => [f.league?.id, f.league])).values()]
     .filter(Boolean)
     .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   
-  const leagueSelect = $('#league-filter');
-  leagueSelect.innerHTML = '<option value="">Todas as ligas</option>' +
+  $('#league-filter').innerHTML = '<option value="">Todas as ligas</option>' +
     uniqueLeagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
   
-  // Pré-calcular previsões para os primeiros jogos
   STATE.fixtures.slice(0, 5).forEach(f => {
     const id = getFixtureId(f);
-    if (!STATE.predictions[id]) {
-      STATE.predictions[id] = calculatePrediction(f);
-    }
+    if (!STATE.predictions[id]) STATE.predictions[id] = calculatePrediction(f);
   });
   
-  // Renderizar interface
   renderFixtures();
   renderHistory();
   updateClock();
-  
-  // Intervalos
   setInterval(updateClock, 10000);
-  
-  // Atualizar jogos ao vivo periodicamente
-  setInterval(async () => {
-    const hasLiveGames = STATE.fixtures.some(f => f.fixture?.status?.short === 'LIVE');
-    if (hasLiveGames && CONFIG.USE_REAL_API) {
-      const updated = await fetchFromAPI('fixtures', { live: 'all' });
-      if (updated && updated.length > 0) {
-        updated.forEach(uf => {
-          const idx = STATE.fixtures.findIndex(f => getFixtureId(f) === uf.fixture.id);
-          if (idx >= 0) STATE.fixtures[idx] = { ...STATE.fixtures[idx], ...uf };
-        });
-        renderFixtures();
-      }
-    }
-  }, CONFIG.REFRESH_INTERVAL);
-  
-  // Configurar eventos
   setupEventListeners();
   
-  STATE.isInitialized = true;
-  console.log('✅ FuteStat pronto! Dados carregados:', STATE.fixtures.length, 'jogos');
+  console.log('✅ Pronto!', STATE.fixtures.length, 'jogos carregados');
 }
 
-// Iniciar quando o DOM estiver pronto
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
